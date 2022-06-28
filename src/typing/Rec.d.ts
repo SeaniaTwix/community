@@ -1,0 +1,1 @@
+declare type Rec<T> = Record<string, T>
