@@ -1,4 +1,4 @@
-export enum UserRanks {
+export enum EUserRanks {
   Banned = -1,
   User, // 사용자
   Manager, // 관리자
