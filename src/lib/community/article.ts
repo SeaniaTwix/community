@@ -1,12 +1,16 @@
-import db from '../database/instance';
+import db from '$lib/database/instance';
 import {aql} from 'arangojs/aql';
 
-export class ArticleManage {
+export class ArticleManager {
 
   title: string | undefined;
   content: string | undefined;
 
   constructor(private readonly id: string) {
+  }
+
+  post(title: string, content: string) {
+
   }
 
   get exists(): Promise<boolean> {

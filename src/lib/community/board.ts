@@ -1,6 +1,6 @@
 import db from '../database/instance';
 import {aql} from 'arangojs/aql';
-import type {EUserRanks} from '../types/UserRanks';
+import type {EUserRanks} from '../types/user-ranks';
 
 export class BoardManager {
   constructor(private readonly id: string) {

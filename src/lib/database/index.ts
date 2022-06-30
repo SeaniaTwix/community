@@ -26,10 +26,14 @@ export default class DefaultDatabase {
   constructor() {
     DefaultDatabase.url = DefaultDatabase.info.url;
     this.system = new Database(DefaultDatabase.url);
-    this.init().then();
+    // this.init().then();
   }
 
   private async init() {
+    if (this.db) {
+      return;
+    }
+
     // console.log('init')
     const info = DefaultDatabase.info;
     const token = await this.system.login(info.user, info.password);
@@ -62,7 +66,7 @@ export default class DefaultDatabase {
   }
 
   query(q: AqlQuery) {
-    return this.db.query(q);
+    return this.init().then(() => this.db.query(q));
   }
 }
 

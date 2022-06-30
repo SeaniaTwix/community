@@ -1,6 +1,6 @@
 <script lang="ts">
   import Register from '$lib/components/Register.svelte';
-  import {User} from '../lib/auth/user/client';
+  import {User} from '$lib/auth/user/client';
 
   async function register(event: CustomEvent<{id: string, pw: string}>) {
     const user = new User(event.detail.id);

@@ -19,5 +19,6 @@ module.exports = {
 	},
   rules: {
     'no-async-promise-executor': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
   }
 };

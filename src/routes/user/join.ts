@@ -1,11 +1,21 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import {newLoginHeaders} from './login';
+import HttpStatus from 'http-status-codes';
 
 export async function post({request}: RequestEvent): Promise<RequestHandlerOutput> {
   const login = new RegisterRequest(await request.json());
 
-  await login.register();
+  try {
+    await login.register();
+  } catch (error) {
+    return {
+      status: HttpStatus.CONFLICT,
+      body: {
+        reason: (<any>error).toString(),
+      }
+    }
+  }
 
   const headers = newLoginHeaders(login.user);
 
