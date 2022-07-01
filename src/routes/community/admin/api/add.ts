@@ -1,7 +1,7 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {BoardDto} from '$lib/types/dto/board.dto';
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 
 /**
  * 게시판 생성

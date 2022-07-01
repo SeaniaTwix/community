@@ -1,5 +1,5 @@
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 
 export class ArticleManager {
 

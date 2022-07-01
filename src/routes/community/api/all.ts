@@ -1,6 +1,6 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 
 export async function get(_: RequestEvent): Promise<RequestHandlerOutput> {
   return {

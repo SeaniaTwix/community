@@ -5,7 +5,7 @@
   import ky from 'ky-universal';
 
   export async function load({session, stuff, url, fetch}: LoadEvent): Promise<LoadOutput> {
-    console.log(url.origin)
+    console.log('__layout', url.origin)
     // const res = await fetch(`${url.pathname}/community/api/all`);
     // const {boards} = await res.json() as {boards: BoardItemDto[]};
     const {boards} = await ky.get(`${url.origin}/community/api/all`).json<{boards: BoardItemDto[]}>()

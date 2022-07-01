@@ -1,5 +1,5 @@
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 import type {EUserRanks} from '$lib/types/user-ranks';
 
 export class Board {

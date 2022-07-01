@@ -2,7 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import _ from 'lodash-es';
 import HttpStatus from 'http-status-codes';
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 import {Board} from '$lib/community/board/server';
 import {ArticleDto} from '$lib/types/dto/article.dto';
 import {User} from '$lib/auth/user/server';

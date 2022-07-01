@@ -1,6 +1,6 @@
 import argon2 from 'argon2';
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 import type {IArangoDocumentIdentifier} from '$lib/database';
 import njwt from 'njwt';
 import {EUserRanks} from '$lib/types/user-ranks';

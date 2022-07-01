@@ -1,6 +1,6 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
-import {aql} from 'arangojs/aql';
+import {aql} from 'arangojs';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
 import {isStringInteger} from '$lib/util';
 import HttpStatus from 'http-status-codes';
