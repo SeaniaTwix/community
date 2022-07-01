@@ -7,10 +7,14 @@
   import {dayjs} from 'dayjs';
   import {fly} from 'svelte/transition';
   import {isEmpty} from 'lodash-es';
+  import {getStores} from '$app/stores';
+  import {EUserRanks} from '$lib/types/user-ranks.js';
 
   export let uid = '';
   export let boards: string[] = [];
   let showSideMenu = false;
+
+  const {session} = getStores();
 
   function switchSideMenu() {
     showSideMenu = !showSideMenu;
@@ -99,11 +103,13 @@
       </span>
     </li>
 
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md" href="/">
-        <Console size="20px" />
-      </a>
-    </li>
+    {#if $session && $session.rank > EUserRanks.User}
+      <li>
+        <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md" href="/community/admin">
+          <Console size="20px"/>
+        </a>
+      </li>
+    {/if}
 
     {#if !isEmpty(uid)}
       <li>

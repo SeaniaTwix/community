@@ -5,13 +5,14 @@
   import ky from 'ky-universal';
 
   export async function load({session, stuff, url, fetch}: LoadEvent): Promise<LoadOutput> {
-    console.log('__layout', url.origin)
+    // console.log('__layout', url.origin)
     // const res = await fetch(`${url.pathname}/community/api/all`);
     // const {boards} = await res.json() as {boards: BoardItemDto[]};
-    const {boards} = await ky.get(`${url.origin}/community/api/all`).json<{boards: BoardItemDto[]}>()
+    const response = await fetch(`${url.origin}/community/api/all`);
+    const {boards} = await response.json<{boards: BoardItemDto[]}>();
     // const boards = [];
-    console.log(session, stuff, url.host)
-    console.log(session)
+    // console.log(session, stuff, url.host)
+    // console.log(session)
     return {
       status: 200,
       props: {

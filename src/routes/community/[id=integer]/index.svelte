@@ -28,13 +28,13 @@
   console.log(id, params);
 </script>
 
-<h2>
-  게시판
-</h2>
-{id === undefined}
-<a href="/community/{params.id}/write"
-   class="px-4 py-2 inline-block ring-1 ring-sky-400 rounded-md shadow-md">
-  새 글 쓰기
-</a>
-
-<ArticleList board={id} {list} />
+<div class="w-10/12 md:w-2/3 lg:w-3/5 mx-auto space-y-4 transition-transform">
+  <h2 class="text-2xl">
+    게시판
+  </h2>
+  <a href="/community/{params.id}/write"
+     class="px-4 py-2 inline-block ring-1 ring-sky-400 rounded-md shadow-md">
+    새 글 쓰기
+  </a>
+  <ArticleList board={id} {list} />
+</div>

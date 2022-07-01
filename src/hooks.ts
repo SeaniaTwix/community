@@ -5,6 +5,10 @@ import njwt from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import type {EUserRanks} from '$lib/types/user-ranks';
+import {atob, btoa} from 'js-base64';
+
+global.atob = atob;
+global.btoa = btoa;
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {

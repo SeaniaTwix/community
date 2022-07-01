@@ -17,11 +17,11 @@ export class User {
       if (!await this.exists) {
         return reject('user not exists');
       }
-      console.log(2)
+
       db.query(aql`
         for user in users
           filter user.id == ${this.id}
-            RETURN user`)
+            return user`)
         .then(async (cursor) => {
           if (!cursor.hasNext) {
             return reject('no user found');
@@ -57,11 +57,11 @@ export class User {
 
   get exists(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
-      console.log(1)
+      // console.trace("user exists check")
       db.query(aql`
         for user in users
           filter user.id == ${this.id}
-            RETURN user`)
+            return user`)
         .then(async (r) => {
           resolve(r.hasNext);
         })
@@ -84,6 +84,10 @@ export class User {
   async register(password: string) {
     if (await this.exists) {
       throw Error('user exists already');
+    }
+
+    if (!password || password.length < 6) {
+      throw Error('password invalid (is that short than 6)');
     }
 
     const hashed = await argon2.hash(password);

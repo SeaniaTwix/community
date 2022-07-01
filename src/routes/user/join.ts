@@ -4,7 +4,18 @@ import {newLoginHeaders} from './login';
 import HttpStatus from 'http-status-codes';
 
 export async function post({request}: RequestEvent): Promise<RequestHandlerOutput> {
-  const login = new RegisterRequest(await request.json());
+  let login: RegisterRequest;
+
+  try {
+    login = new RegisterRequest(await request.json());
+  } catch (e: any) {
+    return {
+      status: HttpStatus.NOT_ACCEPTABLE,
+      body: {
+        reason: e.toString()
+      }
+    }
+  }
 
   try {
     await login.register();
@@ -30,6 +41,9 @@ class RegisterRequest {
   user: User;
 
   constructor(private body: Rec<string>) {
+    if (/\s/.exec(this.id)) {
+      throw new Error('whitespace not allow in id');
+    }
     this.user = new User(this.id);
   }
 
@@ -38,7 +52,7 @@ class RegisterRequest {
   }
 
   get password(): string {
-    return this.body.pw;
+    return this.body.password;
   }
 
   get status(): number {

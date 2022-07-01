@@ -22,6 +22,7 @@ specifiers:
   eslint-plugin-svelte3: ^4.0.0
   froala-editor: ^4.0.12
   http-status-codes: ^2.2.0
+  js-base64: ^3.7.2
   js-cookie: ^3.0.1
   ky: ^0.31.0
   ky-universal: ^0.10.1
@@ -56,6 +57,7 @@ dependencies:
   dto-mapping: 1.1.0
   froala-editor: 4.0.12
   http-status-codes: 2.2.0
+  js-base64: 3.7.2
   js-cookie: 3.0.1
   ky: 0.31.0
   ky-universal: 0.10.1_ky@0.31.0
@@ -1640,6 +1642,10 @@ packages:
 
   /isexe/2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+
+  /js-base64/3.7.2:
+    resolution: {integrity: sha512-NnRs6dsyqUXejqk/yv2aiXlAvOs56sLkX6nUdeaNezI5LFFLlsZjOThmwnrcwh5ZZRwZlCMnVAY3CvhIhoVEKQ==}
+    dev: false
 
   /js-cookie/3.0.1:
     resolution: {integrity: sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==}

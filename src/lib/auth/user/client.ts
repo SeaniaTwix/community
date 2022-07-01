@@ -42,6 +42,10 @@ export class User {
     return res.token;
   }
 
+  static logout() {
+
+  }
+
 }
 
 export interface ILoginResponse {

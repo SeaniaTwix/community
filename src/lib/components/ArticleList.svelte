@@ -3,6 +3,7 @@
   import ko from 'date-fns/locale/ko';
   import format from 'date-fns/format';
   import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+  import {isEmpty} from 'lodash-es';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -22,7 +23,10 @@
   }
 </script>
 
-<div class="w-3/5 mx-auto">
+<div class="w-full">
+  {#if isEmpty(list)}
+    <p class="w-full text-center text-zinc-500">게시글이 없습니다.</p>
+  {/if}
   <ul>
     {#each list as article}
       <li class="flex space-x-16">
