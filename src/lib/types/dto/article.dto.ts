@@ -17,6 +17,6 @@ export class ArticleDto {
   @SafeType({type: String})
   content?: string;
 
-  @SafeType({type: Array})
+  // @SafeType({type: Array})
   tags?: string[];
 }

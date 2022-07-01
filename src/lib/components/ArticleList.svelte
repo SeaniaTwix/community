@@ -1,25 +1,29 @@
 <script lang="ts">
   import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
-  import ko from 'date-fns/locale/ko';
-  import format from 'date-fns/format';
-  import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+  import TimeAgo from 'javascript-time-ago';
+  import ko from 'javascript-time-ago/locale/ko';
   import {isEmpty} from 'lodash-es';
+  import {dayjs} from 'dayjs';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
+
+  TimeAgo.addLocale(ko);
+  const timeAgo = new TimeAgo('ko-KR');
 
   function formatDate(date: number) {
     const d = new Date(date);
     const now = Date.now();
     const diff = (now - d.getTime()) / 1000;
-    if (diff < 60) {
+    if (diff < 60) { // 1분 이내
       return '방금 전';
     }
-    if (diff < 259200) {
-      return formatDistanceToNow(d, {addSuffix: true, locale: ko});
+
+    if (diff < 259200) { // 3일 이내
+      return timeAgo.format(d);
     }
 
-    return format(d, 'PPP EEE p', {locale: ko});
+    return dayjs(d).format('YY년 M월 D일')
   }
 </script>
 

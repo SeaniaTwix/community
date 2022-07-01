@@ -1,5 +1,5 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
-import _ from 'lodash-es';
+import _, {isEmpty} from 'lodash-es';
 import HttpStatus from 'http-status-codes';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -30,8 +30,6 @@ export async function post({request, params, locals}: RequestEvent): Promise<Req
     };
   }
 
-  console.log('user:', locals.user)
-
   try {
     await write.saveToDB(locals.user.uid);
   } catch (e: any) {
@@ -42,8 +40,6 @@ export async function post({request, params, locals}: RequestEvent): Promise<Req
       },
     };
   }
-
-  console.log(write.id);
 
   return {
     status: write.status,
@@ -67,7 +63,7 @@ class WriteRequest {
       this.error = 'invalid board id';
     }
 
-    this.board = new Board(this.boardId ?? '');
+    this.board = new Board(this.boardId!);
   }
 
   get boardId(): string | undefined {
@@ -75,15 +71,22 @@ class WriteRequest {
   }
 
   get title(): string | undefined {
-    return this.body.title;
+    return this.body.title?.trim();
   }
 
   get tags(): string[] {
-    return this.body.tags ?? [];
+    const tags = this.body.tags ?? [];
+    console.log('received:', tags);
+    const isNotEmpty = (v: any) => !isEmpty(v);
+    const filtered = tags.filter(isNotEmpty);
+    console.log('filtered:',filtered);
+    const mapped = filtered.map(v => v.trim());
+    console.log(mapped);
+    return this.body.tags?.filter(v => v.length > 0).map(v => v.trim()) ?? [];
   }
 
   get content(): string | undefined {
-    return this.body.content;
+    return this.body.content?.trim();
   }
 
   private get isBoardExists(): Promise<boolean> {
@@ -119,7 +122,6 @@ class WriteRequest {
       createdAt: new Date(),
       board: this.boardId,
     };
-
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);
     const {_key} = await cursor.next();

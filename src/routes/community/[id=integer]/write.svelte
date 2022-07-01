@@ -19,13 +19,17 @@
 <script lang="ts">
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Delete from 'svelte-material-icons/Delete.svelte';
-  import 'froala-editor/css/froala_editor.min.css';
+  // import 'froala-editor/css/froala_editor.min.css';
   import _ from 'lodash-es';
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
+  import Tiptap from '$lib/components/Tiptap.svelte';
 
+  import type {Editor} from '@tiptap/core';
   export let board: string;
+
+  let editorObject: Editor;
 
   let tagInput: HTMLInputElement;
   let editor;
@@ -46,10 +50,12 @@
   }
 
   async function upload() {
+    console.log(tags)
+
     const data: ArticleDto = {
       board,
       title,
-      content: editor.el.innerHTML,
+      content: editorObject.getHTML(),
       tags,
     };
 
@@ -93,7 +99,7 @@
 <div class="mt-10 w-1/2 mx-auto space-y-4">
   <input class="px-4 py-2 w-full outline outline-sky-400 rounded-md"
          type="text" placeholder="제목" bind:value={title} />
-  <div class="min-h-[10rem]" use:loadEditor></div>
+  <Tiptap bind:editor={editorObject} />
   <div class="text-sm">
     <div id="__tags" class="space-x-2 inline-block">
       {#each tags as tag}

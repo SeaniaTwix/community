@@ -1,8 +1,6 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
-// import addMinutes from 'date-fns/addMinutes';
-// import addDays from 'date-fns/addDays';
 import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
 
