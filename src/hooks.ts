@@ -6,22 +6,40 @@ import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import type {EUserRanks} from '$lib/types/user-ranks';
 import {atob, btoa} from 'js-base64';
+import {User} from './lib/auth/user/server';
+import HttpStatus from 'http-status-codes';
 
 global.atob = atob;
 global.btoa = btoa;
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {
+  let result: GetUserReturn | undefined;
   try {
-    event.locals.user = await getUser(event.request.headers.get('cookie'));
+    result = await getUser(event.request.headers.get('cookie'));
+    if (!result) {
+      return await resolve(event);
+    }
+    event.locals.user = result.user;
   } catch (e) {
     console.error('[hooks]', e);
   }
+
   const response = await resolve(event);
+
+  try {
+    if (result?.newToken) {
+      response.headers.set('set-cookie', result.newToken);
+    }
+  } catch {
+    console.trace('error');
+  }
+
   return response;
 }
 
-async function getUser(cookie: string | null) {
+type GetUserReturn = { user: Rec<any>, newToken?: string };
+async function getUser(cookie: string | null): Promise<GetUserReturn | undefined> {
   if (_.isEmpty(cookie)) {
     return undefined;
   }
@@ -40,10 +58,14 @@ async function getUser(cookie: string | null) {
     const refresh = njwt.verify(cookies.refresh ?? '');
     if (refresh?.isExpired() === false) {
       // todo: sign again
+      const {uid, rank} = jwt.body.toJSON();
+      const user = new User(<string>uid);
+      const newToken = await user.token('user', {uid, rank});
+      return { newToken: newToken.compact(), user: newToken.body.toJSON() };
     }
   }
 
-  return jwt.body.toJSON();
+  return { user: jwt.body.toJSON() as Rec<any> };
   // console.log(body)
 }
 

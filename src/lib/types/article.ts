@@ -7,5 +7,6 @@ export interface IArticle extends ArticleDto, IArangoDocumentIdentifier {
   author: string; // uid
   comments: string[]; // comments ids
   board: string; // board id
+  views: number;
   // tags: string[];
 }

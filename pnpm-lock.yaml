@@ -41,6 +41,7 @@ specifiers:
   sass: ^1.53.0
   secure-random: ^1.1.2
   svelte: ^3.44.0
+  svelte-body: ^1.3.6
   svelte-check: ^2.7.1
   svelte-loading-spinners: ^0.1.7
   svelte-material-icons: ^2.0.2
@@ -77,6 +78,7 @@ dependencies:
   relative-time-format: 1.1.4
   sass: 1.53.0
   secure-random: 1.1.2
+  svelte-body: 1.3.6
   svelte-material-icons: 2.0.2_svelte@3.48.0
   svg-loaders: 0.2.0
   wysiwyg-editor-node-sdk: 4.0.12
@@ -951,6 +953,11 @@ packages:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
     engines: {node: '>=10'}
 
+  /clsx/1.1.1:
+    resolution: {integrity: sha512-6/bPho624p3S2pMyvP5kKBPXnI3ufHLObBFCfgx+LkeR5lg2XYy2hqZqUf45ypD8COn2bhgGJSUE+l5dhNBieA==}
+    engines: {node: '>=6'}
+    dev: false
+
   /code-point-at/1.1.0:
     resolution: {integrity: sha512-RpAVKQA5T63xEj6/giIbUEtZwJ4UFIc3ZtvEkiaUERylqe8xb5IvqcgOurZLahv93CLKfxcw5YI+DZcUBRyLXA==}
     engines: {node: '>=0.10.0'}
@@ -1009,6 +1016,10 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
     dev: true
+
+  /csstype/3.1.0:
+    resolution: {integrity: sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==}
+    dev: false
 
   /data-uri-to-buffer/4.0.0:
     resolution: {integrity: sha512-Vr3mLBA8qWmcuschSLAOogKgQ/Jwxulv3RNE4FXnYWRGujzrRWQI4m12fQqRkwX06C0KanhLr4hK+GydchZsaA==}
@@ -2848,6 +2859,13 @@ packages:
   /supports-preserve-symlinks-flag/1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  /svelte-body/1.3.6:
+    resolution: {integrity: sha512-wTGLVlhWJPauViy56AdtJop0fTaEJMqnCadjrlhcIe76R+KrnW+QvHBx69Xots8GaXgds8y+yBAr0cV7YNIeGw==}
+    dependencies:
+      clsx: 1.1.1
+      csstype: 3.1.0
+    dev: false
 
   /svelte-check/2.8.0_s4vji4hbm6754nioyrbgjz6o3e:
     resolution: {integrity: sha512-HRL66BxffMAZusqe5I5k26mRWQ+BobGd9Rxm3onh7ZVu0nTk8YTKJ9vu3LVPjUGLU9IX7zS+jmwPVhJYdXJ8vg==}

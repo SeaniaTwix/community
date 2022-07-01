@@ -5,14 +5,11 @@
   import ky from 'ky-universal';
 
   export async function load({session, stuff, url, fetch}: LoadEvent): Promise<LoadOutput> {
-    // console.log('__layout', url.origin)
-    // const res = await fetch(`${url.pathname}/community/api/all`);
-    // const {boards} = await res.json() as {boards: BoardItemDto[]};
     const response = await fetch(`${url.origin}/community/api/all`);
     const {boards} = await response.json<{boards: BoardItemDto[]}>();
-    // const boards = [];
-    // console.log(session, stuff, url.host)
-    // console.log(session)
+
+    console.log(session)
+
     return {
       status: 200,
       props: {
@@ -26,15 +23,24 @@
   import 'material-icons/iconfont/material-icons.css';
   import '../styles/tailwind.css';
   import Nav from '$lib/components/Nav.svelte';
+  import { classList } from 'svelte-body';
 
   export let uid;
   export let boards: string[] = [];
   console.log(uid)
 </script>
 
+<svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />
+
 <Nav {boards} {uid}/>
 <slot/>
 
 <style lang="scss">
-  // @import '~material-icons/iconfont/material-icons.scss';
+  :global {
+
+    svg {
+      display: inline-block;
+      vertical-align: sub;
+    }
+  }
 </style>

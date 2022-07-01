@@ -19,6 +19,12 @@ class ReadArticleRequest {
               private readonly article: string) {
   }
 
+  private addViewCount() {
+    return db.query(aql`
+      for article in articles
+        update { _key: ${this.article}, views: article.views ? article.view + 1 : 1 } in articles`)
+  }
+
   async get() {
     const cursor = await db.query(aql`
       for article in articles
@@ -27,7 +33,7 @@ class ReadArticleRequest {
 
     const article = await cursor.next();
 
-    console.log(article);
+    await this.addViewCount();
 
     const uid = article.author;
     const user = await User.getByUniqueId(uid);

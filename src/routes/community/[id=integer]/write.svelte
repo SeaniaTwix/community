@@ -27,6 +27,7 @@
   import Tiptap from '$lib/components/Tiptap.svelte';
 
   import type {Editor} from '@tiptap/core';
+
   export let board: string;
 
   let editorObject: Editor;
@@ -50,7 +51,7 @@
   }
 
   async function upload() {
-    console.log(tags)
+    console.log(tags);
 
     const data: ArticleDto = {
       board,
@@ -96,19 +97,19 @@
 
 </script>
 
-<div class="mt-10 w-1/2 mx-auto space-y-4">
-  <input class="px-4 py-2 w-full outline outline-sky-400 rounded-md"
-         type="text" placeholder="제목" bind:value={title} />
-  <Tiptap bind:editor={editorObject} />
+<div class="mt-10 w-10/12 md:w-3/5 lg:w-2/5 mx-auto space-y-4">
+  <input class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
+         type="text" placeholder="제목" bind:value={title}/>
+  <Tiptap bind:editor={editorObject}/>
   <div class="text-sm">
     <div id="__tags" class="space-x-2 inline-block">
       {#each tags as tag}
-        <span class="rounded-md bg-zinc-100 px-2 py-1">{tag}<span class="cursor-pointer"
+        <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1">{tag}<span class="cursor-pointer"
                                                                   on:click={() => deleteTag(tag)}><Delete size="1rem"
                                                                                                           color="rgb(248, 113, 113)"/></span></span>
       {/each}
     </div>
-    <span class="rounded-md bg-zinc-100 px-2 py-1 transition transition-transform" on:click={addTagClicked}>
+    <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 transition transition-transform cursor-pointer" on:click={addTagClicked}>
       {#if addMode}
         <input bind:this={tagInput} bind:value={tag} type="text" placeholder="태그를 입력하세요... (띄어쓰기로 구분)"
                on:keydown={detectEnter} class="bg-transparent w-fit min-w-[14rem] focus:outline-none"/>
@@ -119,10 +120,10 @@
   </div>
   <div class="flex space-x-2">
     <button on:click={upload}
-            class="items-center flex-grow bg-sky-400 rounded-md text-white py-2">
+            class="items-center flex-grow bg-sky-400 dark:bg-sky-800 rounded-md text-white py-2">
       업로드
     </button>
-    <button class="items-center bg-red-400 px-4 py-2 text-white rounded-md">
+    <button class="items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
       취소
     </button>
   </div>

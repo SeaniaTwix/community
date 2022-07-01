@@ -6,11 +6,21 @@ export class Board {
   constructor(private readonly id: string) {
   }
 
-  async create(title: string, pub: boolean,) {
+  async create(title: string, pub: boolean) {
     const cursor = await db.query(aql`
       insert ${{title, pub}} into boards return NEW`);
 
-    return await cursor.next()
+    return await cursor.next();
+  }
+
+  get name(): Promise<string> {
+    return new Promise<string>(async (resolve, reject) => {
+      const cursor = await db.query(aql`
+        for board in boards
+          filter board._key == ${this.id}
+            return board.name`);
+      return await cursor.next();
+    });
   }
 
   get exists(): Promise<boolean> {
@@ -21,7 +31,7 @@ export class Board {
           return board`)
         .then(async (result) => {
           // console.log(result.hasNext, await result.next())
-          resolve(result.hasNext)
+          resolve(result.hasNext);
         })
         .catch(reject);
     });

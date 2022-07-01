@@ -1,7 +1,7 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
-export class ArticleManager {
+export class Article {
 
   title: string | undefined;
   content: string | undefined;
