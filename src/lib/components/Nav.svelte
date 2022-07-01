@@ -4,7 +4,7 @@
   import Switch from 'svelte-material-icons/ThemeLightDark.svelte';
   import Console from 'svelte-material-icons/Tools.svelte';
   import Cookies from 'js-cookie';
-  import addYears from 'date-fns/addYears';
+  import {dayjs} from 'dayjs';
   import {fly} from 'svelte/transition';
   import {isEmpty} from 'lodash-es';
 
@@ -25,12 +25,12 @@
     if (html.classList.value.includes('dark')) {
       html.classList.remove('dark');
       Cookies.set('theme', 'light', {
-        expires: addYears(new Date, 999),
+        expires: dayjs().add(999, 'year').toDate(),
       });
     } else {
       html.classList.add('dark');
       Cookies.set('theme', 'dark', {
-        expires: addYears(new Date, 999),
+        expires: dayjs().add(999, 'year').toDate(),
       });
     }
   }
@@ -107,10 +107,10 @@
 
     {#if !isEmpty(uid)}
       <li>
-        <span sveltekit:prefetch aria-label="내 프로필" href="/user"
+        <a sveltekit:prefetch aria-label="내 프로필" href="/user"
            class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md">
           내 프로필
-        </span>
+        </a>
       </li>
     {:else}
       <li>

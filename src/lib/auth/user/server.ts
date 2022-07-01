@@ -3,13 +3,8 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs/aql';
 import type {IArangoDocumentIdentifier} from '$lib/database';
 import njwt from 'njwt';
-import secureRandom from 'secure-random';
 import {EUserRanks} from '$lib/types/user-ranks';
-
-export const key =
-  process.env.USE_SPECIFIC_KEY ?? secureRandom(256, {type: 'Buffer'});
-
-console.log(key);
+import {key} from './shared';
 
 export class User {
   constructor(readonly id: string) {

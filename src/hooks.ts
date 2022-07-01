@@ -3,7 +3,7 @@ import type {MaybePromise} from '@sveltejs/kit/types/private';
 import _ from 'lodash-es';
 import njwt from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
-import {key} from '$lib/auth/user/server';
+import {key} from '$lib/auth/user/shared';
 import type {EUserRanks} from '$lib/types/user-ranks';
 
 /** @type {import('@sveltejs/kit').Handle} */
