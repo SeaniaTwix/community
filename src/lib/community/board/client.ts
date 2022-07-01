@@ -14,6 +14,11 @@ export class Board {
     return _key;
   }
 
+  static async all(): Promise<string[]> {
+    const {boards} = await ky.post('/community/api/all').json<{boards: string[]}>();
+    return boards;
+  }
+
   /**
    *
    * @param after 여기에 주어진 게시글 번호 이후부터 불러옵니다.

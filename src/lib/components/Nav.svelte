@@ -9,6 +9,7 @@
   import {isEmpty} from 'lodash-es';
 
   export let uid = '';
+  export let boards: string[] = [];
   let showSideMenu = false;
 
   function switchSideMenu() {
@@ -48,13 +49,15 @@
           <li>
             <a class="block px-4 py-2 w-full bg-zinc-100 hover:bg-zinc-200 rounded-md
                       transition-colors"
-               href="/community/0001" on:click={closeSideMenu}>게시판 1</a>
+               href="/" on:click={closeSideMenu}>홈</a>
           </li>
-          <li>
-            <a class="block px-4 py-2 w-full bg-zinc-100 hover:bg-zinc-200 rounded-md
-                      transition-colors"
-               href="/community/0002">게시판 2</a>
-          </li>
+          {#each boards as board}
+            <li>
+              <a class="block px-4 py-2 w-full bg-zinc-100 hover:bg-zinc-200 rounded-md
+                      transition-colors" sveltekit:prefetch
+                 href="/community/{board.id}" on:click={closeSideMenu}>{board.name}</a>
+            </li>
+          {/each}
         </ul>
       </div>
     </div>
@@ -75,40 +78,18 @@
              lg:inline-block overflow-x-scroll">
     <li>
       <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
+         href="/">
+        홈
       </a>
     </li>
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
-      </a>
-    </li>
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
-      </a>
-    </li>
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
-      </a>
-    </li>
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
-      </a>
-    </li>
-    <li>
-      <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
-         href="/community">
-        게시판
-      </a>
-    </li>
+    {#each boards as board}
+      <li>
+        <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md"
+           href="/community/{board.id}" sveltekit:prefetch>
+          {board.name}
+        </a>
+      </li>
+    {/each}
   </ul>
   <ul class="__flat-menu p-2 space-x-1 items-center">
     <li>

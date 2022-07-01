@@ -1,14 +1,22 @@
 <script lang="ts" context="module">
 
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
+  import ky from 'ky-universal';
 
-  export async function load({session, stuff, url}: LoadEvent): Promise<LoadOutput> {
+  export async function load({session, stuff, url, fetch}: LoadEvent): Promise<LoadOutput> {
+    console.log(url.origin)
+    // const res = await fetch(`${url.pathname}/community/api/all`);
+    // const {boards} = await res.json() as {boards: BoardItemDto[]};
+    const {boards} = await ky.get(`${url.origin}/community/api/all`).json<{boards: BoardItemDto[]}>()
+    // const boards = [];
     console.log(session, stuff, url.host)
     console.log(session)
     return {
       status: 200,
       props: {
-        uid: session?.uid
+        uid: session?.uid,
+        boards,
       }
     }
   }
@@ -19,10 +27,11 @@
   import Nav from '$lib/components/Nav.svelte';
 
   export let uid;
+  export let boards: string[] = [];
   console.log(uid)
 </script>
 
-<Nav {uid}/>
+<Nav {boards} {uid}/>
 <slot/>
 
 <style lang="scss">
