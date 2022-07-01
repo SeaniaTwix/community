@@ -1,8 +1,9 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
-import addMinutes from 'date-fns/addMinutes';
-import addDays from 'date-fns/addDays';
+// import addMinutes from 'date-fns/addMinutes';
+// import addDays from 'date-fns/addDays';
+import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
 
 // noinspection JSUnusedGlobalSymbols
@@ -15,8 +16,8 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
       status: HttpStatus.NOT_FOUND,
       body: {
         error: 'user not found',
-      }
-    }
+      },
+    };
   }
 
   const {token, headers} = await newLoginHeaders(user);
@@ -30,12 +31,14 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
 
 export async function newLoginHeaders(user: User) {
   const token = user.token('user', {uid: await user.uid, rank: await user.rank}).compact();
-  const expire = addMinutes(new Date(), 15).toUTCString();
+  // const expire = addMinutes(new Date(), 15).toUTCString();
+  const expire = dayjs().add(15, 'minute').toDate().toUTCString();
 
   const refresh = user.token('refesh').compact();
-  const expireRefresh = addDays(new Date(), 1).toUTCString();
+  // const expireRefresh = addDays(new Date(), 1).toUTCString();
+  const expireRefresh = dayjs().add(1, 'day').toDate().toUTCString();
 
-  const headers = new Headers()
+  const headers = new Headers();
   headers.append('Set-Cookie',
     `token=${token}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
   headers.append('Set-Cookie',
