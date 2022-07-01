@@ -17,11 +17,12 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
     }
   }
 
-  const headers = newLoginHeaders(login.user);
+  const {token, headers} = await newLoginHeaders(login.user);
 
   return {
     status: login.status,
     headers,
+    body: {token}
   };
 }
 

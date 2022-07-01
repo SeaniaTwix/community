@@ -2,8 +2,9 @@ import type {RequestEvent, ResolveOptions} from '@sveltejs/kit';
 import type {MaybePromise} from '@sveltejs/kit/types/private';
 import _ from 'lodash-es';
 import njwt from 'njwt';
-import {CookieParser} from './lib/cookie-parser';
-import {key} from './lib/auth/user/server';
+import {CookieParser} from '$lib/cookie-parser';
+import {key} from '$lib/auth/user/server';
+import type {EUserRanks} from '$lib/types/user-ranks';
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {
@@ -38,14 +39,25 @@ async function getUser(cookie: string | null) {
     }
   }
 
-  const body = jwt.body.toJSON();
+  return jwt.body.toJSON();
+  // console.log(body)
+}
+
+/** @type {import('@sveltejs/kit').GetSession} */
+export function getSession(event: RequestEvent) {
+  return event.locals.user;
 }
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace App {
     interface Locals {
-      user: any
+      user: any;
+    }
+
+    interface Session {
+      uid: string;
+      rank: EUserRanks;
     }
   }
 }

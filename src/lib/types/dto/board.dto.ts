@@ -5,18 +5,15 @@
 import {Entity, SafeType} from 'dto-mapping';
 
 @Entity()
-export class ArticleDto {
-  constructor(_obj: any) {}
+export class BoardDto {
+  constructor(_obj: any) {
+  }
 
   @SafeType({type: String})
-  board?: string;
+  name?: string;
 
-  @SafeType({ type: String })
-  title?: string;
+  @SafeType({type: Boolean})
+  pub = true;
 
-  @SafeType({type: String})
-  content?: string;
-
-  @SafeType({type: Array})
-  tags?: string[];
+  order?: number;
 }

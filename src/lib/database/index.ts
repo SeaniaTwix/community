@@ -2,6 +2,7 @@ import {Database} from 'arangojs';
 import assert from 'node:assert/strict';
 import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
+import type {ArrayCursor} from 'arangojs/cursor';
 
 export default class DefaultDatabase {
   private static url = 'http://localhost:8529';
@@ -65,8 +66,8 @@ export default class DefaultDatabase {
     console.log('데이터베이스 사용 준비가 완료되었습니다.');
   }
 
-  query(q: AqlQuery) {
-    return this.init().then(() => this.db.query(q));
+  query<T = any>(q: AqlQuery) {
+    return this.init().then(() => this.db.query(q) as Promise<ArrayCursor<T>>);
   }
 }
 

@@ -41,6 +41,7 @@ export class User {
     const res = await r.json<ILoginResponse>();
     return res.token;
   }
+
 }
 
 export interface ILoginResponse {

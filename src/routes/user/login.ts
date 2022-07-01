@@ -10,8 +10,6 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
   const login = new LoginRequest(await request.json() as LoginDto);
   const user = new User(login.id);
 
-  console.log(login);
-
   if (!await user.verify(login.password)) {
     return {
       status: HttpStatus.NOT_FOUND,
@@ -21,16 +19,17 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
     }
   }
 
-  const headers = newLoginHeaders(user);
+  const {token, headers} = await newLoginHeaders(user);
 
   return {
     status: login.status,
     headers,
+    body: {token},
   };
 }
 
-export function newLoginHeaders(user: User) {
-  const token = user.token('user', {id: user.id,}).compact();
+export async function newLoginHeaders(user: User) {
+  const token = user.token('user', {uid: await user.uid, rank: await user.rank}).compact();
   const expire = addMinutes(new Date(), 15).toUTCString();
 
   const refresh = user.token('refesh').compact();
@@ -42,7 +41,7 @@ export function newLoginHeaders(user: User) {
   headers.append('Set-Cookie',
     `refresh=${refresh}; Path=/; Expires=${expireRefresh}; SameSite=Strict; HttpOnly;`);
 
-  return headers;
+  return {token, headers};
 }
 
 class LoginRequest {

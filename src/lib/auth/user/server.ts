@@ -22,11 +22,11 @@ export class User {
       if (!await this.exists) {
         return reject('user not exists');
       }
-
+      console.log(2)
       db.query(aql`
         for user in users
           filter user.id == ${this.id}
-            return user`)
+            RETURN user`)
         .then(async (cursor) => {
           if (!cursor.hasNext) {
             return reject('no user found');
@@ -44,17 +44,46 @@ export class User {
     return this.stored;
   }
 
+  get uid(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.loadUserData()
+        .then((user) => resolve(user._key))
+        .catch(reject);
+    });
+  }
+
+  get rank(): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      this.loadUserData()
+        .then((user) => resolve(user.rank))
+        .catch(reject);
+    });
+  }
+
   get exists(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
+      console.log(1)
       db.query(aql`
         for user in users
           filter user.id == ${this.id}
-            return user`)
+            RETURN user`)
         .then(async (r) => {
           resolve(r.hasNext);
         })
         .catch(reject);
     });
+  }
+
+  static async getByUniqueId(uid: string): Promise<User | null> {
+    try {
+      const cursor = await db.query(aql`
+      for user in users
+        filter user._key == ${uid}
+          return user`);
+      return await cursor.next();
+    } catch {
+      return null;
+    }
   }
 
   async register(password: string) {
@@ -77,12 +106,12 @@ export class User {
       const user = await this.loadUserData();
       return await argon2.verify(user.password, password);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       return false;
     }
   }
 
-  token(type: 'user' | 'refesh', payload: Rec<string> = {}) {
+  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}) {
     return njwt.create({
       iss: 'https://now.gd/',
       sub: `user/${this.id}`,
@@ -93,6 +122,7 @@ export class User {
 }
 
 export interface IUserInfo extends IArangoDocumentIdentifier {
+  id: string;
   password: string; // hashed
   rank: EUserRanks;
 }
