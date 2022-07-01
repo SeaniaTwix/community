@@ -8,7 +8,7 @@
   import {fly} from 'svelte/transition';
   import {isEmpty} from 'lodash-es';
   import {getStores} from '$app/stores';
-  import {EUserRanks} from '$lib/types/user-ranks.js';
+  import {EUserRanks} from '$lib/types/user-ranks';
 
   export let uid = '';
   export let boards: string[] = [];
