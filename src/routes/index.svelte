@@ -1,2 +1,7 @@
-<h1>Welcome to SvelteKit</h1>
-<p class="text-3xl">Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<svelte:head>
+  홈
+</svelte:head>
+
+<div class="w-full text-center mt-4">
+  <h1 class="text-3xl">테스트 중</h1>
+</div>

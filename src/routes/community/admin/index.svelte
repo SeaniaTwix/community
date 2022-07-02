@@ -1,3 +1,6 @@
+<svelte:head>
+  <title>어드민 콘솔</title>
+</svelte:head>
 <div class="p-4">
   <h2 class="text-3xl">어드민 콘솔</h2>
 

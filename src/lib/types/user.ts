@@ -5,7 +5,7 @@ export interface IUser extends IArangoDocumentIdentifier {
   id: string;
   rank: EUserRanks;
   profile?: IUserProfile;
-  remainTags: number;
+  // remainTags: number;
 }
 
 interface IUserProfile {

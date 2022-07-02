@@ -14,12 +14,15 @@ export class Board {
   }
 
   get name(): Promise<string> {
-    return new Promise<string>(async (resolve, reject) => {
-      const cursor = await db.query(aql`
+    return new Promise<string>((resolve, reject) => {
+      db.query(aql`
         for board in boards
           filter board._key == ${this.id}
-            return board.name`);
-      return await cursor.next();
+            return board.name`)
+        .then((cursor) => {
+          cursor.next().then(resolve)
+        })
+        .catch(reject);
     });
   }
 

@@ -19,7 +19,16 @@
   }
 </script>
 
-<div class="w-10/12 md:w-3/5 lg:w-1/3 mx-auto">
+<svelte:head>
+  <title>내 프로필</title>
+</svelte:head>
+
+<div class="w-10/12 md:w-3/5 lg:w-1/3 mx-auto space-y-2">
+  <a sveltekit:prefetch
+     class="w-full block bg-zinc-100 hover:bg-zinc-200 transition-colors py-2 text-center"
+     href="/user/profile/edit">
+    내 프로필 수정
+  </a>
   <button on:click={logout}
           class="w-full bg-zinc-100 hover:bg-zinc-200 transition-colors py-2">
     로그아웃

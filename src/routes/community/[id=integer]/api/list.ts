@@ -34,7 +34,7 @@ class ListBoardRequest {
       throw new Error('too many');
     }
 
-    console.log(amount)
+    // console.log(amount)
 
     const cursor = await db.query(aql`
       for article in articles

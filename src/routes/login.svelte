@@ -7,8 +7,6 @@
 
   const {session} = getStores();
 
-  import Close from 'svelte-material-icons/Close.svelte';
-
   type LoginDetail = {id: string, password: string, whenDone: () => void};
 
   async function login(event: CustomEvent<LoginDetail>) {
@@ -38,6 +36,10 @@
     event.detail.whenDone();
   }
 </script>
+
+<svelte:head>
+  <title>로그인</title>
+</svelte:head>
 
 <div class="mt-24 w-1/3 mx-auto">
   <Login on:login={login} />

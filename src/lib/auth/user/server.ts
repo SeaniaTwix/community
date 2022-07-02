@@ -5,15 +5,18 @@ import type {IArangoDocumentIdentifier} from '$lib/database';
 import njwt from 'njwt';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
+import type {IUser} from '$lib/types/user';
+
+type UnsafeUser = IUser & { password: string };
 
 export class User {
   constructor(readonly id: string) {
   }
 
-  private stored: IUserInfo | undefined;
+  private stored: UnsafeUser | undefined;
 
-  get data(): Promise<IUserInfo> {
-    return new Promise<IUserInfo>(async (resolve, reject) => {
+  get data(): Promise<UnsafeUser> {
+    return new Promise<UnsafeUser>(async (resolve, reject) => {
       if (!await this.exists) {
         return reject('user not exists');
       }
@@ -32,7 +35,19 @@ export class User {
     });
   }
 
-  private async loadUserData() {
+  get safeData(): Promise<IUser> {
+    return new Promise<IUser>((resolve, reject) => {
+      this.loadUserData()
+        .then((data) => {
+          const {_key, _id, _rev, rank, id, profile} = data;
+          resolve({_key, _id, _rev, rank, id, profile});
+        })
+        .catch(reject);
+    });
+
+  }
+
+  private async loadUserData(): Promise<UnsafeUser> {
     if (!this.stored) {
       this.stored = await this.data;
     }
@@ -69,7 +84,15 @@ export class User {
     });
   }
 
-  static async getByUniqueId(uid: string): Promise<User | null> {
+  static async findByUniqueId(uid: string): Promise<User | null> {
+    const cursor = await db.query(
+      aql`for user in users filter user._key == ${uid} return user.id`
+    );
+    const id: string = await cursor.next();
+    return new User(id);
+  }
+
+  static async getByUniqueId(uid: string): Promise<UnsafeUser | null> {
     try {
       const cursor = await db.query(aql`
       for user in users
@@ -86,8 +109,12 @@ export class User {
       throw Error('user exists already');
     }
 
+    if (this.id.length < 3) {
+      throw new Error('id invalid ( is that shorten than 3')
+    }
+
     if (!password || password.length < 6) {
-      throw Error('password invalid (is that short than 6)');
+      throw Error('password invalid (is that shorten than 6)');
     }
 
     const hashed = await argon2.hash(password);
@@ -118,10 +145,4 @@ export class User {
       ...payload,
     }, key);
   }
-}
-
-export interface IUserInfo extends IArangoDocumentIdentifier {
-  id: string;
-  password: string; // hashed
-  rank: EUserRanks;
 }

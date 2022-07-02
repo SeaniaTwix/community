@@ -19,6 +19,10 @@
 
 </script>
 
+<svelte:head>
+  <title>계정 등록</title>
+</svelte:head>
+
 <div class="w-10/12 md:w-3/5 lg:w-1/3 mx-auto">
   <Register on:register={register}/>
 </div>

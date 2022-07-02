@@ -1,22 +1,42 @@
 <script lang="ts" context="module">
-
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
-  import ky from 'ky-universal';
+  import type {IUser} from '$lib/types/user';
+  import HttpStatus from 'http-status-codes';
 
-  export async function load({session, stuff, url, fetch}: LoadEvent): Promise<LoadOutput> {
-    const response = await fetch(`${url.origin}/community/api/all`);
-    const {boards} = await response.json<{boards: BoardItemDto[]}>();
+  export async function load({session, url, fetch}: LoadEvent): Promise<LoadOutput> {
+    try {
+      const response = await fetch(`${url.origin}/community/api/all`);
+      const {boards} = await response.json<{boards: BoardItemDto[]}>();
 
-    console.log(session)
+      let user: IUser;
 
-    return {
-      status: 200,
-      props: {
-        uid: session?.uid,
-        boards,
+      try {
+        if (session) {
+          const ur = await fetch(`/user/profile/api/detail?id=${session.uid}`);
+          const result = await ur.json<{ user: IUser }>();
+          user = result.user;
+
+        }
+      } catch {
+        // user not found;
+      }
+
+      return {
+        status: 200,
+        props: {
+          uid: session?.uid,
+          boards,
+          user,
+        }
+      }
+    } catch (e) {
+      return {
+        status: HttpStatus.BAD_GATEWAY,
+        error: e.toString(),
       }
     }
+
   }
 </script>
 <script lang="ts">
@@ -27,12 +47,13 @@
 
   export let uid;
   export let boards: string[] = [];
+  export let user: IUser;
   console.log(uid)
 </script>
 
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />
 
-<Nav {boards} {uid}/>
+<Nav {boards} {uid} {user} />
 <slot/>
 
 <style lang="scss">

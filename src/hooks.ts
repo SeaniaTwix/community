@@ -22,7 +22,8 @@ export async function handle({event, resolve}: HandleParameter) {
     }
     event.locals.user = result.user;
   } catch (e) {
-    console.error('[hooks]', e);
+    // console.error('[hooks]', event.request.headers.get('cookie'), e);
+
   }
 
   const response = await resolve(event);
@@ -38,31 +39,39 @@ export async function handle({event, resolve}: HandleParameter) {
   return response;
 }
 
+async function refreshJwt(token: string) {
+  const refresh = njwt.verify(token ?? '');
+  console.log(refresh)
+  if (refresh?.isExpired() === false) {
+    // todo: sign again
+    const {uid} = refresh.body.toJSON();
+    const user = new User(<string>uid);
+    const newToken = await user.token('user', {uid, rank: await user.rank});
+    return { newToken: newToken.compact(), user: newToken.body.toJSON() };
+  }
+
+  return undefined;
+}
+
 type GetUserReturn = { user: Rec<any>, newToken?: string };
 async function getUser(cookie: string | null): Promise<GetUserReturn | undefined> {
   if (_.isEmpty(cookie)) {
     return undefined;
   }
 
-  const cookies = (new CookieParser(cookie!)).get();
-  if (!cookies.token) {
-    return undefined;
+  const {token, refresh} = (new CookieParser(cookie!)).get();
+  if (!token) {
+    if (refresh) {
+      // console.log('refresh', refresh)
+      return await refreshJwt(refresh)
+    } else {
+      return undefined;
+    }
   }
 
-  const jwt = njwt.verify(cookies.token, key);
+  const jwt = njwt.verify(token!, key);
   if (!jwt) {
     return undefined;
-  }
-
-  if (jwt.isExpired()) {
-    const refresh = njwt.verify(cookies.refresh ?? '');
-    if (refresh?.isExpired() === false) {
-      // todo: sign again
-      const {uid, rank} = jwt.body.toJSON();
-      const user = new User(<string>uid);
-      const newToken = await user.token('user', {uid, rank});
-      return { newToken: newToken.compact(), user: newToken.body.toJSON() };
-    }
   }
 
   return { user: jwt.body.toJSON() as Rec<any> };

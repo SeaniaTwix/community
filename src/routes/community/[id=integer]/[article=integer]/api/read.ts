@@ -22,7 +22,7 @@ class ReadArticleRequest {
   private addViewCount() {
     return db.query(aql`
       for article in articles
-        update { _key: ${this.article}, views: article.views ? article.view + 1 : 1 } in articles`)
+        update { _key: ${this.article}, views: article.views != null ? article.view + 1 : 1 } in articles`)
   }
 
   async get() {

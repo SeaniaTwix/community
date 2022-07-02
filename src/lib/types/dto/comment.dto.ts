@@ -6,6 +6,10 @@ import {Entity, SafeType} from 'dto-mapping';
 
 @Entity()
 export class CommentDto {
+
+  constructor(_obj: unknown) {
+  }
+
   // article id (root)
   @SafeType({type: String})
   article?: string;

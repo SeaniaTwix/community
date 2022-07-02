@@ -3,18 +3,31 @@
   import Menu from 'svelte-material-icons/Menu.svelte';
   import Switch from 'svelte-material-icons/ThemeLightDark.svelte';
   import Console from 'svelte-material-icons/Tools.svelte';
+  import Search from 'svelte-material-icons/Magnify.svelte';
   import Cookies from 'js-cookie';
   import {dayjs} from 'dayjs';
   import {fly} from 'svelte/transition';
   import {isEmpty} from 'lodash-es';
-  import {getStores} from '$app/stores';
+  import {getStores, page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
+  import {goto} from '$app/navigation';
+  import {theme} from '$lib/stores/shared/theme';
+  import type {IUser} from '$lib/types/user';
 
   export let uid = '';
   export let boards: string[] = [];
+  export let user: IUser;
   let showSideMenu = false;
 
   const {session} = getStores();
+
+  $: showSearch = $page.routeId.startsWith('community/');
+
+  function gotoLogin(event: Event) {
+    event.preventDefault();
+    localStorage.setItem('now.gd:back', location.pathname);
+    goto('/login');
+  }
 
   function switchSideMenu() {
     showSideMenu = !showSideMenu;
@@ -32,11 +45,13 @@
       Cookies.set('theme', 'light', {
         expires: dayjs().add(999, 'year').toDate(),
       });
+      theme.set({mode: 'light'});
     } else {
       html.classList.add('dark');
       Cookies.set('theme', 'dark', {
         expires: dayjs().add(999, 'year').toDate(),
       });
+      theme.set({mode: 'dark'});
     }
   }
 </script>
@@ -102,6 +117,17 @@
     {/each}
   </ul>
   <ul class="__flat-menu p-2 space-x-1 items-center">
+    {#if showSearch}
+
+      <li>
+        <span aria-label="검색 모드 활성화"
+              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
+                     dark:hover:bg-gray-500">
+          <Search size="1.25rem" />
+        </span>
+      </li>
+    {/if}
+
     <li>
       <span on:click={switchTheme} aria-label="라이트 - 다크 모드 스위치"
             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
@@ -125,12 +151,12 @@
         <a sveltekit:prefetch aria-label="내 프로필" href="/user"
            class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500">
-          내 프로필
+          {user?.id ?? '알 수 없음'}
         </a>
       </li>
     {:else}
       <li>
-        <a sveltekit:prefetch aria-label="로그인 버튼"
+        <a sveltekit:prefetch aria-label="로그인 버튼" on:click={gotoLogin}
            class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
            href="/login">
