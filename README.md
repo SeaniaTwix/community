@@ -3,6 +3,8 @@
  * [NodeJS](https://nodejs.org) tested on 16.15.1^
  * [Svelte Kit](https://kit.svelte.dev)
  * [ArangoDB](https://www.arangodb.com)
+ * Independent Websocket Server
+
 
 ### How to running
 1. create new file on `$lib/editor-key.ts` for using tinymce.

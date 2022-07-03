@@ -1,6 +1,6 @@
 import ky from 'ky-universal';
 
-const dev = true;
+const dev = Object.hasOwn(process.env, 'IS_DEV');
 const url = dev ? 'http://localhost:50000' : 'https://push.now.gd'
 
 export class Pusher {

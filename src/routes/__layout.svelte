@@ -42,8 +42,19 @@
 <script lang="ts">
   import 'material-icons/iconfont/material-icons.css';
   import '../styles/tailwind.css';
+  import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
   import { classList } from 'svelte-body';
+  import {onMount} from 'svelte';
+  import {CookieParser} from '$lib/cookie-parser';
+
+  onMount(() => {
+    const cookies = (new CookieParser(document.cookie)).get();
+    if (cookies?.theme === 'dark') {
+      const html = document.querySelector('html');
+      html.classList.add('dark');
+    }
+  })
 
   export let uid;
   export let boards: string[] = [];

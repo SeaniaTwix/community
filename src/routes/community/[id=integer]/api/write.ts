@@ -6,6 +6,7 @@ import {aql} from 'arangojs';
 import {Board} from '$lib/community/board/server';
 import {ArticleDto} from '$lib/types/dto/article.dto';
 import {User} from '$lib/auth/user/server';
+import type {IArticle} from '$lib/types/article';
 
 // noinspection JSUnusedGlobalSymbols
 export async function post({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -76,13 +77,13 @@ class WriteRequest {
 
   get tags(): string[] {
     const tags = this.body.tags ?? [];
-    console.log('received:', tags);
+    // console.log('received:', tags);
     const isNotEmpty = (v: any) => !isEmpty(v);
     const filtered = tags.filter(isNotEmpty);
-    console.log('filtered:',filtered);
+    // console.log('filtered:',filtered);
     const mapped = filtered.map(v => v.trim());
-    console.log(mapped);
-    return this.body.tags?.filter(v => v.length > 0).map(v => v.trim()) ?? [];
+    // console.log(mapped);
+    return mapped ?? [];
   }
 
   get content(): string | undefined {
@@ -114,13 +115,16 @@ class WriteRequest {
       return;
     }
 
-    const data = {
+    const data: Partial<IArticle> = {
       title: this.title,
       content: this.content,
       tags: this.tags,
       author: userId,
       createdAt: new Date(),
-      board: this.boardId,
+      board: this.boardId!,
+      pub: true,
+      locked: false,
+      comments: 0,
     };
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);

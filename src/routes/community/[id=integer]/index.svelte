@@ -2,10 +2,17 @@
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import type {IUser} from '$lib/types/user';
+  import HttpStatus from 'http-status-codes';
 
   export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
+    if (!name) {
+      return {
+        status: HttpStatus.NOT_FOUND,
+        error: '없는 게시판입니다.'
+      }
+    }
     const res = await fetch(`${url.pathname}/api/list`);
     const {list} = await res.json() as {list: ArticleDto[]};
     const id = params.id;
@@ -29,6 +36,7 @@
 <script lang="ts">
   import ArticleList from '$lib/components/ArticleList.svelte';
   import {onMount} from 'svelte';
+  import { fade } from 'svelte/transition';
 
   export let list: ArticleDto[];
   export let id: string;
@@ -73,7 +81,9 @@
       {name}
     </h2>
     <a href="/community/{params.id}/write"
-       class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400 hover:text-white rounded-md shadow-md transition-colors">
+       class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
+         hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
+         dark:ring-0 dark:hover:bg-sky-400">
       새 글 쓰기
     </a>
   </div>

@@ -6,5 +6,5 @@ export interface IComment extends IArangoDocumentIdentifier, CommentDto {
   // user id
   author: string;
 
-  createAt: Date;
+  createdAt: Date;
 }

@@ -26,6 +26,13 @@ export class Article {
     });
   }
 
+  addViewCount() {
+    return db.query(aql`
+      for article in articles
+        let v = article.views != null ? article.views + 1 : 1
+        update { _key: ${this.id} } with { views: v } in articles`);
+  }
+
   /**
    * 태그를 추가합니다. (누적도 동일)
    * @param tag 추가할 태그 이름입니다.

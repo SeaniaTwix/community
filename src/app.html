@@ -9,4 +9,7 @@
 <body>
 <div>%sveltekit.body%</div>
 </body>
+<script>
+  window.forceDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: Dark)').matches;
+</script>
 </html>

@@ -1,9 +1,7 @@
 import {Subject} from 'rxjs';
 import type {Observable} from 'rxjs';
 import type {CommentDto} from '$lib/types/dto/comment.dto';
-
-const dev = true;
-const url = dev ? 'ws://localhost:50000' : 'wss://push.now.gd'
+import {isEmpty} from 'lodash-es';
 
 export class Pusher {
   private readonly target: string;
@@ -11,7 +9,6 @@ export class Pusher {
 
   constructor(context: string) {
     this.target = context;
-
   }
 
   close() {
@@ -21,7 +18,16 @@ export class Pusher {
   }
 
   observable(about: 'comments'): Observable<{ body: CommentDto, socket: WebSocket }> {
+    const dev = window.location.host.startsWith('localhost');
+    const url = dev ? 'ws://localhost:50000' : 'wss://push.now.gd'
     const ws = new WebSocket(`${url}/subscribe/${this.target}/${about}`);
+
+    if (isEmpty(this.wsList)) {
+      window.onbeforeunload = () => {
+        this.close();
+      }
+    }
+
     this.wsList.push(ws);
     const subject = new Subject<{ body: CommentDto, socket: WebSocket }>();
     ws.onmessage = (event) => {

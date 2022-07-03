@@ -5,14 +5,16 @@
   import {isEmpty} from 'lodash-es';
   import {dayjs} from 'dayjs';
   import View from 'svelte-material-icons/Eye.svelte';
+  import Comment from 'svelte-material-icons/Comment.svelte';
   import {ko} from '$lib/time-ko';
   import type {IUser} from '$lib/types/user';
+  import Tag from './Tag.svelte';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
   export let users: IUser[] = [];
 
-  TimeAgo.addLocale(ko);
+  TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
 
   function formatDate(date: number) {
@@ -41,16 +43,24 @@
         <div class="flex space-x-4 justify-between">
         <span class="flex justify-between space-x-4">
           <span class="text-zinc-500 dark:text-zinc-400">{article._key}</span>
-          <span class="flex justify-between flex-grow">
-            <a class="hover:text-sky-400 transition-colors inline-block flex-grow pr-2" sveltekit:prefetch
+          <span class="flex justify-between flex-grow space-x-1">
+            <a class="hover:text-sky-400 transition-colors inline-block flex-grow" sveltekit:prefetch
                href="/community/{board}/{article._key}">
               {article.title}
             </a>
-            <span class="select-none"><View size="1rem" /> {article.views}</span>
+            {#if article?.comments}
+                <span class="mt-[3px] leading-none">
+                  <!--[{article.comments}]-->
+                  <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
+                </span>
+              {/if}
+            <span class="select-none">
+              <span class="mr-0.5"><View size="1rem" /></span>{article.views}
+            </span>
           </span>
         </span>
           <span class="flex justify-between w-3/12">
-          <span class="cursor-pointer hover:text-sky-400">{users[article.author].id}</span>
+          <a class="cursor-pointer hover:text-sky-400" href="/user/profile/{article.author}">{users[article.author].id}</a>
           <span class="">{formatDate(article.createdAt)}</span>
         </span>
         </div>
@@ -58,10 +68,7 @@
           <ul>
             {#each article.tags as tag}
               <li class="inline-block">
-                <span class="rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-700 px-2 py-1 flex justify-between space-x-1">
-                  <span class="inline-block leading-5">{tag}</span>
-                  <span class="__circle text-xs bg-sky-400 text-white inline w-4 h-4 text-center mt-0.5">2</span>
-                </span>
+                <Tag>{tag}</Tag>
               </li>
             {/each}
           </ul>
@@ -70,9 +77,3 @@
     {/each}
   </ul>
 </div>
-
-<style>
-  .__circle {
-    border-radius: 50%;
-  }
-</style>
