@@ -6,7 +6,7 @@ export class Article {
   title: string | undefined;
   content: string | undefined;
 
-  constructor(private readonly id: string) {
+  constructor(readonly id: string) {
   }
 
   post(title: string, content: string) {

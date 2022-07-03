@@ -108,7 +108,7 @@ class WriteRequest {
     }
 
     const user = await User.getByUniqueId(userId);
-    console.log(userId, user)
+    // console.log(userId, user)
     // const uid = await user.data;
     if (!user) {
       return;

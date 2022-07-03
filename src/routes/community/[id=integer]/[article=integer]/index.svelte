@@ -11,14 +11,14 @@
     const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
     const {user} = await ar.json();
     const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
-    const {comments} = await cr.json() as {comments: IComment[]};
+    const {comments} = await cr.json() as { comments: IComment[] };
     // console.log('ids:', comments[0]);
     const userNameRequests = await Promise.all(
       comments.map(c => c.author)
-        .map(id => fetch(`/user/profile/api/detail?id=${id}`))
+        .map(id => fetch(`/user/profile/api/detail?id=${id}`)),
     );
     const userInfo = {};
-    const users: {user: IUser}[] = await Promise.all(userNameRequests.map(v => v.json<{user: IUser}>()));
+    const users: { user: IUser }[] = await Promise.all(userNameRequests.map(v => v.json<{ user: IUser }>()));
 
     for (const {user} of users) {
       // console.log(user, user._key)
@@ -47,6 +47,9 @@
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
   import {isEmpty} from 'lodash-es';
+  import {onMount} from 'svelte';
+  import {Pusher} from '$lib/pusher/client';
+  import { fade, fly } from 'svelte/transition';
 
   /**
    * 게시글 보기
@@ -86,13 +89,15 @@
       commentData.relative = relative;
     }
 
-    console.log(commentData);
+    // console.log(commentData);
     // return;
     const result = await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
       json: commentData,
     }).json();
 
-    console.log(result);
+    // console.log(result);
+
+    commentContent = '';
 
     commenting = false;
   }
@@ -108,6 +113,39 @@
       addComment().then();
     }
   }
+
+
+  onMount(() => {
+
+    console.log('comments', comments);
+    const pusher = new Pusher(article._key);
+
+    const unsub = pusher
+      .observable('comments')
+      .subscribe(({body}) => {
+        console.log(body, typeof body);
+        const newComment: IComment = {
+          ...body,
+          createdAt: new Date,
+        }
+        if ((<string[]>Object.keys(users)).includes(body.author)) {
+          ky.get(`/user/profile/api/detail?id=${body.author}`)
+            .json<{user: IUser}>()
+            .then(({user}) => {
+              users[user._key] = user;
+              comments = [...comments, newComment];
+            })
+            .catch(console.error);
+        }
+      });
+
+    console.log(pusher);
+    return () => {
+      unsub.unsubscribe();
+      pusher.close();
+      console.log('closed')
+    }
+  });
 </script>
 
 <svelte:head>
@@ -183,7 +221,8 @@
       </article>
       <div class="pt-3">
         {#if session}
-          <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 transition transition-transform cursor-pointer select-none">
+          <span
+            class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 transition transition-transform cursor-pointer select-none">
             <Plus size="1rem"/>새 태그 추가
           </span>
         {/if}
@@ -193,13 +232,13 @@
     <div> <!-- 댓글 -->
 
       {#if isEmpty(comments)}
-        <p class="mt-8 text-zinc-500 text-lg text-center">댓글이 없어요...</p>
+        <p transition:fade class="mt-8 text-zinc-500 text-lg text-center">댓글이 없어요...</p>
       {/if}
 
       <ul class="space-y-2">
 
         {#each comments as comment}
-          <li>
+          <li transition:fade>
             <div class="p-4 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted spacey">
               <div class="flex mb-2 space-x-2">
                 <div class="w-12 min-h-[3rem]">

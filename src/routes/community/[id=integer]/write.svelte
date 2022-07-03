@@ -57,8 +57,9 @@
 
   const defaultEditorSettings = {
     language: 'ko_KR',
-    plugins: 'image searchreplace',
-    toolbar: 'undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace',
+    plugins: 'image imagetools media searchreplace code',
+    toolbar: 'undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat',
+    // menubar: 'code',
     resize: true,
     min_height: 160,
     // skin: dark ? 'oxide-dark' : 'silver',

@@ -19,7 +19,7 @@
     for (const {user} of authorInfos) {
       users[user._key] = user;
     }
-    console.log('board:', );
+
     return {
       status: 200,
       props: {list, id, params, name, users,},

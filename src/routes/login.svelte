@@ -6,6 +6,7 @@
   import {decode} from 'js-base64';
 
   const {session} = getStores();
+  let whenFailed: () => {};
 
   type LoginDetail = {id: string, password: string, whenDone: () => void};
 
@@ -16,9 +17,6 @@
     }).then(async (result) => {
       const {token} = await result.json<{token: string}>();
 
-      console.log(token)
-      console.log(token.split('.')[1]);
-      console.log(decode(token.split('.')[1]))
       session.update((store) => ({
         ...store,
         ...JSON.parse(decode(token.split('.')[1])),
@@ -30,9 +28,9 @@
     }).catch((e) => {
       // show error message
       console.error(e);
+      whenFailed();
     })
 
-    console.log('done');
     event.detail.whenDone();
   }
 </script>
@@ -42,5 +40,5 @@
 </svelte:head>
 
 <div class="mt-24 w-1/3 mx-auto">
-  <Login on:login={login} />
+  <Login on:login={login} bind:whenFailed={whenFailed} />
 </div>

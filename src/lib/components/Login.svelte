@@ -51,6 +51,18 @@
     }
   }
 
+  let animating: number = null;
+  export function whenFailed() {
+    if (animating) {
+      clearTimeout(animating);
+    }
+    loginButton.classList.add('__failed');
+    animating = setTimeout(() => {
+      loginButton.classList.remove('__failed');
+      animating = null;
+    }, 800);
+  }
+
 </script>
 
 <form on:submit|preventDefault class="space-y-4 font-medium">
@@ -62,8 +74,8 @@
          class="w-full shadow-md rounded-md px-4 py-2 focus:outline-0">
   <div class="flex space-x-2">
     <button on:click={login} id="btn-login" bind:this={loginButton}
-            class="bg-sky-400 text-white items-center rounded-md px-4 py-2
-                    flex-grow disabled:bg-sky-600 transition-colors">
+            class="bg-sky-400 hover:bg-sky-800 text-white items-center rounded-md px-4 py-2
+                    flex-grow disabled:bg-sky-600 disabled:text-zinc-500 transition-colors">
       {#if !loading}
         로그인
       {:else}
@@ -71,7 +83,7 @@
       {/if}
     </button>
     <button on:click={() => goto('/join').then()}
-            class="bg-red-400 text-white items-center rounded-md px-4 py-2">
+            class="bg-red-400 hover:bg-red-600 transition-colors text-white items-center rounded-md px-4 py-2">
       계정이 없어요
     </button>
   </div>
@@ -132,5 +144,32 @@
         // min-height: 38px;
       }
     }
+
+
+    .__failed {
+      animation: shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+
+    @keyframes shake {
+      10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+
+      20%, 80% {
+        transform: translate3d(2px, 0, 0);
+      }
+
+      30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+
+      40%, 60% {
+        transform: translate3d(4px, 0, 0);
+      }
+    }
   }
+
 </style>
