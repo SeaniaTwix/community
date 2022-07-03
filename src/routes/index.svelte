@@ -1,5 +1,5 @@
 <svelte:head>
-  홈
+  <title>홈</title>
 </svelte:head>
 
 <div class="w-full text-center mt-4">
