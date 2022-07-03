@@ -7,8 +7,8 @@ import HttpStatus from 'http-status-codes';
 import {CommentDto} from '$lib/types/dto/comment.dto';
 import {Pusher} from '$lib/pusher/server';
 
-export async function get({params, url, request}: RequestEvent): Promise<RequestHandlerOutput> {
-  const {id, article} = params;
+export async function get({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
+  const {article} = params;
   const comment = new CommentRequest(article);
   if (!await comment.article.exists) {
     return {
@@ -85,7 +85,7 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     if (cd) {
-      await Pusher.notify('comments', article, cd)
+      await Pusher.notify('comments', article, locals.user.uid, cd)
     }
   } catch (e) {
     console.error(e);
@@ -108,12 +108,12 @@ class CommentRequest {
   }
 
   async list(amount: number) {
+    // console.log('list:', this.article.id)
     const cursor = await db.query(aql`
       for comment in comments
-        filter comment.article == ${this.article}
-        limit ${amount}
-        return comments`);
-    return await cursor.next();
+        filter comment.article == ${this.article.id} limit ${amount}
+        return comment`);
+    return await cursor.all();
   }
 
   async add(userId: string, comment: CommentDto) {
