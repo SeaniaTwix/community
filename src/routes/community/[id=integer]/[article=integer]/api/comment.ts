@@ -22,7 +22,7 @@ export async function get({params, url}: RequestEvent): Promise<RequestHandlerOu
   const comments = await comment.list(amount) ?? [];
 
   return {
-    status: 201,
+    status: HttpStatus.OK,
     body: {
       comments,
     },
@@ -92,7 +92,7 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
   }
 
   return {
-    status: 201,
+    status: HttpStatus.CREATED,
     body: {
       author: locals.user.uid,
       added: cd as any,

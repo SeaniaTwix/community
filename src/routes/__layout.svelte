@@ -59,7 +59,7 @@
   export let uid;
   export let boards: string[] = [];
   export let user: IUser;
-  console.log(uid)
+  // console.log(uid)
 </script>
 
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />

@@ -12,7 +12,9 @@
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
-  export let users: IUser[] = [];
+  export let users: Record<string, IUser>;
+
+  // console.log(users);
 
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
@@ -60,7 +62,7 @@
           </span>
         </span>
           <span class="flex justify-between w-3/12">
-          <a class="cursor-pointer hover:text-sky-400" href="/user/profile/{article.author}">{users[article.author].id}</a>
+          <a class="cursor-pointer hover:text-sky-400" href="/user/profile/{article.author}">{users[article.author]?.id}</a>
           <span class="">{formatDate(article.createdAt)}</span>
         </span>
         </div>

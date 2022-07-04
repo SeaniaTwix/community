@@ -21,7 +21,7 @@
 
   const {session} = getStores();
 
-  $: showSearch = $page.routeId.startsWith('community/');
+  $: showSearch = $page.routeId?.startsWith('community/') === true;
 
   function gotoLogin(event: Event) {
     event.preventDefault();

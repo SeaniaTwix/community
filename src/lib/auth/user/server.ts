@@ -6,6 +6,7 @@ import njwt from 'njwt';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
 import type {IUser} from '$lib/types/user';
+import {isStringInteger} from '../../util';
 
 type UnsafeUser = IUser & { password: string };
 
@@ -16,6 +17,7 @@ export class User {
   private stored: UnsafeUser | undefined;
 
   get data(): Promise<UnsafeUser> {
+    // console.trace('1');
     return new Promise<UnsafeUser>(async (resolve, reject) => {
       if (!await this.exists) {
         return reject('user not exists');
@@ -85,15 +87,23 @@ export class User {
   }
 
   static async findByUniqueId(uid: string): Promise<User | null> {
+    // console.trace('3');
+    if (!isStringInteger(uid)) {
+      return null;
+    }
     const cursor = await db.query(
       aql`for user in users filter user._key == ${uid} return user.id`
     );
+    if (!cursor.hasNext) {
+      return null;
+    }
     const id: string = await cursor.next();
     return new User(id);
   }
 
   static async getByUniqueId(uid: string): Promise<UnsafeUser | null> {
     try {
+      // console.trace('4');
       const cursor = await db.query(aql`
       for user in users
         filter user._key == ${uid}
@@ -132,7 +142,7 @@ export class User {
       const user = await this.loadUserData();
       return await argon2.verify(user.password, password);
     } catch (e) {
-      console.log(e);
+      console.error(e);
       return false;
     }
   }

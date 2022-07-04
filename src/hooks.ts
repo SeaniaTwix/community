@@ -40,8 +40,8 @@ export async function handle({event, resolve}: HandleParameter) {
 }
 
 async function refreshJwt(token: string) {
-  const refresh = njwt.verify(token ?? '');
-  console.log(refresh)
+  const refresh = njwt.verify(token ?? '', key);
+  // console.log(refresh)
   if (refresh?.isExpired() === false) {
     // todo: sign again
     const {uid} = refresh.body.toJSON();

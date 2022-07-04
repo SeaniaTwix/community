@@ -23,7 +23,7 @@
 
   function checkEnter(event: KeyboardEvent, type: 0 | 1 | 2) {
     if (event.key === 'Enter') {
-      console.log(type)
+      // console.log(type)
       if (type === 0) {
         if (id.length <= 2) {
           error = ELoginError.ID_TOO_SHORT;

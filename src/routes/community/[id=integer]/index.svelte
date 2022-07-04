@@ -16,15 +16,14 @@
     const res = await fetch(`${url.pathname}/api/list`);
     const {list} = await res.json() as {list: ArticleDto[]};
     const id = params.id;
-    const authors = list.map(a => a.author);
-    const authorsInfoRequests = await Promise.all(
-      authors
-        .map(v => fetch(`/user/profile/api/detail?id=${v}`))
-    );
-    const authorInfos = await Promise.all(authorsInfoRequests.map(v => v.json() as Promise<{user: IUser}>));
+    const authors = list.map(a => a.author).join(',');
+    const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
     const users = {};
-    for (const {user} of authorInfos) {
-      users[user._key] = user;
+    if (authorsInfoRequests.ok) {
+      const authorInfos = await authorsInfoRequests.json() as {users: IUser[]};
+      for (const user of authorInfos.users) {
+        users[user._key] = user;
+      }
     }
 
     return {
@@ -36,13 +35,12 @@
 <script lang="ts">
   import ArticleList from '$lib/components/ArticleList.svelte';
   import {onMount} from 'svelte';
-  import { fade } from 'svelte/transition';
 
   export let list: ArticleDto[];
   export let id: string;
   export let params;
   export let name: string;
-  export let users: IUser[] = [];
+  export let users: Record<string, IUser>;
 
   onMount(() => {
     id = params.id;

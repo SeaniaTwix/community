@@ -2,6 +2,7 @@
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import type {IComment} from '$lib/types/comment';
   import type {IUser} from '$lib/types/user';
+  import {uniq, isEmpty} from 'lodash-es';
 
   export async function load({params, fetch, session}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
@@ -13,16 +14,18 @@
     const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
     const {comments} = await cr.json() as { comments: IComment[] };
     // console.log('ids:', comments[0]);
-    const userNameRequests = await Promise.all(
-      comments.map(c => c.author)
-        .map(id => fetch(`/user/profile/api/detail?id=${id}`)),
-    );
     const userInfo = {};
-    const users: { user: IUser }[] = await Promise.all(userNameRequests.map(v => v.json<{ user: IUser }>()));
 
-    for (const {user} of users) {
-      // console.log(user, user._key)
-      userInfo[user._key] = user;
+    if (!isEmpty(comments)) {
+      const commentAuthorIds = uniq(comments.map(c => c.author)).join(',');
+      const car = await fetch(`/user/profile/api/detail?ids=${commentAuthorIds}`);
+      if (car.ok) {
+        const {users} = await car.json() as {users: IUser[]};
+        // console.log(users);
+        for (const user of users.filter(user => !!user)) {
+          userInfo[user._key] = user;
+        }
+      }
     }
 
     return {
@@ -56,7 +59,6 @@
   import {ko} from '$lib/time-ko';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
-  import {isEmpty} from 'lodash-es';
   import {onMount} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import { fade } from 'svelte/transition';
@@ -65,6 +67,7 @@
   import {EUserRanks} from '$lib/types/user-ranks';
   import Tag from '$lib/components/Tag.svelte';
   import Comment from '$lib/components/Comment.svelte';
+  import type {Subscription} from 'rxjs';
 
   /**
    * 게시글 보기
@@ -76,7 +79,7 @@
   // eslint-disable-next-line no-undef
   export let session: App.Session;
   export let author: IUser;
-  export let users: IUser[];
+  export let users: Record<string, IUser>;
   export let comments: IComment[];
 
   /**
@@ -141,30 +144,42 @@
     // console.log('comments', comments);
     const pusher = new Pusher(article._key);
 
-    const unsub = pusher
-      .observable('comments')
-      .subscribe(async ({body}) => {
-        // console.log(body.author, body, typeof body);
-        const newComment: IComment = {
-          ...body,
-          createdAt: new Date,
-        }
+    const whileSub = async ({body}) => {
+      const newComment: IComment = {
+        ...body,
+        createdAt: new Date,
+      }
 
-        if (!users[body.author]) {
+      if (typeof body.author === 'string' && !users[body.author]) {
+        try {
           const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
             .json<{user: IUser}>();
 
           users[user._key] = user;
+        } catch {
+          console.error('user detail unavaliable')
         }
 
         comments = [...comments, newComment];
-      });
+      }
+    }
 
-    console.log(pusher);
+    const observable = pusher.observable('comments');
+    let subscription: Subscription;
+    try {
+      subscription = observable.subscribe(whileSub);
+    } catch {
+      return () => {
+        pusher.close();
+        document.querySelector('body')
+          .style
+          .overflow = '';
+      }
+    }
+
     return () => {
-      unsub.unsubscribe();
+      subscription.unsubscribe();
       pusher.close();
-      console.log('closed')
 
       document.querySelector('body')
         .style
@@ -283,7 +298,7 @@
           <div class="w-12 min-h-[3rem] inline-block">
             <CircleAvatar />
           </div>
-          <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author.id}</span>
+          <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
         </div>
       </div>
       <article class="p-2 min-h-[10rem]">
@@ -314,7 +329,7 @@
 
         {#each comments as comment}
           <li in:fade>
-            <Comment {users} {session} {comment} />
+            <Comment user="{users[comment.author]}" {session} {comment} />
           </li>
         {/each}
 

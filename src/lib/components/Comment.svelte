@@ -68,7 +68,7 @@
     });
   }
 
-  export let users: IUser[];
+  export let user: IUser;
   export let comment: IComment;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
@@ -81,7 +81,7 @@
         <CircleAvatar/>
       </div>
       <span class="mt-2.5 space-x-1">
-        {users[comment.author].id}
+        {user?.id ?? '[이름을 불러지 못 했습니다]'}
 
         {#if session}
           <span class="cursor-pointer hover:text-sky-400"
@@ -143,6 +143,7 @@
   </div>
   <div class="flex flex-col justify-between p-2 pt-4">
     <div class="grow">
+
       {#each comment.content.split('\n') as line}
         <p>{line}</p>
       {/each}
