@@ -50,15 +50,20 @@ export async function handle({event, resolve}: HandleParameter) {
 }
 
 async function refreshJwt(token: string) {
-  const refresh = njwt.verify(token ?? '', key);
-  if (refresh?.isExpired() === false) {
-    // todo: sign again
-    const {sub} = refresh.body.toJSON() as {sub: string};
-    const id = sub.split('/')[1];
-    const user = new User(id);
-    const {_key, rank} = await user.safeData;
-    const newToken = await user.token('user', {uid: _key, rank});
-    return { newToken: newToken.compact(), user: newToken.body.toJSON() };
+  try {
+    const refresh = njwt.verify(token ?? '', key);
+    if (refresh?.isExpired() === false) {
+      // todo: sign again
+      const {sub} = refresh.body.toJSON() as { sub: string };
+      const id = sub.split('/')[1];
+      const user = new User(id);
+      const {_key, rank} = await user.safeData;
+      const exp = dayjs().add(15, 'minute').toDate();
+      const newToken = await user.token('user', {uid: _key, rank}, exp);
+      return {newToken: newToken.compact(), user: newToken.body.toJSON()};
+    }
+  } catch {
+    //
   }
 
   return undefined;

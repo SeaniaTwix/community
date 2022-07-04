@@ -7,6 +7,7 @@ import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
 import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '../../util';
+import {parseInt} from 'lodash-es';
 
 type UnsafeUser = IUser & { password: string };
 
@@ -148,11 +149,13 @@ export class User {
     }
   }
 
-  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}) {
+  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}, expire: Date) {
+    const exp = parseInt((expire.getTime() / 1000).toString())
     return njwt.create({
       iss: 'https://ru.hn/',
       sub: `user/${this.id}`,
       scope: type,
+      exp,
       ...payload,
     }, key);
   }
