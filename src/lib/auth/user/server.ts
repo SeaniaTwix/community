@@ -149,7 +149,7 @@ export class User {
 
   token(type: 'user' | 'refesh', payload: Rec<unknown> = {}) {
     return njwt.create({
-      iss: 'https://now.gd/',
+      iss: 'https://ru.hn/',
       sub: `user/${this.id}`,
       scope: type,
       ...payload,

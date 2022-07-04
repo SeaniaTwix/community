@@ -12,7 +12,7 @@
 
     if (!session) {
       try {
-        localStorage.setItem('now.gd:back', `/community/${params.id}/write`);
+        localStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
       } catch {}
 
       return {

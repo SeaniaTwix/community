@@ -1,7 +1,7 @@
 import ky from 'ky-universal';
 
 const dev = Object.hasOwn(process.env, 'IS_DEV');
-const url = dev ? 'http://localhost:50000' : 'https://push.now.gd'
+const url = dev ? 'http://localhost:50000' : 'https://push.ru.hn'
 
 export class Pusher {
   static notify(about: PushAbout, context: string, userId: string, body: object) {

@@ -8,6 +8,7 @@ import type {EUserRanks} from '$lib/types/user-ranks';
 import {atob, btoa} from 'js-base64';
 import {User} from './lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
+import {dayjs} from 'dayjs';
 
 global.atob = atob;
 global.btoa = btoa;
@@ -18,7 +19,10 @@ export async function handle({event, resolve}: HandleParameter) {
   try {
     result = await getUser(event.request.headers.get('cookie'));
     if (!result) {
-      return await resolve(event);
+      const response = await resolve(event);
+      const expireNow = dayjs().toDate().toUTCString();
+      response.headers.append('set-cookie', `refresh=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
+      return response;
     }
     event.locals.user = result.user;
   } catch (e) {
@@ -63,7 +67,11 @@ async function getUser(cookie: string | null): Promise<GetUserReturn | undefined
   if (!token) {
     if (refresh) {
       // console.log('refresh', refresh)
-      return await refreshJwt(refresh)
+      try {
+        return await refreshJwt(refresh)
+      } catch {
+        return undefined;
+      }
     } else {
       return undefined;
     }

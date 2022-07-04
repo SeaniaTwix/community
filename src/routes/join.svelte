@@ -7,9 +7,9 @@
     const user = new User(event.detail.id);
     user.register(event.detail.pw, '')
       .then((token) => {
-        localStorage.setItem('now.gd:token', token);
-        goto(localStorage.getItem('now.gd:back') ?? '/').then(() => {
-          localStorage.removeItem('now.gd:back');
+        localStorage.setItem('ru.hn:token', token);
+        goto(localStorage.getItem('ru.hn:back') ?? '/').then(() => {
+          localStorage.removeItem('ru.hn:back');
         });
       });
 

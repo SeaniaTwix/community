@@ -19,7 +19,7 @@ export class Pusher {
 
   observable(about: 'comments'): Observable<{ body: CommentDto, socket: WebSocket }> {
     const dev = window.location.host.startsWith('localhost');
-    const url = dev ? 'ws://localhost:50000' : 'wss://push.now.gd'
+    const url = dev ? 'ws://localhost:50000' : 'wss://push.ru.hn'
     const ws = new WebSocket(`${url}/subscribe/${this.target}/${about}`);
 
     if (isEmpty(this.wsList)) {

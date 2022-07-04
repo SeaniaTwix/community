@@ -22,8 +22,8 @@
         ...JSON.parse(decode(token.split('.')[1])),
       }));
 
-      goto(localStorage.getItem('now.gd:back') ?? '/').then(() => {
-        localStorage.removeItem('now.gd:back');
+      goto(localStorage.getItem('ru.hn:back') ?? '/').then(() => {
+        localStorage.removeItem('ru.hn:back');
       })
     }).catch((e) => {
       // show error message
