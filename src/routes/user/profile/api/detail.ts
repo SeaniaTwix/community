@@ -3,7 +3,7 @@ import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {isStringInteger} from '$lib/util';
 import type {IUser} from '$lib/types/user';
-import {uniq} from 'lodash-es';
+import {isEmpty, uniq} from 'lodash-es';
 
 export async function get({url}: RequestEvent): Promise<RequestHandlerOutput> {
   const id = url.searchParams.get('id');
@@ -11,6 +11,14 @@ export async function get({url}: RequestEvent): Promise<RequestHandlerOutput> {
     const ids = url.searchParams.get('ids');
     if (ids) {
       const list = uniq(ids.split(','));
+      if (isEmpty(list)) {
+        return {
+          status: HttpStatus.OK,
+          body: {
+            users: [],
+          }
+        }
+      }
       const u = list.map(i => {
         if (!isStringInteger(i)) {
           return null;
