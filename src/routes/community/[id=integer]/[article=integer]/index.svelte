@@ -150,14 +150,16 @@
         createdAt: new Date,
       }
 
-      if (typeof body.author === 'string' && !users[body.author]) {
-        try {
-          const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
-            .json<{user: IUser}>();
+      if (typeof body.author === 'string') {
+        if (!users[body.author]) {
+          try {
+            const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
+              .json<{user: IUser}>();
 
-          users[user._key] = user;
-        } catch {
-          console.error('user detail unavaliable')
+            users[user._key] = user;
+          } catch {
+            console.error('user detail unavaliable')
+          }
         }
 
         comments = [...comments, newComment];

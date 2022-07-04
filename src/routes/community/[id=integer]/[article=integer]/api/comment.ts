@@ -85,7 +85,7 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     if (cd) {
-      await Pusher.notify('comments', article, locals.user.uid, cd)
+      await Pusher.notify('comments', article, locals.user.uid, cd);
     }
   } catch (e) {
     console.error(e);
