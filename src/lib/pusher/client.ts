@@ -3,6 +3,17 @@ import type {Observable} from 'rxjs';
 import type {CommentDto} from '$lib/types/dto/comment.dto';
 import {isEmpty} from 'lodash-es';
 
+try {
+  if (!Object.hasOwn) {
+    // eslint-disable-next-line no-prototype-builtins
+    Object.hasOwn = (obj: object, item: string) => obj.hasOwnProperty(item);
+  }
+} catch {
+  Object.hasOwn = (obj: object, item: string) => {
+    return Object.keys(obj).includes(item);
+  }
+}
+
 export class Pusher {
   private readonly target: string;
   private wsList: WebSocket[] = [];

@@ -41,40 +41,53 @@
   {/if}
   <ul class="divide-y">
     {#each list as article}
-      <li class="py-3 space-y-1">
-        <div class="flex space-x-4 justify-between">
-        <span class="flex justify-between space-x-4">
-          <span class="text-zinc-500 dark:text-zinc-400">{article._key}</span>
-          <span class="flex justify-between flex-grow space-x-1">
-            <a class="hover:text-sky-400 transition-colors inline-block flex-grow" sveltekit:prefetch
-               href="/community/{board}/{article._key}">
-              {article.title}
-            </a>
-            {#if article?.comments}
-                <span class="mt-[3px] leading-none">
-                  <!--[{article.comments}]-->
-                  <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
-                </span>
-              {/if}
-            <span class="select-none">
-              <span class="mr-0.5"><View size="1rem" /></span>{article.views}
+      <li>
+        <a class="flex justify-between space-x-4 py-4" href="/community/{board}/{article._key}">
+          <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
+          <div class="flex space-x-1 flex-grow flex-col md:flex-row lg:flex-row">
+            <span class="flex justify-between">
+              <span class="hover:text-sky-400 transition-colors inline-block" sveltekit:prefetch
+                 >
+                {article.title}
+              </span>
+              <!-- i have no idea to make no duplicated elements... -->
+              <a class="cursor-pointer hover:text-sky-400 inline-block md:hidden lg:hidden
+               underline decoration-dashed decoration-sky-400"
+                 href="/user/profile/{article.author}">{users[article.author]?.id}</a>
             </span>
-          </span>
-        </span>
-          <span class="flex justify-between w-3/12">
-          <a class="cursor-pointer hover:text-sky-400" href="/user/profile/{article.author}">{users[article.author]?.id}</a>
-          <span class="">{formatDate(article.createdAt)}</span>
-        </span>
-        </div>
-        <div class="w-full px-2">
-          <ul>
-            {#each article.tags as tag}
-              <li class="inline-block">
-                <Tag>{tag}</Tag>
-              </li>
-            {/each}
-          </ul>
-        </div>
+            <div class="flex flex-grow justify-between">
+              <div class="inline-block select-none">
+                {#if article?.comments}
+                  <span>
+                    <!--[{article.comments}]-->
+                    <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
+                  </span>
+                  {/if}
+                  <span>
+                    <span class="mr-0.5"><View size="1rem" /></span>{article.views ?? 0}
+                  </span>
+              </div>
+              <div class="inline-block">
+                <a class="cursor-pointer hover:text-sky-400 hidden sm:inline-block md:inline-block lg:inline-block
+                          underline decoration-dashed decoration-sky-400"
+                   href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+                <span class="text-right inline-block w-[6rem]">{formatDate(article.createdAt)}</span>
+              </div>
+
+            </div>
+          </div>
+        </a>
+        {#if article.tags.length > 0}
+          <div class="w-full px-2">
+            <ul>
+              {#each article.tags as tag}
+                <li class="inline-block">
+                  <Tag>{tag}</Tag>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
       </li>
     {/each}
   </ul>

@@ -20,7 +20,7 @@
       const commentAuthorIds = uniq(comments.map(c => c.author)).join(',');
       const car = await fetch(`/user/profile/api/detail?ids=${commentAuthorIds}`);
       if (car.ok) {
-        const {users} = await car.json() as {users: IUser[]};
+        const {users} = await car.json() as { users: IUser[] };
         // console.log(users);
         for (const user of users.filter(user => !!user)) {
           userInfo[user._key] = user;
@@ -61,13 +61,14 @@
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
-  import { fade } from 'svelte/transition';
+  import {fade} from 'svelte/transition';
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
   import {dayjs} from 'dayjs';
   import {EUserRanks} from '$lib/types/user-ranks';
   import Tag from '$lib/components/Tag.svelte';
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
+  import {goto} from '$app/navigation';
 
   /**
    * 게시글 보기
@@ -134,6 +135,23 @@
 
 
   onMount(() => {
+    let prevVisualViewport = 0;
+
+    window.visualViewport.addEventListener('resize', () => {
+      const currentVisualViewport = window.visualViewport.height;
+
+      if (prevVisualViewport - 30 > currentVisualViewport
+        && prevVisualViewport - 100 < currentVisualViewport) {
+        const scrollHeight = window.document.scrollingElement.scrollHeight;
+        const scrollTop = scrollHeight - window.visualViewport.height;
+
+        window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
+      }
+
+      prevVisualViewport = window.visualViewport.height;
+
+    });
+
     // hacks
     document.querySelector('body')
       .style
@@ -148,23 +166,23 @@
       const newComment: IComment = {
         ...body,
         createdAt: new Date,
-      }
+      };
 
       if (typeof body.author === 'string') {
         if (!users[body.author]) {
           try {
             const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
-              .json<{user: IUser}>();
+              .json<{ user: IUser }>();
 
             users[user._key] = user;
           } catch {
-            console.error('user detail unavaliable')
+            console.error('user detail unavaliable');
           }
         }
 
         comments = [...comments, newComment];
       }
-    }
+    };
 
     const observable = pusher.observable('comments');
     let subscription: Subscription;
@@ -176,7 +194,7 @@
         document.querySelector('body')
           .style
           .overflow = '';
-      }
+      };
     }
 
     return () => {
@@ -186,11 +204,11 @@
       document.querySelector('body')
         .style
         .overflow = '';
-    }
+    };
   });
 
   function timeFullFormat(time: Date) {
-    return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분')
+    return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
   }
 </script>
 
@@ -199,13 +217,13 @@
 </svelte:head>
 
 <div in:fade
-     class="w-10/12 md:w-3/5 lg:w-3/5 mx-auto flex flex-col justify-between __fixed-view">
-  <div class="flex justify-between">
+     class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto flex flex-col justify-between __fixed-view">
+  <div class="flex justify-between w-full">
     <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
           <a href="/"
-             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white">
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white w-max" >
             <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
@@ -215,70 +233,70 @@
         </li>
         <li>
           <div class="flex items-center">
-            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                 xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd"
                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                     clip-rule="evenodd"></path>
             </svg>
             <a href="/community/{article.board}"
-               class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400">
+               class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 w-max">
               {boardName}
             </a>
           </div>
         </li>
         <li aria-current="page">
-          <div class="flex items-center">
-            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <div class="flex items-center text-ellipsis overflow-hidden">
+            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                 xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd"
                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-            {article.title}
-          </span>
+            <span class="w-full ml-1 text-sm font-medium text-gray-500 md:ml-2
+             dark:text-gray-400 text-ellipsis overflow-hidden">
+              {article.title}
+            </span>
           </div>
         </li>
       </ol>
     </nav>
-    <div class="sm:hidden">
-      <button class="hover:text-sky-400">
-        <span><Back size="1rem" /></span>
-      </button>
-    </div>
   </div>
 
   <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
     <div class="p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
       <div class="space-y-2 mb-4">
         <div class="flex justify-between">
-          <div class="flex space-x-2">
+          <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
             <h2 class="text-2xl flex-shrink">{article.title}</h2>
-            {#if session && session.uid !== article.author}
+            <div class="inline-block">
+              {#if session && session.uid !== article.author}
               <span class="mt-0.5 cursor-pointer hover:text-red-600">
-                <Report size="1rem" />
+                <Report size="1rem"/>
               </span>
-            {/if}
-            {#if article.author === session?.uid}
+              {/if}
+              {#if article.author === session?.uid}
               <span class="mt-0.5 cursor-pointer hover:text-sky-400">
-                <Edit size="1rem" />
+                <Edit size="1rem"/>
               </span>
-            {/if}
-            {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
+              {/if}
+              {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
               <span class="mt-0.5 cursor-pointer hover:text-red-400">
                 <Delete size="1rem"/>
               </span>
-            {/if}
-            {#if session?.rank >= EUserRanks.Manager}
+              {/if}
+              {#if session?.rank >= EUserRanks.Manager}
               <span class="mt-0.5 cursor-pointer hover:text-red-400">
                 <Lock size="1rem"/>
               </span>
-              <span class="mt-0.5 cursor-pointer hover:text-red-400">
+                <span class="mt-0.5 cursor-pointer hover:text-red-400">
                 <Pub size="1rem"/>
               </span>
-              <span class="mt-0.5 cursor-pointer hover:text-red-400">
+                <span class="mt-0.5 cursor-pointer hover:text-red-400">
                 <Private size="1rem"/>
               </span>
-            {/if}
+              {/if}
+            </div>
           </div>
           <div>
             <span><View size="1rem"/> {article.views ?? 1}</span>
@@ -298,7 +316,7 @@
         </div>
         <div class="flex space-x-3">
           <div class="w-12 min-h-[3rem] inline-block">
-            <CircleAvatar />
+            <CircleAvatar/>
           </div>
           <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
         </div>
@@ -331,7 +349,7 @@
 
         {#each comments as comment}
           <li in:fade>
-            <Comment user="{users[comment.author]}" {session} {comment} />
+            <Comment user="{users[comment.author]}" {session} {comment}/>
           </li>
         {/each}
 
@@ -339,24 +357,26 @@
     </div>
   </div>
   <div class="relative">
-    <div class="absolute" style="bottom: {session ? '9' : '2'}rem; left: -1rem;">
+    <div class="absolute" style="bottom: {session ? '9' : '2'}rem; left: -0.5rem;">
       <ul class="space-y-2">
         <li>
-          <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
-         text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Back size="1rem" /></span>
+          <!-- todo: add page parameter -->
+          <button on:click={() => goto(`/community/${article.board}/`)}
+                  class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
+                  text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
+            <span><Back size="1rem"/></span>
           </button>
         </li>
         <li>
           <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
          text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Up size="1rem" /></span>
+            <span><Up size="1rem"/></span>
           </button>
         </li>
         <li>
           <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
          text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Down size="1rem" /></span>
+            <span><Down size="1rem"/></span>
           </button>
         </li>
       </ul>
@@ -390,7 +410,7 @@
     height: calc(100vh - 62px);
     // for mobile
     @supports (-webkit-appearance:none) {
-      min-height: calc(var(--vh, 1vh) * 100 - 62px);
+      height: calc(var(--vh, 1vh) * 100 - 62px);
     }
   }
 
