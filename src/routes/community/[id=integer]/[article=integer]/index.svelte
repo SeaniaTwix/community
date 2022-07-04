@@ -140,16 +140,20 @@
     window.visualViewport.addEventListener('resize', () => {
       const currentVisualViewport = window.visualViewport.height;
 
+      console.log('prevVisualViewport:', prevVisualViewport, '\ncurrentVisualViewport:', currentVisualViewport);
       if (prevVisualViewport - 30 > currentVisualViewport
         && prevVisualViewport - 100 < currentVisualViewport) {
         const scrollHeight = window.document.scrollingElement.scrollHeight;
         const scrollTop = scrollHeight - window.visualViewport.height;
+        console.log(scrollHeight, scrollTop);
 
-        window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
+        // window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
+        window.scrollTo(0, prevVisualViewport - currentVisualViewport);
+      } else if (prevVisualViewport > 0 && prevVisualViewport < currentVisualViewport) {
+        window.scrollTo(0, currentVisualViewport);
       }
 
       prevVisualViewport = window.visualViewport.height;
-
     });
 
     // hacks
@@ -207,7 +211,7 @@
     };
   });
 
-  function timeFullFormat(time: Date) {
+  function timeFullFormat(time: Date | number) {
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
   }
 </script>
