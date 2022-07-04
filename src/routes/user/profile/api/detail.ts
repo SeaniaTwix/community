@@ -43,9 +43,9 @@ export async function get({url}: RequestEvent): Promise<RequestHandlerOutput> {
     }
 
     return {
-      status: HttpStatus.BAD_GATEWAY,
+      status: HttpStatus.OK,
       body: {
-        reason: 'id invalid'
+        users: [],
       }
     }
   }
