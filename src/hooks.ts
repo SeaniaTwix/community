@@ -15,6 +15,7 @@ global.btoa = btoa;
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {
+  console.log('hi')
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));
@@ -32,9 +33,6 @@ export async function handle({event, resolve}: HandleParameter) {
   }
   if (!result) {
     const response = await resolve(event);
-    const expireNow = dayjs().toDate().toUTCString();
-    response.headers.append('set-cookie', `token=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
-    response.headers.append('set-cookie', `refesh=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
     return response;
   }
   event.locals.user = result.user;
