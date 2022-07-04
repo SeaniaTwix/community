@@ -12,9 +12,9 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
     return {
       status: HttpStatus.NOT_ACCEPTABLE,
       body: {
-        reason: e.toString()
-      }
-    }
+        reason: e.toString(),
+      },
+    };
   }
 
   try {
@@ -24,8 +24,8 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
       status: HttpStatus.CONFLICT,
       body: {
         reason: (<any>error).toString(),
-      }
-    }
+      },
+    };
   }
 
   const {token, headers} = await newLoginHeaders(login.user);
@@ -33,7 +33,7 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
   return {
     status: login.status,
     headers,
-    body: {token}
+    body: {token},
   };
 }
 
@@ -41,8 +41,17 @@ class RegisterRequest {
   user: User;
 
   constructor(private body: Rec<string>) {
-    if (/\s/.exec(this.id)) {
+    if (/\s/.test(this.id)) {
       throw new Error('whitespace not allow in id');
+    }
+    if (this.id.length < 3) {
+      throw new Error('id is too short');
+    }
+    if (this.id.length > 16) {
+      throw new Error('id is too long');
+    }
+    if (/^[a-zA-Z가-힣\d_]+$/.test(this.id)) {
+      throw new Error('some character is not allowed');
     }
     this.user = new User(this.id);
   }
