@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <link rel="icon" href="%sveltekit.assets%/favicon.png"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   %sveltekit.head%
 </head>
 <body>
@@ -11,10 +11,12 @@
 </body>
 <script>
   window.forceDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: Dark)').matches;
+
   function setGlobalVh() {
     window.vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
+
   setGlobalVh();
   window.addEventListener('resize', setGlobalVh);
 </script>
