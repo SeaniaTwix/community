@@ -18,17 +18,26 @@ export async function handle({event, resolve}: HandleParameter) {
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));
-    if (!result) {
+    console.log('user data:', result);
+    if (result?.newToken) {
       const response = await resolve(event);
-      const expireNow = dayjs().toDate().toUTCString();
-      response.headers.append('set-cookie', `refresh=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
+      const expire = dayjs().add(15, 'minute').toDate().toUTCString();
+      response.headers.append('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
+
+      event.locals.user = result.user;
       return response;
     }
-    event.locals.user = result.user;
   } catch (e) {
     // console.error('[hooks]', event.request.headers.get('cookie'), e);
-
   }
+  if (!result) {
+    const response = await resolve(event);
+    const expireNow = dayjs().toDate().toUTCString();
+    response.headers.append('set-cookie', `token=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
+    response.headers.append('set-cookie', `refesh=; Path=/; Expires=${expireNow}; SameSite=Strict; HttpOnly;`);
+    return response;
+  }
+  event.locals.user = result.user;
 
   const response = await resolve(event);
 

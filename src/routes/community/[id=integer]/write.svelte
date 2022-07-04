@@ -87,10 +87,11 @@
 
   async function upload() {
     const data: ArticleDto = {
+      views: 0,
       board,
       title,
       content, //editorObject.getHTML(),
-      tags,
+      tags
     };
 
     const response = await ky.post(`/community/${board}/api/write`, {

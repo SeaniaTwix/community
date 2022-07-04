@@ -20,8 +20,8 @@ export class ArticleDto {
   @SafeType({type: String})
   author?: string;
 
-  @SafeType({type: Number})
-  comments = 0;
+  // @SafeType({type: Number})
+  // comments = 0;
 
   createdAt?: Date | number;
 
