@@ -39,6 +39,6 @@
   <title>로그인</title>
 </svelte:head>
 
-<div class="mt-24 w-1/3 mx-auto">
+<div class="mt-24 w-10/12 md:w-3/5 lg:w-1/3 mx-auto">
   <Login on:login={login} bind:whenFailed={whenFailed} />
 </div>
