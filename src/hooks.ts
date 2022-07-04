@@ -14,7 +14,7 @@ global.btoa = btoa;
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {
-  console.log('hi')
+  // console.log('hi')
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));

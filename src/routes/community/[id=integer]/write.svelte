@@ -85,22 +85,34 @@
 
   let addMode = false;
 
+  let uplading = false;
+
   async function upload() {
-    const data: ArticleDto = {
-      views: 0,
-      board,
-      title,
-      content, //editorObject.getHTML(),
-      tags
-    };
+    if (uplading) {
+      return;
+    }
 
-    const response = await ky.post(`/community/${board}/api/write`, {
-      json: data,
-    });
+    uplading = true;
 
-    const {id} = await response.json<{ id: string }>();
+    try {
+      const data: ArticleDto = {
+        views: 0,
+        board,
+        title,
+        content, //editorObject.getHTML(),
+        tags
+      };
 
-    goto(`/community/${board}/${id}`).then();
+      const response = await ky.post(`/community/${board}/api/write`, {
+        json: data,
+      });
+
+      const {id} = await response.json<{ id: string }>();
+
+      goto(`/community/${board}/${id}`).then();
+    } finally {
+      uplading = false;
+    }
   }
 
   function addTagClicked() {
@@ -186,9 +198,13 @@
     </span>
   </div>
   <div class="flex space-x-2">
-    <button on:click={upload}
+    <button on:click={upload} on:cursor-not-allowed={uplading}
             class="items-center flex-grow bg-sky-400 dark:bg-sky-800 rounded-md text-white py-2">
-      작성 완료
+      {#if uplading}
+        전송 중...
+      {:else}
+        작성 완료
+      {/if}
     </button>
     <button class="items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
       취소

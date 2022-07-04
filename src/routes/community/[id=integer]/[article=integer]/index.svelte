@@ -385,8 +385,13 @@
 </div>
 
 <style lang="scss">
+  //noinspection CssInvalidPropertyValue
   .__fixed-view {
     height: calc(100vh - 62px);
+    // for mobile
+    @supports (-webkit-appearance:none) and (stroke-color: transparent) {
+      min-height: calc(var(--vh, 1vh) * 100);
+    }
   }
 
   .__circle {
