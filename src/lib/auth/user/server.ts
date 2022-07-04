@@ -74,12 +74,13 @@ export class User {
 
   get exists(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
-      // console.trace("user exists check")
+      // console.trace('user exists check:', this.id)
       db.query(aql`
         for user in users
           filter user.id == ${this.id}
             return user`)
         .then(async (r) => {
+          // console.log(r)
           resolve(r.hasNext);
         })
         .catch(reject);

@@ -7,7 +7,6 @@ import {key} from '$lib/auth/user/shared';
 import type {EUserRanks} from '$lib/types/user-ranks';
 import {atob, btoa} from 'js-base64';
 import {User} from './lib/auth/user/server';
-import HttpStatus from 'http-status-codes';
 import {dayjs} from 'dayjs';
 
 global.atob = atob;
@@ -19,22 +18,22 @@ export async function handle({event, resolve}: HandleParameter) {
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));
-    console.log('user data:', result);
     if (result?.newToken) {
+      event.locals.user = result.user;
+
       const response = await resolve(event);
       const expire = dayjs().add(15, 'minute').toDate().toUTCString();
-      response.headers.append('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
-
-      event.locals.user = result.user;
+      response.headers.set('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
       return response;
     }
   } catch (e) {
     // console.error('[hooks]', event.request.headers.get('cookie'), e);
   }
   if (!result) {
-    const response = await resolve(event);
-    return response;
+    // noinspection ES6RedundantAwait
+    return await resolve(event);
   }
+
   event.locals.user = result.user;
 
   const response = await resolve(event);
@@ -52,12 +51,13 @@ export async function handle({event, resolve}: HandleParameter) {
 
 async function refreshJwt(token: string) {
   const refresh = njwt.verify(token ?? '', key);
-  // console.log(refresh)
   if (refresh?.isExpired() === false) {
     // todo: sign again
-    const {uid} = refresh.body.toJSON();
-    const user = new User(<string>uid);
-    const newToken = await user.token('user', {uid, rank: await user.rank});
+    const {sub} = refresh.body.toJSON() as {sub: string};
+    const id = sub.split('/')[1];
+    const user = new User(id);
+    const {_key, rank} = await user.safeData;
+    const newToken = await user.token('user', {uid: _key, rank});
     return { newToken: newToken.compact(), user: newToken.body.toJSON() };
   }
 
@@ -66,6 +66,7 @@ async function refreshJwt(token: string) {
 
 type GetUserReturn = { user: Rec<any>, newToken?: string };
 async function getUser(cookie: string | null): Promise<GetUserReturn | undefined> {
+
   if (_.isEmpty(cookie)) {
     return undefined;
   }
@@ -73,10 +74,10 @@ async function getUser(cookie: string | null): Promise<GetUserReturn | undefined
   const {token, refresh} = (new CookieParser(cookie!)).get();
   if (!token) {
     if (refresh) {
-      // console.log('refresh', refresh)
       try {
         return await refreshJwt(refresh)
-      } catch {
+      } catch (e) {
+        console.error(e)
         return undefined;
       }
     } else {
