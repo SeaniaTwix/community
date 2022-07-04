@@ -40,7 +40,7 @@ class ListBoardRequest {
       for article in articles
         sort article.createdAt desc
         filter article.board == ${this.id}
-          let c = length(for c in comments filter c.article == article._key return comments)
+          let c = length(for c in comments filter c.article == article._key return c)
           return merge(article, {comments: c})`);
 
     return await cursor.all();
