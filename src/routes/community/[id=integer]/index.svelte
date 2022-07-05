@@ -54,7 +54,7 @@
 </svelte:head>
 
 <!-- todo: move to __layout -->
-<div class="w-10/12 md:w-2/3 lg:w-3/5 mx-auto space-y-4 transition-transform">
+<div class="w-10/12 md:w-2/3 lg:w-3/5 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
@@ -87,3 +87,14 @@
   </div>
   <ArticleList board={id} {list} {users} />
 </div>
+
+<style lang="scss">
+  // ios bottom gap
+  // noinspection CssOverwrittenProperties
+  .__mobile-bottom-fix {
+    margin-bottom: 0;
+    // noinspection CssInvalidFunction
+    margin-bottom: constant(safe-area-inset-bottom);
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+</style>

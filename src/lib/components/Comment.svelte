@@ -69,66 +69,68 @@
   }
 
   let showInfo = false;
+  export let selected = false;
   export let user: IUser;
   export let comment: IComment;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
 </script>
 
-<div class="p-4 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted spacey">
+<div class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted spacey">
   <div class="space-y-4">
     <div class="flex justify-between" class:mb-4={!showInfo}>
-      <div class="flex space-x-2">
-        <div on:click={() => (showInfo = !showInfo)} class="flex space-x-2 hover:cursor-pointer group">
+      <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
+        <div on:click={() => {showInfo = !showInfo; selected = !selected}} class="flex space-x-2 hover:cursor-pointer group">
           <div class="w-12 min-h-[3rem]">
             <CircleAvatar/>
           </div>
           <span class="mt-2.5 group-hover:text-sky-400">
-          {user?.id ?? '[이름을 불러지 못 했습니다]'}
-        </span>
+            {user?.id ?? '[이름을 불러지 못 했습니다]'}
+            {#if selected}(이 메시지에 답장 중){/if}
+          </span>
         </div>
         <span class="mt-2.5 space-x-1">
-        {#if session}
-          <span class="cursor-pointer hover:text-sky-400"
-                on:click={() => onReplyClicked(comment._key)}>
-            <Reply size="1rem"/>
-          </span>
-        {/if}
+          {#if session}
+            <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                  on:click={() => onReplyClicked(comment._key)}>
+              <Reply size="1rem"/>
+            </span>
+          {/if}
 
           {#if session && session.uid !== comment.author}
-          <span class="cursor-pointer hover:text-red-600"
-                on:click={() => onReportClicked(comment._key)}>
-            <Report size="1rem"/>
-          </span>
-        {/if}
+            <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
+                  on:click={() => onReportClicked(comment._key)}>
+              <Report size="1rem"/>
+            </span>
+          {/if}
           {#if session?.uid === comment.author}
-          <span class="cursor-pointer hover:text-sky-400"
-                on:click={() => onEditClicked(comment._key)}>
-            <Edit size="1rem"/>
-          </span>
-        {/if}
+            <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                  on:click={() => onEditClicked(comment._key)}>
+              <Edit size="1rem"/>
+            </span>
+          {/if}
           {#if comment.author === session?.uid || session?.rank <= EUserRanks.Manager}
-          <span class="cursor-pointer hover:text-red-400"
-                on:click={() => onDeleteClicked(comment._key)}>
-            <Delete size="1rem"/>
-          </span>
-        {/if}
+            <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                  on:click={() => onDeleteClicked(comment._key)}>
+              <Delete size="1rem"/>
+            </span>
+          {/if}
 
           {#if session?.rank >= EUserRanks.Manager}
-          <span class="mt-0.5 cursor-pointer hover:text-red-400"
-                on:click={() => onLockClicked(comment._key)}>
-            <Lock size="1rem"/>
-          </span>
-          <span class="mt-0.5 cursor-pointer hover:text-red-400"
-                on:click={() => onPubClicked(comment._key)}>
-            <Pub size="1rem"/>
-          </span>
-          <span class="mt-0.5 cursor-pointer hover:text-red-400
-                on:click={() => onPrivateClicked(comment._key)}">
-            <Private size="1rem"/>
-          </span>
-        {/if}
-      </span>
+            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                  on:click={() => onLockClicked(comment._key)}>
+              <Lock size="1rem"/>
+            </span>
+            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                  on:click={() => onPubClicked(comment._key)}>
+              <Pub size="1rem"/>
+            </span>
+            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                  on:click={() => onPrivateClicked(comment._key)}>
+              <Private size="1rem"/>
+            </span>
+          {/if}
+        </span>
       </div>
       <div>
         <button data-tooltip-target="tooltip-comment-time-specific-{comment._key}" type="button">

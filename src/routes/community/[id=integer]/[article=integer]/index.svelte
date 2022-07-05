@@ -78,7 +78,7 @@
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
-  import {YouTube} from 'svelte-yt';
+  import {inRange} from 'lodash-es';
 
   /**
    * 게시글 보기
@@ -148,72 +148,61 @@
   }
 
   let prevVisualViewport = 0;
-  function fixIosKeyboardScrolling() {
+  async function fixIosKeyboardScrolling() {
     const currentVisualViewport = window.visualViewport.height;
 
-    console.log('prevVisualViewport:', prevVisualViewport, '\ncurrentVisualViewport:', currentVisualViewport);
-    if (prevVisualViewport - 30 > currentVisualViewport
-      && prevVisualViewport - 100 < currentVisualViewport) {
-      const scrollHeight = window.document.scrollingElement.scrollHeight;
-      const scrollTop = scrollHeight - window.visualViewport.height;
-      console.log(scrollHeight, scrollTop);
+    const isKeyboardVisible = prevVisualViewport > currentVisualViewport;
+    let changed = prevVisualViewport - currentVisualViewport;
 
-      // window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
-      window.scrollTo(0, prevVisualViewport - currentVisualViewport);
-    } else if (prevVisualViewport > 0 && prevVisualViewport < currentVisualViewport) {
-      window.scrollTo(0, currentVisualViewport);
+    if (isKeyboardVisible) {
+      if (inRange(changed, -50, 50)) {
+        changed = prevVisualViewport - changed;
+      }
+      window.scrollTo(0, changed);
+    } else {
+      window.scrollTo(0, 0);
+      prevVisualViewport = window.visualViewport.height;
     }
-
-    prevVisualViewport = window.visualViewport.height;
   }
 
-  onMount(() => {
-
-    window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling);
-
-    // hacks
-    document.querySelector('body')
-      .style
-      .overflow = 'hidden';
-    // prevent add viewcount on prefetch
-    ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
-
-    // console.log('comments', comments);
+  onMount(async () => {
+    let subscription: Subscription;
     const pusher = new Pusher(article._key);
 
-    const whileSub = async ({body}) => {
-      const newComment: IComment = {
-        ...body,
-        createdAt: new Date,
-      };
-
-      if (typeof body.author === 'string') {
-        if (!users[body.author]) {
-          try {
-            const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
-              .json<{ user: IUser }>();
-
-            users[user._key] = user;
-          } catch {
-            console.error('user detail unavaliable');
-          }
-        }
-
-        comments = [...comments, newComment];
-      }
-    };
-
-    const observable = pusher.observable('comments');
-    let subscription: Subscription;
     try {
-      subscription = observable.subscribe(whileSub);
-    } catch {
-      return () => {
-        pusher.close();
-        document.querySelector('body')
-          .style
-          .overflow = '';
+      prevVisualViewport = window.visualViewport.height;
+
+      window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling);
+
+      ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
+
+      const whileSub = async ({body}) => {
+        const newComment: IComment = {
+          ...body,
+          createdAt: new Date,
+        };
+
+        if (typeof body.author === 'string') {
+          if (!users[body.author]) {
+            try {
+              const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
+                .json<{ user: IUser }>();
+
+              users[user._key] = user;
+            } catch {
+              console.error('user detail unavaliable');
+            }
+          }
+
+          comments = [...comments, newComment];
+        }
       };
+
+      const observable = pusher.observable('comments');
+      subscription = observable.subscribe(whileSub);
+
+    } catch (e) {
+      console.error(e);
     }
 
     return () => {
@@ -226,6 +215,7 @@
         .style
         .overflow = '';
     };
+
   });
 
   function timeFullFormat(time: Date | number) {
@@ -237,10 +227,11 @@
   <title>{boardName} - {article.title}</title>
 </svelte:head>
 
-<svelte:body style="overflow:hidden" />
+<!-- for scroll blocking on side of comment input -->
+<svelte:body on:scroll|preventDefault />
 
 <div in:fade
-     class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto flex flex-col justify-between __fixed-view">
+     class="flex flex-col justify-between __fixed-view">
   <div class="flex justify-between w-full">
     <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -287,7 +278,7 @@
   </div>
 
   <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
-    <div class="p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+    <div class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
       <div class="space-y-2 mb-4">
         <div class="flex justify-between">
           <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
@@ -347,8 +338,12 @@
       <article class="p-2 min-h-[10rem]">
         {#each contents as content}
           {#if youtubeUrlFind.test(content)}
-            youtube: {youtubeUrlFind.exec(content)[1]}
-            <YouTube videoId="{youtubeUrlFind.exec(content)[1]}" />
+            <iframe width="560" height="315"
+                    src="https://www.youtube.com/embed/{youtubeUrlFind.exec(content)[1]}"
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
           {:else}
             {@html content}
           {/if}
@@ -369,7 +364,7 @@
       </div>
     </div>
 
-    <div> <!-- 댓글 -->
+    <div class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
 
       {#if isEmpty(comments)}
         <p class="mt-8 text-zinc-500 text-lg text-center">댓글이 없어요...</p>
@@ -386,7 +381,8 @@
       </ul>
     </div>
   </div>
-  <div class="relative">
+
+  <div class="relative w-11/12 md:w-3/5 lg:w-3/5 mx-auto">
     <div class="absolute" style="bottom: {session ? '9' : '2'}rem; left: -0.5rem;">
       <ul class="space-y-2">
         <li>
@@ -449,6 +445,12 @@
   }
 
   :global {
+
+    // this page won't use native body scroll.
+    body {
+      overflow-y: hidden;
+    }
+
     article {
       h1 {
         font-size: xx-large;
@@ -479,6 +481,14 @@
         &:hover {
 
         }
+      }
+
+      // maybe youtube only...?
+      iframe {
+        width: 100%;
+        aspect-ratio: 16/9;
+        height: auto;
+        margin: 1rem 0;
       }
     }
   }
