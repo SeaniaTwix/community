@@ -23,26 +23,26 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
   return {
     status: login.status,
     headers,
-    body: {token},
+    body: {token: token.compact()},
   };
 }
 
 export async function newLoginHeaders(user: User) {
-  const expire = dayjs().add(15, 'minute').toDate(); // .toUTCString();
   const token = user.token('user', {
     uid: await user.uid, rank: await user.rank
-  }, expire).compact();
-  // const expire = addMinutes(new Date(), 15).toUTCString();
+  });
+  const expire = dayjs().add(15, 'minute').toDate();
+  token.setExpiration(expire);
 
+  const refresh = user.token('refesh');
   const expireRefresh = dayjs().add(1, 'day').toDate();
-  const refresh = user.token('refesh', {}, expireRefresh).compact();
-  // const expireRefresh = addDays(new Date(), 1).toUTCString();
+  refresh.setExpiration(expireRefresh);
 
   const headers = new Headers();
   headers.append('Set-Cookie',
-    `token=${token}; Path=/; Expires=${expire.toUTCString()}; SameSite=Strict; HttpOnly;`);
+    `token=${token.compact()}; Path=/; Expires=${expire.toUTCString()}; SameSite=Strict; HttpOnly;`);
   headers.append('Set-Cookie',
-    `refresh=${refresh}; Path=/; Expires=${expireRefresh.toUTCString()}; SameSite=Strict; HttpOnly;`);
+    `refresh=${refresh.compact()}; Path=/; Expires=${expireRefresh.toUTCString()}; SameSite=Strict; HttpOnly;`);
 
   return {token, headers};
 }

@@ -149,13 +149,11 @@ export class User {
     }
   }
 
-  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}, expire: Date) {
-    const exp = parseInt((expire.getTime() / 1000).toString())
+  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}): njwt.Jwt {
     return njwt.create({
       iss: 'https://ru.hn/',
       sub: `user/${this.id}`,
       scope: type,
-      exp,
       ...payload,
     }, key);
   }

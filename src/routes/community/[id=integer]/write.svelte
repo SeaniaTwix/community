@@ -3,7 +3,7 @@
   import HttpStatus from 'http-status-codes';
   import {key} from '$lib/editor-key';
 
-  export async function load({params, session}: LoadEvent): Promise<LoadOutput> {
+  export async function load({params, session, fetch}: LoadEvent): Promise<LoadOutput> {
     if (!params?.id) {
       return {
         status: HttpStatus.FORBIDDEN,
@@ -57,7 +57,7 @@
 
   const defaultEditorSettings = {
     language: 'ko_KR',
-    plugins: 'image imagetools media searchreplace code',
+    plugins: 'image imagetools media searchreplace code autolink',
     toolbar: 'undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat',
     // menubar: 'code',
     resize: true,
@@ -145,6 +145,10 @@
 
   }
 
+  function detectPaste(event: KeyboardEvent, type: 'down' | 'up') {
+    console.log(type, event);
+  }
+
   onMount(() => {
     titleInput.focus();
   })
@@ -169,7 +173,9 @@
                 apiKey="{editorKey}"
                 conf="{darkEditorSettings}"
                 bind:value={content}
-                on:resizeeditor={console.log}/>
+                on:resizeeditor={console.log}
+                on:keydown={(e) => detectPaste(e, 'down')}
+                on:keyup={(e) => detectPaste(e, 'up')}/>
       {:else}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"

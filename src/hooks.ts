@@ -59,7 +59,8 @@ async function refreshJwt(token: string) {
       const user = new User(id);
       const {_key, rank} = await user.safeData;
       const exp = dayjs().add(15, 'minute').toDate();
-      const newToken = await user.token('user', {uid: _key, rank}, exp);
+      const newToken = await user.token('user', {uid: _key, rank});
+      newToken.setExpiration(exp);
       return {newToken: newToken.compact(), user: newToken.body.toJSON()};
     }
   } catch {

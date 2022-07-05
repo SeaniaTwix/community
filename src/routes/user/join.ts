@@ -33,7 +33,7 @@ export async function post({request}: RequestEvent): Promise<RequestHandlerOutpu
   return {
     status: login.status,
     headers,
-    body: {token},
+    body: {token: token.compact(),},
   };
 }
 

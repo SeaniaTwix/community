@@ -3,12 +3,20 @@
   import type {IComment} from '$lib/types/comment';
   import type {IUser} from '$lib/types/user';
   import {uniq, isEmpty} from 'lodash-es';
+  import {load as cheerio} from 'cheerio';
+  import {ArticleDto} from '$lib/types/dto/article.dto';
 
   export async function load({params, fetch, session}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
-    const {article} = await res.json();
+    const {article} = await res.json() as ArticleDto;
+    const $ = cheerio(`<div class="__top">${article.content}</div>`);
+    const elems = $('.__top:first > *').toArray();
+    const contents = [];
+    for (const elem of elems) {
+      contents.push(cheerio(elem).html());
+    }
     const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
     const {user} = await ar.json();
     const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
@@ -32,6 +40,7 @@
       status: 200,
       props: {
         article,
+        contents,
         boardName: name,
         session,
         author: user,
@@ -69,6 +78,7 @@
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
+  import {YouTube} from 'svelte-yt';
 
   /**
    * 게시글 보기
@@ -76,12 +86,16 @@
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
   export let article: IArticle;
+  export let contents: string[] = [];
   export let boardName: string;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
   export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
+
+  const youtubeUrlFind =
+    /<a href="https:\/\/(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?(.*?)"/;
 
   /**
    * 대댓글 등의 댓글 id가 들어올 수 있습니다.
@@ -133,28 +147,29 @@
     }
   }
 
+  let prevVisualViewport = 0;
+  function fixIosKeyboardScrolling() {
+    const currentVisualViewport = window.visualViewport.height;
+
+    console.log('prevVisualViewport:', prevVisualViewport, '\ncurrentVisualViewport:', currentVisualViewport);
+    if (prevVisualViewport - 30 > currentVisualViewport
+      && prevVisualViewport - 100 < currentVisualViewport) {
+      const scrollHeight = window.document.scrollingElement.scrollHeight;
+      const scrollTop = scrollHeight - window.visualViewport.height;
+      console.log(scrollHeight, scrollTop);
+
+      // window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
+      window.scrollTo(0, prevVisualViewport - currentVisualViewport);
+    } else if (prevVisualViewport > 0 && prevVisualViewport < currentVisualViewport) {
+      window.scrollTo(0, currentVisualViewport);
+    }
+
+    prevVisualViewport = window.visualViewport.height;
+  }
 
   onMount(() => {
-    let prevVisualViewport = 0;
 
-    window.visualViewport.addEventListener('resize', () => {
-      const currentVisualViewport = window.visualViewport.height;
-
-      console.log('prevVisualViewport:', prevVisualViewport, '\ncurrentVisualViewport:', currentVisualViewport);
-      if (prevVisualViewport - 30 > currentVisualViewport
-        && prevVisualViewport - 100 < currentVisualViewport) {
-        const scrollHeight = window.document.scrollingElement.scrollHeight;
-        const scrollTop = scrollHeight - window.visualViewport.height;
-        console.log(scrollHeight, scrollTop);
-
-        // window.scrollTo(0, scrollTop); // 입력창이 키보드에 가려지지 않도록 조절
-        window.scrollTo(0, prevVisualViewport - currentVisualViewport);
-      } else if (prevVisualViewport > 0 && prevVisualViewport < currentVisualViewport) {
-        window.scrollTo(0, currentVisualViewport);
-      }
-
-      prevVisualViewport = window.visualViewport.height;
-    });
+    window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling);
 
     // hacks
     document.querySelector('body')
@@ -205,6 +220,8 @@
       subscription.unsubscribe();
       pusher.close();
 
+      window.visualViewport.removeEventListener('resize', fixIosKeyboardScrolling);
+
       document.querySelector('body')
         .style
         .overflow = '';
@@ -219,6 +236,8 @@
 <svelte:head>
   <title>{boardName} - {article.title}</title>
 </svelte:head>
+
+<svelte:body style="overflow:hidden" />
 
 <div in:fade
      class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto flex flex-col justify-between __fixed-view">
@@ -326,7 +345,14 @@
         </div>
       </div>
       <article class="p-2 min-h-[10rem]">
-        {@html article.content}
+        {#each contents as content}
+          {#if youtubeUrlFind.test(content)}
+            youtube: {youtubeUrlFind.exec(content)[1]}
+            <YouTube videoId="{youtubeUrlFind.exec(content)[1]}" />
+          {:else}
+            {@html content}
+          {/if}
+        {/each}
       </article>
       <div class="pt-3">
         {#each article.tags as tag}
@@ -446,6 +472,13 @@
 
       hr {
         margin-bottom: 1px;
+      }
+
+      a[href] {
+        color: rgb(56, 189, 248);
+        &:hover {
+
+        }
       }
     }
   }
