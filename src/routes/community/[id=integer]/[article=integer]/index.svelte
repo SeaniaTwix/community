@@ -485,9 +485,9 @@
 
       // maybe youtube only...?
       iframe {
-        width: 100%;
+        width: 100% !important;
         aspect-ratio: 16/9;
-        height: auto;
+        height: auto !important;
         margin: 1rem 0;
       }
     }

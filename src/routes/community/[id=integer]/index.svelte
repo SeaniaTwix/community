@@ -54,7 +54,7 @@
 </svelte:head>
 
 <!-- todo: move to __layout -->
-<div class="w-10/12 md:w-2/3 lg:w-3/5 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
+<div class="w-10/12 md:w-4/5 lg:w-3/4 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">

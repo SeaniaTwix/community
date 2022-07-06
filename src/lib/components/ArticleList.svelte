@@ -9,6 +9,7 @@
   import {ko} from '$lib/time-ko';
   import type {IUser} from '$lib/types/user';
   import Tag from './Tag.svelte';
+  import CircleAvatar from './CircleAvatar.svelte';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -42,21 +43,31 @@
   <ul class="divide-y">
     {#each list as article}
       <li>
-        <a class="flex justify-between space-x-4 py-4" href="/community/{board}/{article._key}">
+        <a class="flex justify-between space-x-4 py-4" sveltekit:prefetch
+           href="/community/{board}/{article._key}">
           <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
-          <div class="flex space-x-1 flex-grow flex-col md:flex-row lg:flex-row">
+          <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
             <span class="flex justify-between">
-              <span class="hover:text-sky-400 transition-colors inline-block" sveltekit:prefetch
-                 >
+              <span class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
                 {article.title}
               </span>
               <!-- i have no idea to make no duplicated elements... -->
-              <a class="cursor-pointer hover:text-sky-400 inline-block md:hidden lg:hidden
-               underline decoration-dashed decoration-sky-400"
-                 href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+              <span class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
+                <span class="w-6 max-h-6">
+                  <CircleAvatar border="sm" />
+                </span>
+                <span>
+                  <a class="cursor-pointer hover:text-sky-400
+                            underline decoration-dashed decoration-sky-400"
+                     href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+                </span>
+              </span>
             </span>
             <div class="flex flex-grow justify-between">
-              <div class="inline-block select-none">
+              <div class="inline-block select-none flex-shrink-0 justify-between">
+                <span class="inline-block md:hidden lg:hidden text-zinc-400">
+                  {article._key}
+                </span>
                 {#if article?.comments}
                   <span>
                     <!--[{article.comments}]-->
@@ -67,11 +78,18 @@
                     <span class="mr-0.5"><View size="1rem" /></span>{article.views ?? 0}
                   </span>
               </div>
-              <div class="inline-block">
-                <a class="cursor-pointer hover:text-sky-400 hidden sm:inline-block md:inline-block lg:inline-block
-                          underline decoration-dashed decoration-sky-400"
-                   href="/user/profile/{article.author}">{users[article.author]?.id}</a>
-                <span class="text-right inline-block w-[6rem]">{formatDate(article.createdAt)}</span>
+              <div class="inline-block flex w-max">
+                <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
+                  <span class="w-6 max-h-6 inline-block mt-[-1px]">
+                    <CircleAvatar border="sm" />
+                  </span>
+                  <a class="cursor-pointer hover:text-sky-400 inline-block align-super
+                              underline decoration-dashed decoration-sky-400"
+                     href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+                </div>
+                <span class="text-right inline-block flex-shrink-0 min-w-[7rem]">
+                  {formatDate(article.createdAt)}
+                </span>
               </div>
 
             </div>
