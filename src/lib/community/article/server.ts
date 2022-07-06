@@ -29,6 +29,7 @@ export class Article {
   addViewCount() {
     return db.query(aql`
       for article in articles
+        filter article._key == ${this.id}
         let v = article.views != null ? article.views + 1 : 1
         update { _key: ${this.id} } with { views: v } in articles`);
   }
