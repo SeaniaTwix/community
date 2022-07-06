@@ -67,7 +67,9 @@ export default class DefaultDatabase {
   }
 
   query<T = any>(q: AqlQuery) {
-    return this.init().then(() => this.db.query(q) as Promise<ArrayCursor<T>>);
+    return this.init()
+      .then(() => this.db.query(q) as Promise<ArrayCursor<T>>)
+      .catch((reason) => console.error(reason, q.query));
   }
 }
 
