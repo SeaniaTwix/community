@@ -39,7 +39,8 @@ class ListBoardRequest {
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
-        filter article.board == ${this.id}
+        let isPub = article.pub == null || article.pub == true
+        filter article.board == ${this.id} && isPub
           let c = length(for c in comments filter c.article == article._key return c)
           return merge(article, {comments: c})`);
 

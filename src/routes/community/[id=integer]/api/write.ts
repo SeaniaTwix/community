@@ -124,7 +124,6 @@ class WriteRequest {
       board: this.boardId!,
       pub: true,
       locked: false,
-      comments: 0,
     };
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);

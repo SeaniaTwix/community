@@ -77,6 +77,10 @@
   <div class="flex justify-between">
     <h2 class="text-2xl">
       {name}
+      <span class="inline sm:hidden">none</span>
+      <span class="hidden sm:inline md:hidden">sm</span>
+      <span class="hidden sm:hidden md:inline lg:hidden">md</span>
+      <span class="hidden sm:hidden md:hidden lg:inline">lg</span>
     </h2>
     <a href="/community/{params.id}/write"
        class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
