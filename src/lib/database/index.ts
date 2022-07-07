@@ -66,10 +66,22 @@ export default class DefaultDatabase {
     console.log('데이터베이스 사용 준비가 완료되었습니다.');
   }
 
+  private async relogin() {
+    const info = DefaultDatabase.info;
+    const token = await this.system.login(info.user, info.password);
+    const authorized = this.system.useBearerAuth(token);
+    this.db = authorized.database(DefaultDatabase.dbName);
+    assert.equal(!!this.db, true);
+  }
+
   query<T = any>(q: AqlQuery) {
     return this.init()
       .then(() => this.db.query(q) as Promise<ArrayCursor<T>>)
-      .catch((reason) => console.error(reason, q.query));
+      .catch((reason) => {
+        this.relogin()
+          .then(this.query(q))
+          .catch(() => console.error('database auth error. before query error:', reason));
+      });
   }
 }
 
