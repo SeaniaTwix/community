@@ -78,9 +78,11 @@ export default class DefaultDatabase {
     return this.init()
       .then(() => this.db.query(q) as Promise<ArrayCursor<T>>)
       .catch((reason) => {
-        this.relogin()
-          .then(() => this.query(q))
-          .catch(() => console.error('database auth error. before query error:', reason));
+        const q = this.relogin()
+          .catch(() => console.error('database auth error. before query error:', reason))
+          .then(() => this.query(q));
+        
+        return q;
       });
   }
 }
