@@ -78,7 +78,7 @@ export default class DefaultDatabase {
     assert.equal(!!this.db, true);
   }
 
-  async query<T = any>(q: AqlQuery, level = 0): Promise<ArrayCursor<T>> {
+  async query<T = any>(q: AqlQuery): Promise<ArrayCursor<T>> {
     const release = await mutex.acquire();
     try {
       await this.init();

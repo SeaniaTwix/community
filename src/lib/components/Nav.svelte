@@ -25,7 +25,7 @@
 
   function gotoLogin(event: Event) {
     event.preventDefault();
-    localStorage.setItem('ru.hn:back', location.pathname);
+    sessionStorage.setItem('ru.hn:back', location.pathname);
     goto('/login');
   }
 

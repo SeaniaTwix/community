@@ -9,6 +9,7 @@ export async function get({params, url}: RequestEvent): Promise<RequestHandlerOu
     status: 200,
     body: {
       name: await board.name,
+
     }
   }
 }

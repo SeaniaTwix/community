@@ -8,8 +8,8 @@
     user.register(event.detail.pw, '')
       .then((token) => {
         localStorage.setItem('ru.hn:token', token);
-        goto(localStorage.getItem('ru.hn:back') ?? '/').then(() => {
-          localStorage.removeItem('ru.hn:back');
+        goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
+          sessionStorage.removeItem('ru.hn:back');
         });
       });
 

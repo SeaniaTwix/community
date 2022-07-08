@@ -7,9 +7,11 @@ import {Board} from '$lib/community/board/server';
 import {ArticleDto} from '$lib/types/dto/article.dto';
 import {User} from '$lib/auth/user/server';
 import type {IArticle} from '$lib/types/article';
+import {Article} from '$lib/community/article/server';
 
 // noinspection JSUnusedGlobalSymbols
 export async function post({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+  console.log('new write')
   const article = new ArticleDto(await request.json());
   const write = new WriteRequest(article);
 
@@ -18,8 +20,8 @@ export async function post({request, params, locals}: RequestEvent): Promise<Req
       status: HttpStatus.BAD_GATEWAY,
       body: {
         reason: 'board id invalid',
-      }
-    }
+      },
+    };
   }
 
   if (write.error) {

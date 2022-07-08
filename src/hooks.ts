@@ -14,7 +14,10 @@ global.btoa = btoa;
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter) {
-  // console.log('hi')
+  /* console.log('event:', event);
+  const r = await resolve(event);
+  console.log('resolved', r);
+  return r; */
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));
@@ -24,14 +27,19 @@ export async function handle({event, resolve}: HandleParameter) {
       const response = await resolve(event);
       const expire = dayjs().add(15, 'minute').toDate().toUTCString();
       response.headers.set('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
+      // console.log('return', 1);
       return response;
     }
   } catch (e) {
     // console.error('[hooks]', event.request.headers.get('cookie'), e);
   }
+
   if (!result) {
     // noinspection ES6RedundantAwait
-    return await resolve(event);
+    // console.log('resolve', 2);
+    const r = await resolve(event);
+    // console.log('return', 2);
+    return r;
   }
 
   event.locals.user = result.user;
@@ -46,6 +54,7 @@ export async function handle({event, resolve}: HandleParameter) {
     console.trace('error');
   }
 
+  // console.log('return', 3);
   return response;
 }
 

@@ -23,8 +23,8 @@
         ...JSON.parse(decode(token.split('.')[1])),
       }));
 
-      goto(localStorage.getItem('ru.hn:back') ?? '/').then(() => {
-        localStorage.removeItem('ru.hn:back');
+      goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
+        sessionStorage.removeItem('ru.hn:back');
       })
     }).catch((e) => {
       // show error message

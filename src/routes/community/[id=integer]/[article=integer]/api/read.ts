@@ -7,19 +7,20 @@ import HttpStatus from 'http-status-codes';
 
 export async function get({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
+  console.log(read);
 
   try {
     return {
       status: 200,
       body: {
-        article: await read.get(locals?.user.uid),
+        article: await read.get(locals?.user?.uid),
       }
     }
-  } catch (e) {
+  } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
-        reason: 'article invalid',
+        reason: 'article invalid:' + e.toString(),
       }
     }
   }
@@ -47,7 +48,9 @@ class ReadArticleRequest {
 
     const article: ArticleDto = await cursor.next();
 
+    console.log(article);
     article.views += 1;
+
 
     const tags: Record<string, number> = {};
 

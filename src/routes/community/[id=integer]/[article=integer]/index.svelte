@@ -12,6 +12,7 @@
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
     const {article} = await res.json() as ArticleDto;
     const $ = cheerio(`<div class="__top">${article.content}</div>`);
+    // @ts-ignore
     const elems = $('.__top:first > *').toArray();
     const contents = [];
     for (const elem of elems) {

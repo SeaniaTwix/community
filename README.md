@@ -3,7 +3,8 @@
  * [NodeJS](https://nodejs.org) tested on 16.15.1^
  * [Svelte Kit](https://kit.svelte.dev)
  * [ArangoDB](https://www.arangodb.com)
- * Independent Websocket Server
+## Optional
+ * Independent Websocket Server (If not available, some feature will not reload automatically)
 
 
 ### How to running
@@ -11,4 +12,4 @@
    check `$lib/editor-key.example.ts`
 2. `pnpm install`
 3. `pnpm run build`
-4. `env DB_PASSWORD=[YOUR ARANGO PASSWORD] PORT=[PORT WHAT YOU WANT] node build`
+4. `env DB_PASSWORD=[YOUR ARANGO PASSWORD] PORT=[PORT WHAT YOU WANT] node ./run.js`

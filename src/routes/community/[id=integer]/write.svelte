@@ -12,7 +12,7 @@
 
     if (!session) {
       try {
-        localStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
+        sessionStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
       } catch {}
 
       return {
@@ -57,13 +57,13 @@
 
   const defaultEditorSettings = {
     language: 'ko_KR',
-    plugins: 'image imagetools media searchreplace code autolink',
-    toolbar: 'undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat',
-    // menubar: 'code',
+    plugins: 'image imagetools media searchreplace code autolink autosave',
+    toolbar: 'image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
+    autosave_ask_before_unload: false,
+    images_upload_url: '/file/upload',
+    // images_upload_base_path: '/file',
     resize: true,
     min_height: 160,
-    // skin: dark ? 'oxide-dark' : 'silver',
-    // content_css: dark ? 'dark' : 'default',
   }
 
   const darkEditorSettings = {
@@ -109,7 +109,7 @@
 
       const {id} = await response.json<{ id: string }>();
 
-      goto(`/community/${board}/${id}`).then();
+      await goto(`/community/${board}/${id}`);
     } finally {
       uplading = false;
     }

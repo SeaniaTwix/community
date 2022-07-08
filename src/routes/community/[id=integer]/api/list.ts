@@ -15,12 +15,21 @@ export async function get({params, url}: RequestEvent): Promise<RequestHandlerOu
 
   const board = new ListBoardRequest(params.id);
   const amount = _.toInteger(url.searchParams.get('amount')) ?? 30;
-  const list = await board.getListRecents(amount) as any;
+  const list = await board.getListRecents(amount) as any[];
+
+  // todo: find diff way for mapping tags count (in aql if available)
 
   return {
     status: 200,
     body: {
-      list,
+      list: list.map(article => {
+        const tags: Record<string, number> = {};
+        for (const tagName of article.tags) {
+          tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
+        }
+        article.tags = tags;
+        return article;
+      }),
     }
   }
 }
@@ -42,7 +51,13 @@ class ListBoardRequest {
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub
           let c = length(for c in comments filter c.article == article._key return c)
-          return merge(article, {comments: c})`);
+          let tags = (
+            for userId in attributes(is_object(article.tags) ? article.tags : {})
+              for tag in article.tags[userId]
+                return tag.name)
+          
+          
+          return merge(article, {comments: c, tags: tags})`);
 
     return await cursor.all();
   }
