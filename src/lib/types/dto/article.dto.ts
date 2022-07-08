@@ -28,6 +28,6 @@ export class ArticleDto {
   @SafeType({type: Number})
   views = 0;
 
-  // @SafeType({type: Array})
-  tags?: string[];
+  //
+  tags: Record<string, Record<string, any>> | string[] = {};
 }

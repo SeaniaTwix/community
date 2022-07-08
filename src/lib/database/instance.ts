@@ -1,7 +1,7 @@
 import DefaultDatabase from './index';
 
 class Database {
-  static get instance() {
+  static get instance(): DefaultDatabase {
     if (!(<any>global).__db_stored) {
       (<any>global).__db_stored = new DefaultDatabase();
     }

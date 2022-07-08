@@ -1,4 +1,4 @@
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestHandlerOutput} from '@sveltejs/kit';
 import {dayjs} from 'dayjs';
 
 export async function post(): Promise<RequestHandlerOutput> {
@@ -9,16 +9,13 @@ export async function post(): Promise<RequestHandlerOutput> {
 }
 
 function newLogoutHeader() {
-  // const expire = addMinutes(new Date(), 15).toUTCString();
-  const expire = dayjs().toDate().toUTCString();
-  // const expireRefresh = addDays(new Date(), 1).toUTCString();
-  const expireRefresh = dayjs().toDate().toUTCString();
+  const rightNow = dayjs().toDate().toUTCString();
 
   const headers = new Headers();
   headers.append('Set-Cookie',
-    `token=; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
+    `token=; Path=/; Expires=${rightNow}; SameSite=Strict; HttpOnly;`);
   headers.append('Set-Cookie',
-    `refresh=; Path=/; Expires=${expireRefresh}; SameSite=Strict; HttpOnly;`);
+    `refresh=; Path=/; Expires=${rightNow}; SameSite=Strict; HttpOnly;`);
 
   return headers;
 }

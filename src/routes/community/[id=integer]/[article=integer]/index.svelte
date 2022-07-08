@@ -291,13 +291,13 @@
   </div>
 
   <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
-    <div class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+    <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
       <div class="space-y-2 mb-4">
         <div class="flex justify-between">
           <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
             <h2 class="text-2xl flex-shrink">{article.title}</h2>
             <div class="inline-block flex space-x-2">
-              <div>
+              <div class="py-2 md:py-0">
                 {#if session && session.uid !== article.author}
                   <span class="mt-0.5 cursor-pointer hover:text-red-600">
                     <Report size="1rem"/>
@@ -314,7 +314,7 @@
                   </span>
                 {/if}
               </div>
-              <div>
+              <div class="py-2 md:py-0">
                 {#if session?.rank >= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Admin size="1rem"/>
@@ -323,7 +323,7 @@
               </div>
             </div>
           </div>
-          <div>
+          <div class="flex flex-col md:flex-col">
             <span><View size="1rem"/> {article.views ?? 1}</span>
 
             <button data-tooltip-target="tooltip-time-specific" type="button">
@@ -361,47 +361,46 @@
         {/each}
       </article>
       <div class="pt-3">
-        {#if session}
-          <li class="inline-block text-sky-400 hover:text-sky-600" reserved>
-            <Tag>
-              {#if liked}
-                <Like size="1rem" />
-              {:else}
-                <LikeEmpty size="1rem" />
-              {/if}
-              0
-            </Tag>
-          </li>
-          <li class="inline-block text-red-400 hover:text-red-600" reserved>
-            <Tag>
-              {#if disliked}
-                <Dislike size="1rem" />
-              {:else}
-                <DislikeEmpty size="1rem" />
-              {/if}
-              0
-            </Tag>
-          </li>
-        {/if}
-        {#each article.tags as tag}
-          <li class="inline-block">
-            <Tag>{tag}</Tag>
-          </li>
-        {/each}
-        {#if session}
-          <span
-            class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 transition transition-transform cursor-pointer select-none">
-            <Plus size="1rem"/>새 태그 추가
-          </span>
-        {/if}
+        <ul class="space-x-2 flex flex-wrap">
+          {#if session}
+            <li class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
+              <Tag>
+                {#if liked}
+                  <Like size="1rem" />
+                {:else}
+                  <LikeEmpty size="1rem" />
+                {/if}
+                0
+              </Tag>
+            </li>
+            <li class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
+              <Tag>
+                {#if disliked}
+                  <Dislike size="1rem" />
+                {:else}
+                  <DislikeEmpty size="1rem" />
+                {/if}
+                0
+              </Tag>
+            </li>
+          {/if}
+          {#each Object.keys(article.tags) as tagName}
+            <li class="inline-block mb-2">
+              <Tag count="{article.tags[tagName]}">{tagName}</Tag>
+            </li>
+          {/each}
+
+          {#if session}
+            <li class="inline-block mb-2">
+              <Tag><Plus size="1rem"/> 새 태그 추가</Tag>
+            </li>
+          {/if}
+        </ul>
       </div>
     </div>
 
-    <div class="w-11/12 md:w-3/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
+    <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
 
-      {#if isEmpty(comments)}
-        <p class="mt-8 text-zinc-500 text-lg text-center">댓글이 없어요...</p>
-      {/if}
 
       <ul class="space-y-2">
 
@@ -412,10 +411,18 @@
         {/each}
 
       </ul>
+
+      <p class="mt-8 text-zinc-500 text-lg text-center">
+        {#if isEmpty(comments)}
+          댓글이 없어요...
+        {:else}
+          끝
+        {/if}
+      </p>
     </div>
   </div>
 
-  <div class="relative w-11/12 md:w-3/5 lg:w-3/5 mx-auto">
+  <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
     <div class="absolute" style="bottom: {session ? '9' : '2'}rem; left: -0.5rem;">
       <ul class="space-y-2">
         <li>
@@ -469,7 +476,7 @@
     height: calc(100vh - 62px);
     // for mobile
     @supports (-webkit-appearance:none) {
-      height: calc(var(--vh, 1vh) * 100 - 62px);
+      height: calc(var(--vh, 1vh) * 100 - 62px - env(safe-area-inset-bottom));
     }
   }
 

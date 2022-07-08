@@ -42,8 +42,8 @@
   {/if}
   <ul class="divide-y">
     {#each list as article}
-      <li>
-        <a class="flex justify-between space-x-4 py-4" sveltekit:prefetch
+      <li class="py-4">
+        <a class="flex justify-between space-x-4" sveltekit:prefetch
            href="/community/{board}/{article._key}">
           <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
           <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
@@ -95,12 +95,12 @@
             </div>
           </div>
         </a>
-        {#if article.tags.length > 0}
+        {#if Object.keys(article.tags).length > 0}
           <div class="w-full px-2">
-            <ul>
-              {#each article.tags as tag}
+            <ul class="space-x-1">
+              {#each Object.keys(article.tags) as tagName}
                 <li class="inline-block">
-                  <Tag>{tag}</Tag>
+                  <Tag count="{article.tags[tagName]}">{tagName}</Tag>
                 </li>
               {/each}
             </ul>

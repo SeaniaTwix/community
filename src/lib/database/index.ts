@@ -2,7 +2,11 @@ import {Database} from 'arangojs';
 import assert from 'node:assert/strict';
 import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
+import {Mutex} from 'async-mutex';
 import type {ArrayCursor} from 'arangojs/cursor';
+// import type {MutexInterface} from 'async-mutex';
+
+const mutex = new Mutex;
 
 export default class DefaultDatabase {
   private static url = 'http://localhost:8529';
@@ -74,16 +78,20 @@ export default class DefaultDatabase {
     assert.equal(!!this.db, true);
   }
 
-  query<T = any>(q: AqlQuery) {
-    return this.init()
-      .then(() => this.db.query(q) as Promise<ArrayCursor<T>>)
-      .catch((reason) => {
-        const q = this.relogin()
-          .catch(() => console.error('database auth error. before query error:', reason))
-          .then(() => this.query(q));
-        
-        return q;
-      });
+  async query<T = any>(q: AqlQuery, level = 0): Promise<ArrayCursor<T>> {
+    const release = await mutex.acquire();
+    try {
+      await this.init();
+      return await this.db.query(q);
+    } catch (e: any) {
+      if (e.errorNum === 11) {
+        await this.relogin();
+        return await this.db.query(q);
+      }
+      throw e;
+    } finally {
+      release();
+    }
   }
 }
 

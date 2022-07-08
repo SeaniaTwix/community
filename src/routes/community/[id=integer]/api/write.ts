@@ -76,14 +76,23 @@ class WriteRequest {
   }
 
   get tags(): string[] {
-    const tags = this.body.tags ?? [];
-    // console.log('received:', tags);
+    const tagsList = this.body.tags as string[] ?? [];
     const isNotEmpty = (v: any) => !isEmpty(v);
-    const filtered = tags.filter(isNotEmpty);
-    // console.log('filtered:',filtered);
-    const mapped = filtered.map(v => v.trim());
-    // console.log(mapped);
-    return mapped ?? [];
+    const filtered = tagsList.filter(isNotEmpty);
+    return filtered.map(v => v.trim());
+
+    /*
+    const tags = {[userId]: [] as any[]};
+
+    for (const name of mapped) {
+      tags[userId].push({
+        name,
+        createdAt: new Date,
+        pub: true,
+      });
+    }
+
+    return tags; */
   }
 
   get content(): string | undefined {
@@ -112,13 +121,15 @@ class WriteRequest {
     // console.log(userId, user)
     // const uid = await user.data;
     if (!user) {
+      this.error = 'user not exists';
       return;
     }
 
     const data: Partial<IArticle> = {
       title: this.title,
       content: this.content,
-      tags: this.tags,
+      // lazy
+      tags: {},
       author: userId,
       createdAt: new Date(),
       board: this.boardId!,
@@ -130,6 +141,9 @@ class WriteRequest {
     const {_key} = await cursor.next();
 
     this.id = _key;
+    const article = new Article(_key);
+
+    await article.addTags(userId, this.tags);
   }
 
   get status(): number {

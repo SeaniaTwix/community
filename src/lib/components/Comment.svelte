@@ -6,10 +6,15 @@
   import Edit from 'svelte-material-icons/Pencil.svelte';
   import Delete from 'svelte-material-icons/TrashCan.svelte';
   import Report from 'svelte-material-icons/AlertBox.svelte';
+  import Like from 'svelte-material-icons/ThumbUp.svelte';
+  import LikeEmpty from 'svelte-material-icons/ThumbUpOutline.svelte';
+  import Dislike from 'svelte-material-icons/ThumbDown.svelte';
+  import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import Lock from 'svelte-material-icons/Lock.svelte';
   import Pub from 'svelte-material-icons/EyeCheck.svelte';
   import Private from 'svelte-material-icons/EyeOff.svelte';
-  import Reply from 'svelte-material-icons/Reply.svelte';
+  import Messages from 'svelte-material-icons/Message.svelte';
+  import Admin from 'svelte-material-icons/Settings.svelte';
 
   import {EUserRanks} from '$lib/types/user-ranks';
   import TimeAgo from 'javascript-time-ago';
@@ -56,18 +61,6 @@
     });
   }
 
-  function onPubClicked(id: string) {
-    dispatch('pub', {
-      id,
-    });
-  }
-
-  function onPrivateClicked(id: string) {
-    dispatch('private', {
-      id,
-    });
-  }
-
   let showInfo = false;
   export let selected = false;
   export let user: IUser;
@@ -78,10 +71,11 @@
 
 <div class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted spacey">
   <div class="space-y-4">
-    <div class="flex justify-between" class:mb-4={!showInfo}>
+    <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
-        <div on:click={() => {showInfo = !showInfo; selected = !selected}} class="flex space-x-2 hover:cursor-pointer group">
-          <div class="w-12 min-h-[3rem]">
+        <div on:click={() => {showInfo = !showInfo; selected = !selected}}
+             class="flex space-x-2 hover:cursor-pointer group">
+          <div class="w-10 min-h-[2.5rem]">
             <CircleAvatar/>
           </div>
           <span class="mt-2.5 group-hover:text-sky-400">
@@ -89,13 +83,48 @@
             {#if selected}(이 메시지에 답장 중){/if}
           </span>
         </div>
-        <span class="mt-2.5 space-x-1">
-          {#if session}
-            <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
-                  on:click={() => onReplyClicked(comment._key)}>
-              <Reply size="1rem"/>
-            </span>
-          {/if}
+      </div>
+      <div>
+        <button data-tooltip-target="tooltip-comment-time-specific-{comment._key}" type="button">
+          <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+            {timeAgo.format(new Date(comment.createdAt))}
+          </time>
+        </button>
+
+        <div id="tooltip-comment-time-specific-{comment._key}" role="tooltip"
+             class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
+          작성 시간: {timeFullFormat(comment.createdAt)}
+          <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+      </div>
+    </div>
+    {#if showInfo}
+      <div class="pb-4">
+        유저 정보:
+      </div>
+    {/if}
+  </div>
+  <div class="flex flex-col justify-between p-2 pt-4 divide-y divide-dotted">
+    <div class="flex-grow pb-4">
+      {#each comment.content.split('\n') as line}
+        <p>{line}</p>
+      {/each}
+    </div>
+    {#if session}
+      <div class="pt-2 flex justify-between">
+        <span class="">
+          <span class="text-sky-500 hover:text-sky-700 cursor-pointer p-2 sm:p-0">
+            <LikeEmpty size="1rem" /> 0
+          </span>
+          <span class="text-red-500 hover:text-red-700 cursor-pointer p-2 sm:p-0">
+            <DislikeEmpty size="1rem" /> 0
+          </span>
+        </span>
+        <span>
+          <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                on:click={() => onReplyClicked(comment._key)}>
+            <Messages size="1rem"/>
+          </span>
 
           {#if session && session.uid !== comment.author}
             <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
@@ -119,45 +148,11 @@
           {#if session?.rank >= EUserRanks.Manager}
             <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
                   on:click={() => onLockClicked(comment._key)}>
-              <Lock size="1rem"/>
-            </span>
-            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                  on:click={() => onPubClicked(comment._key)}>
-              <Pub size="1rem"/>
-            </span>
-            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                  on:click={() => onPrivateClicked(comment._key)}>
-              <Private size="1rem"/>
+              <Admin size="1rem"/>
             </span>
           {/if}
         </span>
       </div>
-      <div>
-        <button data-tooltip-target="tooltip-comment-time-specific-{comment._key}" type="button">
-          <time class="text-zinc-500 dark:text-zinc-300 text-sm">
-            {timeAgo.format(new Date(comment.createdAt))}
-          </time>
-        </button>
-
-        <div id="tooltip-comment-time-specific-{comment._key}" role="tooltip"
-             class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
-          작성 시간: {timeFullFormat(comment.createdAt)}
-          <div class="tooltip-arrow" data-popper-arrow></div>
-        </div>
-      </div>
-    </div>
-    {#if showInfo}
-      <div class="pb-4">
-        유저 정보:
-      </div>
     {/if}
-  </div>
-  <div class="flex flex-col justify-between p-2 pt-4">
-    <div class="grow">
-
-      {#each comment.content.split('\n') as line}
-        <p>{line}</p>
-      {/each}
-    </div>
   </div>
 </div>

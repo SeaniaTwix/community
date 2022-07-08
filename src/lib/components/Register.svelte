@@ -66,7 +66,7 @@
 
 <form on:submit|preventDefault class="space-y-4 text-lg">
   <input type="text" placeholder="계정 이름 겸 닉네임" on:keydown={(e) => checkEnter(e, 0)}
-         bind:value={id}
+         bind:value={id} autocorrect="off" autocapitalize="none"
          class="w-full shadow-md rounded-md px-4 py-2 focus:outline-0">
   <input type="password" placeholder="비밀번호" on:keydown={(e) => checkEnter(e, 1)}
          bind:this={password} bind:value={pw}

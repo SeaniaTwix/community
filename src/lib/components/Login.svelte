@@ -67,7 +67,7 @@
 
 <form on:submit|preventDefault class="space-y-4 font-medium">
   <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
-         bind:value={id}
+         bind:value={id} autocorrect="off" autocapitalize="none"
          class="w-full shadow-md rounded-md px-4 py-2 focus:outline-0">
   <input type="password" placeholder="PW" on:keydown={(e) => checkEnter(e, 1)}
          bind:this={passwordInput} bind:value={password}

@@ -5,14 +5,14 @@ import {User} from '$lib/auth/user/server';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
 import HttpStatus from 'http-status-codes';
 
-export async function get({params}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function get({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
 
   try {
     return {
       status: 200,
       body: {
-        article: await read.get(),
+        article: await read.get(locals?.user.uid),
       }
     }
   } catch (e) {
@@ -39,7 +39,7 @@ class ReadArticleRequest {
         update { _key: ${this.article} } with { views: v } in articles`);
   } // */
 
-  async get() {
+  async get(reader?: string) {
     const cursor = await db.query(aql`
       for article in articles
         filter article._key == ${this.article} and article.board == ${this.board}
@@ -47,8 +47,16 @@ class ReadArticleRequest {
 
     const article: ArticleDto = await cursor.next();
 
-    // await this.updateArticle();
     article.views += 1;
+
+    const tags: Record<string, number> = {};
+
+    for (const userTags of Object.values(article.tags)) {
+      for (const tag of Object.values(userTags) as any[]) {
+        const tagName = tag.name;
+        tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
+      }
+    }
 
     const uid = article.author;
     if (!uid) {
@@ -63,9 +71,18 @@ class ReadArticleRequest {
 
     // todo
 
+    const myTags = reader ? (<Record<string, Record<string, any>>>article.tags)[reader] : undefined;
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    delete article.tags;
+
+    (<any>article).tags = tags;
+
     return {
       ...article,
-      user: {name: user.id}
+      user: {name: user.id},
+      myTags,
     }
 
   }
