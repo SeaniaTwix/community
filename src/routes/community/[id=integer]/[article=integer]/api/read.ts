@@ -7,13 +7,14 @@ import HttpStatus from 'http-status-codes';
 
 export async function get({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
-  console.log(read);
 
   try {
+    const uid = locals?.user?.uid;
+    const article: any = await read.get(uid);
     return {
       status: 200,
       body: {
-        article: await read.get(locals?.user?.uid),
+        article,
       }
     }
   } catch (e: any) {
@@ -30,15 +31,6 @@ class ReadArticleRequest {
   constructor(private readonly board: string,
               private readonly article: string) {
   }
-
-  /*
-  private updateArticle() {
-    console.log('update article:', this.article)
-    return db.query(aql`
-      for article in articles
-        let v = article.views != null ? article.views + 1 : 1
-        update { _key: ${this.article} } with { views: v } in articles`);
-  } // */
 
   async get(reader?: string) {
     const cursor = await db.query(aql`
@@ -74,13 +66,13 @@ class ReadArticleRequest {
 
     // todo
 
-    const myTags = reader ? (<Record<string, Record<string, any>>>article.tags)[reader] : undefined;
+    const myTags = reader ? article.tags[reader] : undefined;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     delete article.tags;
 
-    (<any>article).tags = tags;
+    article.tags = tags;
 
     return {
       ...article,

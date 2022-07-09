@@ -2,6 +2,8 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
+import {Pusher} from '$lib/pusher/server';
+import type {ITag} from '$lib/types/tag';
 
 /**
  * 예약된 태그들입니다.
@@ -13,7 +15,7 @@ import {Article} from '$lib/community/article/server';
 const reserved = {
   '추천': 'like',
   '비추': 'dislike',
-  '벌레': 'smile',
+  '일베충': 'smile',
   '어그로': '03',
 };
 
@@ -35,18 +37,47 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
 
   const tagList = uniq(names.split(',').map(t => t.trim()));
   const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@]+$/g;
+  const {article} = params;
 
   for (const name of tagList) {
-    if (name.startsWith('_')) {
+    /**
+     * 여기 예약 태그들은 한 번에 등록할 수 없습니다.
+     * 추천과 비추천을 한 번에 누르지 못하게 하기 위함입니다.
+     * 따라서 예약 태그를 발견하면 해당 예약 태그만 등록하고 나머지 요청은 무시됩니다.
+     */
+    if (name.startsWith('_') || Object.keys(reserved).includes(name)) {
       if (Object.values(reserved).includes(name.slice(1))) {
-        // todo: add reserved tag
+        const addTag = new AddTagRequest(article, [name]);
+
+        if (name === '_like' || name === '_dislike') {
+          if (await addTag.isVoteAlready(locals.user.uid)) {
+            return {
+              status: HttpStatus.NOT_ACCEPTABLE,
+              body: {
+                reason: 'you voted this already',
+              }
+            }
+          }
+        }
+
+        try {
+          await addTag.addAll(locals.user.uid);
+        } catch (e: any) {
+          return {
+            status: HttpStatus.BAD_GATEWAY,
+            body: {
+              reason: e.toString(),
+            },
+          };
+        }
+
         return succeed;
       }
 
       return unacceptableTagNameError(name);
     }
 
-    console.log(`${name}:`, tagNameValidator.test(name), tagNameValidator.exec(name));
+    // console.log(`${name}:`, tagNameValidator.test(name), tagNameValidator.exec(name));
 
     if (!tagNameValidator.test(name)) {
       return unacceptableTagNameError(name);
@@ -61,8 +92,7 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
     }
   }
 
-  const uniqTagList = uniq(tagList);
-  const {article} = params;
+  const uniqTagList: string[] = uniq(tagList);
 
   const addTag = new AddTagRequest(article, uniqTagList);
 
@@ -77,6 +107,11 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
     };
   }
 
+  Pusher.notify('tag', article, locals.user.uid, {
+    tag: uniqTagList,
+    type: 'add',
+  });
+
 
   return {
     status: HttpStatus.ACCEPTED,
@@ -90,10 +125,19 @@ class AddTagRequest {
     this.article = new Article(articleId);
   }
 
-  addAll(userId: string) {
-    return this.article.addTags(userId, uniq(this.tags));
+  async addAll(userId: string) {
+    if (!await this.article.exists) {
+      return;
+    }
+    return await this.article.addTags(userId, uniq(this.tags));
   }
 
+  async isVoteAlready(userId: string) {
+    const article = await this.article.get();
+    const tags = article.tags[userId];
+
+    return tags?.find((tag: ITag) => tag.name === '_like' || tag.name === '_dislike') !== undefined;
+  }
 
 }
 

@@ -4,20 +4,17 @@ import _ from 'lodash-es';
 import njwt from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
-import type {EUserRanks} from '$lib/types/user-ranks';
 import {atob, btoa} from 'js-base64';
 import {User} from './lib/auth/user/server';
 import {dayjs} from 'dayjs';
+import type { JwtUser } from '$lib/types/user';
 
 global.atob = atob;
 global.btoa = btoa;
 
+// noinspection JSUnusedLocalSymbols
 /** @type {import('@sveltejs/kit').Handle} */
-export async function handle({event, resolve}: HandleParameter) {
-  /* console.log('event:', event);
-  const r = await resolve(event);
-  console.log('resolved', r);
-  return r; */
+export async function handle({event, resolve}: HandleParameter): Promise<Response> {
   let result: GetUserReturn | undefined;
   try {
     result = await getUser(event.request.headers.get('cookie'));
@@ -27,7 +24,6 @@ export async function handle({event, resolve}: HandleParameter) {
       const response = await resolve(event);
       const expire = dayjs().add(15, 'minute').toDate().toUTCString();
       response.headers.set('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
-      // console.log('return', 1);
       return response;
     }
   } catch (e) {
@@ -36,10 +32,7 @@ export async function handle({event, resolve}: HandleParameter) {
 
   if (!result) {
     // noinspection ES6RedundantAwait
-    // console.log('resolve', 2);
-    const r = await resolve(event);
-    // console.log('return', 2);
-    return r;
+    return await resolve(event);
   }
 
   event.locals.user = result.user;
@@ -54,7 +47,6 @@ export async function handle({event, resolve}: HandleParameter) {
     console.trace('error');
   }
 
-  // console.log('return', 3);
   return response;
 }
 
@@ -79,7 +71,7 @@ async function refreshJwt(token: string) {
   return undefined;
 }
 
-type GetUserReturn = { user: Rec<any>, newToken?: string };
+type GetUserReturn = { user: JwtUser, newToken?: string };
 async function getUser(cookie: string | null): Promise<GetUserReturn | undefined> {
 
   if (_.isEmpty(cookie)) {
@@ -90,7 +82,7 @@ async function getUser(cookie: string | null): Promise<GetUserReturn | undefined
   if (!token) {
     if (refresh) {
       try {
-        return await refreshJwt(refresh)
+        return await refreshJwt(refresh) as any
       } catch (e) {
         console.error(e)
         return undefined;
@@ -105,27 +97,12 @@ async function getUser(cookie: string | null): Promise<GetUserReturn | undefined
     return undefined;
   }
 
-  return { user: jwt.body.toJSON() as Rec<any> };
-  // console.log(body)
+  return { user: jwt.body.toJSON() as any };
 }
 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
   return event.locals.user;
-}
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace App {
-    interface Locals {
-      user: any;
-    }
-
-    interface Session {
-      uid: string;
-      rank: EUserRanks;
-    }
-  }
 }
 
 interface HandleParameter {

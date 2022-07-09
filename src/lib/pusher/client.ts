@@ -2,6 +2,7 @@ import {Subject} from 'rxjs';
 import type {Observable} from 'rxjs';
 import type {CommentDto} from '$lib/types/dto/comment.dto';
 import {isEmpty} from 'lodash-es';
+import type {PushAbout} from './shared';
 
 try {
   if (!Object.hasOwn) {
@@ -28,7 +29,7 @@ export class Pusher {
     }
   }
 
-  observable(about: 'comments'): Observable<{ body: CommentDto, socket: WebSocket }> {
+  observable(about: PushAbout): Observable<{ body: CommentDto, socket: WebSocket }> {
     const dev = window.location.host.startsWith('localhost');
     const url = dev ? 'ws://localhost:50000' : 'wss://push.ru.hn'
     const ws = new WebSocket(`${url}/subscribe/${this.target}/${about}`);

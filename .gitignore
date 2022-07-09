@@ -10,3 +10,5 @@ node_modules
 ecosystem.config.cjs
 
 .idea/
+
+.pnpm-debug.log

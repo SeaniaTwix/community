@@ -13,12 +13,14 @@
     if (!session) {
       try {
         sessionStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
-      } catch {}
+      } catch {
+        //
+      }
 
       return {
         status: HttpStatus.MOVED_TEMPORARILY,
         redirect: '/login',
-      }
+      };
     }
 
     const nr = await fetch(`/community/${params.id}/api/info`);
@@ -37,17 +39,19 @@
 <script lang="ts">
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Delete from 'svelte-material-icons/Delete.svelte';
-  // import 'froala-editor/css/froala_editor.min.css';
   import _ from 'lodash-es';
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
-  //import Tiptap from '$lib/components/Tiptap.svelte';
-  // import type {Editor} from '@tiptap/core';
   import Editor from '@tinymce/tinymce-svelte';
-  import {onMount} from 'svelte';
-  import {CookieParser} from '$lib/cookie-parser';
+  import {onDestroy, onMount, tick} from 'svelte';
   import {theme} from '$lib/stores/shared/theme';
+  import {writable} from 'svelte/store';
+  import type {Editor as TinyMCE, Events} from 'tinymce';
+
+  type CommandEvent = Events.CommandEvent;
+
+  const f = writable<File>(null);
 
   export let editorKey: string;
   export let board: string;
@@ -55,28 +59,73 @@
 
   $: dark = $theme.mode === 'dark';
 
+  function imageUpload(file: File) {
+    return new Promise<string>(async (resolve, reject) => {
+      try {
+        // const file = blobInfo.blob();
+        const request = await ky.post(`/file/request?type=${file.type}`)
+          .json<{ uploadUrl: string, key: string }>();
+        await ky.put(request.uploadUrl, {
+          body: file,
+          onDownloadProgress: console.log,
+        });
+        // console.log(blobInfo.blob());
+        resolve(`https://s3.ru.hn/${request.key}`);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
   const defaultEditorSettings = {
     language: 'ko_KR',
     plugins: 'image imagetools media searchreplace code autolink autosave',
-    toolbar: 'image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
+    toolbar: 'uploadImageRu image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
     autosave_ask_before_unload: false,
-    images_upload_url: '/file/upload',
+    // images_upload_url: '/file/upload',
     // images_upload_base_path: '/file',
+    images_upload_handler: (blobInfo: IBlobInfo) => imageUpload(blobInfo.blob()),
     resize: true,
     min_height: 160,
+
+    file_picker_types: 'image media',
+    images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl',
+    //*
+    setup: (_editor) => {
+      editor = _editor;
+      _editor.ui.registry.addButton('uploadImageRu', {
+        text: '바로 업로드',
+        onAction: async () => {
+          await tick();
+          fileUploader.click();
+          // console.log(editor);
+        },
+      });
+    }, // */
+  };
+
+  interface IBlobInfo {
+    base64: () => any;
+    blob: () => File;
+    blobUri: () => any;
+    filename: () => any;
+    id: () => any;
+    name: () => any;
+    uri: () => any;
   }
 
   const darkEditorSettings = {
     ...defaultEditorSettings,
     skin: 'oxide-dark',
     content_css: 'dark',
-  }
+  };
 
   // let editorObject: Editor;
 
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
-  let editor;
+  let fileUploader: HTMLInputElement;
+  let editor: TinyMCE;
   let title = '';
   let content = '';
   let tag = '';
@@ -86,6 +135,14 @@
   let addMode = false;
 
   let uplading = false;
+
+  function fileSelected() {
+    f.set(fileUploader.files[0]);
+  }
+
+  function insertImage(imageUrl: string) {
+    editor.insertContent(`<img src="${imageUrl}" alt="uploaded-at-${new Date}" />`);
+  }
 
   async function upload() {
     if (uplading) {
@@ -100,7 +157,7 @@
         board,
         title,
         content, //editorObject.getHTML(),
-        tags
+        tags,
       };
 
       const response = await ky.post(`/community/${board}/api/write`, {
@@ -142,15 +199,28 @@
   }
 
   function defaultEditorResized(event: CustomEvent) {
-
+    //
   }
 
   function detectPaste(event: KeyboardEvent, type: 'down' | 'up') {
     console.log(type, event);
   }
 
+  let unsub: () => void;
   onMount(() => {
     titleInput.focus();
+
+    unsub = f.subscribe(async (file) => {
+      if (!file) return;
+      const url = await imageUpload(file);
+      insertImage(url);
+    });
+  });
+
+  onDestroy(() => {
+    if (unsub) {
+      unsub();
+    }
   })
 
 </script>
@@ -159,10 +229,14 @@
   <title>게시판 - {name} - 새 글 쓰기</title>
 </svelte:head>
 
+<div class="hidden">
+  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
+</div>
+
 <div class="mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
   <input bind:this={titleInput}
-    class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
-    type="text" placeholder="제목" bind:value={title}/>
+         class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
+         type="text" placeholder="제목" bind:value={title}/>
   <div class="min-h-[25rem]">
     {#if !editorLoaded}
       에디터 초기화 중...
@@ -180,7 +254,7 @@
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
                 conf="{defaultEditorSettings}"
-                bind:value={content} />
+                bind:value={content}/>
       {/if}
     </div>
   </div>

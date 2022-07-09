@@ -118,7 +118,7 @@ class CommentRequest {
 
   async add(userId: string, comment: CommentDto) {
     const cursor = await db.query(aql`
-      insert merge(${comment}, {author: ${userId}, createdAt: ${new Date()}}) into comments return NEW`)
+      insert merge(${comment}, {author: ${userId}, createdAt: ${new Date()}, like: 0, dislike: 0}) into comments return NEW`)
     return await cursor.next();
   }
 

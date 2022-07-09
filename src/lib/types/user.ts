@@ -12,3 +12,14 @@ interface IUserProfile {
   name: string;
   ext: string[];
 }
+
+export interface JwtUser {
+  iss: 'https://ru.hn';
+  sub: string;
+  scope: 'user' | 'refresh';
+  jti: string;
+  iat: number;
+  exp: number;
+  uid: string;
+  rank: EUserRanks;
+}

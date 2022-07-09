@@ -1,5 +1,6 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
+import type {ArticleDto} from '$lib/types/dto/article.dto';
 
 export class Article {
 
@@ -7,6 +8,14 @@ export class Article {
   content: string | undefined;
 
   constructor(readonly id: string) {
+  }
+
+  async get(): Promise<ArticleDto> {
+    const cursor = await db.query(aql`
+      for article in articles
+        filter article._key == ${this.id}
+          return article`);
+    return await cursor.next();
   }
 
   get exists(): Promise<boolean> {
@@ -59,6 +68,28 @@ export class Article {
               ${userId}: append(userTags, tags)
             })
           } in articles`);
+  }
+
+  async removeTags(userId: string, tags: string[]) {
+    if (tags.find(tag => /\s/.test(tag))) {
+      throw new Error('whitespace not allowed in tag');
+    }
+
+    const r = await db.query(aql`
+      for article in articles
+        filter article._key == ${this.id}
+          let userTags = has(article.tags, ${userId}) ? article.tags[${userId}] : []
+          let newTags = (
+            for t in userTags
+              filter t.name not in ${tags}
+                return t)
+          update article with merge_recursive(article, { 
+            tags: {
+              ${userId}: newTags,
+            }
+          }) in articles`);
+
+    console.dir(await r.next(), {depth: 3})
   }
 
 }

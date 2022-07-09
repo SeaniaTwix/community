@@ -16,6 +16,7 @@
     const elems = $('.__top:first > *').toArray();
     const contents = [];
     for (const elem of elems) {
+      // console.log(elem);
       contents.push(cheerio(elem).html());
     }
     const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
@@ -68,6 +69,7 @@
   import LikeEmpty from 'svelte-material-icons/ThumbUpOutline.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
+  import RemoveTag from 'svelte-material-icons/Close.svelte';
   import {ko} from '$lib/time-ko';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
@@ -82,13 +84,19 @@
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
   import {inRange} from 'lodash-es';
+  import Content from '$lib/components/Content.svelte';
 
   /**
    * 게시글 보기
    */
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
-  export let article: IArticle;
+
+  interface TagType {
+    [tagName: string]: number;
+  }
+
+  export let article: IArticle<TagType> = undefined;
   export let contents: string[] = [];
   export let boardName: string;
   // eslint-disable-next-line no-undef
@@ -96,11 +104,10 @@
   export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
-  export let liked = false;
-  export let disliked = false;
-
-  const youtubeUrlFind =
-    /<a href="https:\/\/(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?(.*?)"/;
+  let liked = article.myTags?.find((tag) => tag.name === '_like') !== undefined;
+  let disliked = article.myTags?.find((tag) => tag.name === '_dislike') !== undefined;
+  let likeCount = article.tags?._like ?? 0;
+  let dislikeCount = article.tags?._dislike ?? 0;
 
   /**
    * 대댓글 등의 댓글 id가 들어올 수 있습니다.
@@ -152,6 +159,11 @@
     }
   }
 
+  function isMyTag(tagName: string): boolean {
+    // console.log(tagName, article.myTags)
+    return article.myTags?.find(tag => tag.name === tagName) !== undefined;
+  }
+
 
   let prevVisualViewport = 0;
   const fixIosKeyboardScrolling = () => {
@@ -169,13 +181,67 @@
       window.scrollTo(0, 0);
       prevVisualViewport = window.visualViewport.height;
     }
+  };
+
+  async function addTag(tags: string) {
+    const t = tags.includes(',')
+      ? tags.split(',').map(v => v.trim()).join(',') : tags.trim();
+    return await ky
+      .put(`/community/${article.board}/${article._key}/api/tag/add?name=${t}`)
+      .json();
   }
 
+  async function removeTag(tags: string) {
+    const t = tags.includes(',')
+      ? tags.split(',').map(v => v.trim()).join(',') : tags.trim();
+    return await ky
+      .delete(`/community/${article.board}/${article._key}/api/tag/remove?name=${t}`)
+      .json();
+  }
 
+  async function vote(type: 'like' | 'dislike') {
+    console.log(type);
+    if (type === 'like') {
+      if (liked) {
+        liked = false;
+        return removeTag('_like');
+      } else if (disliked) {
+        disliked = false;
+        await removeTag('_dislike');
+      }
+      liked = true;
+      return await addTag('_like');
+    } else { // vote dislike
+      if (disliked) {
+        disliked = false;
+        return removeTag('_dislike');
+      } else if (liked) {
+        liked = false;
+        await removeTag('_like');
+      }
+      disliked = true;
+      return await addTag('_dislike');
+    }
+  }
 
-  let subscription: Subscription;
+  async function userNameExistingCheck(author: string) {
+    if (!users[author]) {
+      try {
+        const {user} = await ky.get(`/user/profile/api/detail?id=${author}`)
+          .json<{ user: IUser }>();
+
+        users[user._key] = user;
+      } catch {
+        console.error('user detail unavaliable');
+      }
+    }
+  }
+
+  let subscriptions: Subscription[] = [];
   let pusher: Pusher;
   onMount(async () => {
+    console.log(article);
+
     pusher = new Pusher(article._key);
 
     document.body.classList.add('overflow-hidden', 'touch-none');
@@ -187,30 +253,42 @@
 
       ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
 
+
       const whileSub = async ({body}) => {
-        const newComment: IComment = {
-          ...body,
-          createdAt: new Date,
-        };
-
         if (typeof body.author === 'string') {
-          if (!users[body.author]) {
-            try {
-              const {user} = await ky.get(`/user/profile/api/detail?id=${body.author}`)
-                .json<{ user: IUser }>();
+          await userNameExistingCheck(body.author);
 
-              users[user._key] = user;
-            } catch {
-              console.error('user detail unavaliable');
+          if (body.content) {
+            const newComment: IComment = {
+              ...body,
+              createdAt: new Date,
+            };
+            comments = [...comments, newComment];
+          }
+        }
+      };
+
+      const whenTagChanged = async ({body}) => {
+        // await userNameExistingCheck(body.author);
+        const tags = body.tag as string[];
+        const type = body.type as 'add' | 'remove';
+        if (tags) {
+          let amount = type === 'add' ? 1 : -1;
+          for (const tag of tags) {
+            // noinspection TypeScriptUnresolvedFunction
+            if (Object.keys(article.tags).includes(tag)) {
+              article.tags[tag] += amount;
+            } else if (amount > 0) {
+              article.tags[tag] = 1;
             }
           }
-
-          comments = [...comments, newComment];
         }
       };
 
       const observable = pusher.observable('comments');
-      subscription = observable.subscribe(whileSub);
+      subscriptions.push(observable.subscribe(whileSub));
+      const tagChange = pusher.observable('tag');
+      subscriptions.push(tagChange.subscribe(whenTagChanged));
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
 
@@ -220,7 +298,9 @@
   });
 
   onDestroy(() => {
-    subscription?.unsubscribe();
+    for (const sub of subscriptions) {
+      sub.unsubscribe();
+    }
     pusher?.close();
     try {
 
@@ -244,14 +324,18 @@
 
 <div class="touch-none hidden"></div>
 
+<div class="hidden absolute w-screen h-screen bg-gray-700/50 z-10 top-0">
+
+</div>
+
 <div in:fade
      class="flex flex-col justify-between __fixed-view">
-  <div class="flex justify-between w-full">
+  <div class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
     <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
           <a href="/"
-             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white w-max" >
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white w-max">
             <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
@@ -292,7 +376,8 @@
   </div>
 
   <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
-    <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+    <div
+      class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
       <div class="space-y-2 mb-4">
         <div class="flex justify-between">
           <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
@@ -303,13 +388,13 @@
                   <span class="mt-0.5 cursor-pointer hover:text-red-600">
                     <Report size="1rem"/>
                   </span>
-                    {/if}
-                    {#if article.author === session?.uid}
+                {/if}
+                {#if article.author === session?.uid}
                   <span class="mt-0.5 cursor-pointer hover:text-sky-400">
                     <Edit size="1rem"/>
                   </span>
-                    {/if}
-                    {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
+                {/if}
+                {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Delete size="1rem"/>
                   </span>
@@ -348,52 +433,51 @@
         </div>
       </div>
       <article class="p-2 min-h-[10rem]">
-        {#each contents as content}
-          {#if youtubeUrlFind.test(content)}
-            <iframe width="560" height="315"
-                    src="https://www.youtube.com/embed/{youtubeUrlFind.exec(content)[1]}"
-                    title="YouTube video player"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen></iframe>
-          {:else}
-            {@html content}
-          {/if}
-        {/each}
+        <Content contents="{contents}"/>
       </article>
       <div class="pt-3">
         <ul class="space-x-2 flex flex-wrap">
           {#if session}
-            <li class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
+            <li on:click={() => vote('like')}
+                class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
               <Tag>
                 {#if liked}
-                  <Like size="1rem" />
+                  <Like size="1rem"/>
                 {:else}
-                  <LikeEmpty size="1rem" />
+                  <LikeEmpty size="1rem"/>
                 {/if}
-                0
+                {likeCount}
               </Tag>
             </li>
-            <li class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
+            <li on:click={() => vote('dislike')}
+                class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
               <Tag>
                 {#if disliked}
-                  <Dislike size="1rem" />
+                  <Dislike size="1rem"/>
                 {:else}
-                  <DislikeEmpty size="1rem" />
+                  <DislikeEmpty size="1rem"/>
                 {/if}
-                0
+                {dislikeCount}
               </Tag>
             </li>
           {/if}
           {#each Object.keys(article.tags) as tagName}
-            <li class="inline-block mb-2">
-              <Tag count="{article.tags[tagName]}">{tagName}</Tag>
-            </li>
+            {#if !tagName.startsWith('_')}
+              <li class="inline-block mb-2">
+                <Tag count="{article.tags[tagName]}">{tagName}
+                  {#if isMyTag(tagName)}<span class="text-gray-600 leading-none __icon-fix"><RemoveTag
+                    size="1rem"/></span>{/if}
+                </Tag>
+              </li>
+            {/if}
           {/each}
 
           {#if session}
             <li class="inline-block mb-2">
-              <Tag><Plus size="1rem"/> 새 태그 추가</Tag>
+              <Tag>
+                <Plus size="1rem"/>
+                새 태그 추가
+              </Tag>
             </li>
           {/if}
         </ul>
@@ -490,46 +574,13 @@
   }
 
   :global {
-
-    article {
-      h1 {
-        font-size: xx-large;
-      }
-
-      h2 {
-        font-size: larger;
-      }
-
-      h3 {
-        font-size: large;
-      }
-
-      b, strong {
-        font-weight: bold;
-      }
-
-      i {
-        font-style: italic;
-      }
-
-      hr {
-        margin-bottom: 1px;
-      }
-
-      a[href] {
-        color: rgb(56, 189, 248);
-        &:hover {
-
-        }
-      }
-
-      // maybe youtube only...?
-      iframe {
-        width: 100% !important;
-        aspect-ratio: 16/9;
-        height: auto !important;
-        margin: 1rem 0;
+    .__icon-fix {
+      svg {
+        vertical-align: text-top;
+        margin-top: 2px;
       }
     }
+
+
   }
 </style>

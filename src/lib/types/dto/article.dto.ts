@@ -3,9 +3,10 @@
                   @typescript-eslint/no-unused-vars*/
 
 import {Entity, SafeType} from 'dto-mapping';
+import type {ITag} from '$lib/types/tag';
 
 @Entity()
-export class ArticleDto {
+export class ArticleDto<TagType = Record<string, Record<string, ITag>>> {
   constructor(_obj: any) {}
 
   @SafeType({type: String})
@@ -29,5 +30,5 @@ export class ArticleDto {
   views = 0;
 
   //
-  tags: Record<string, Record<string, any>> | string[] = {};
+  tags: TagType;
 }

@@ -1,4 +1,5 @@
 import got from 'got';
+import type {PushAbout} from './shared';
 
 const dev = Object.hasOwn(process.env, 'IS_DEV');
 const url = dev ? 'http://localhost:50000' : 'https://push.ru.hn'
@@ -14,5 +15,3 @@ export class Pusher {
     });
   }
 }
-
-type PushAbout = 'comments'

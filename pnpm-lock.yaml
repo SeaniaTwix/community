@@ -18,6 +18,7 @@ specifiers:
   '@types/sharp': ^0.30.4
   '@types/socketcluster-client': ^16.0.0
   '@types/socketcluster-server': ^16.1.0
+  '@types/tinymce': ^4.6.5
   '@typescript-eslint/eslint-plugin': ^5.27.0
   '@typescript-eslint/parser': ^5.27.0
   arangojs: ^7.8.0
@@ -26,6 +27,7 @@ specifiers:
   autoprefixer: ^10.4.7
   aws-sdk: ^2.1168.0
   cheerio: 1.0.0-rc.12
+  cropperjs: ^1.5.12
   date-fns: ^2.28.0
   date-fns-tz: ^1.3.5
   dayjs: 2.0.0-alpha.2
@@ -47,6 +49,7 @@ specifiers:
   magic-bytes.js: ^1.0.12
   material-icons: ^1.11.3
   minio: ^7.0.28
+  nanoid: ^4.0.0
   njwt: ^1.2.0
   node-webpmux: ^3.1.1
   on-screen-keyboard-detector: ^2.3.0
@@ -80,7 +83,7 @@ dependencies:
   '@aws-sdk/client-iam': 3.121.0
   '@skyra/timestamp': 1.0.0
   '@sveltejs/adapter-node': 1.0.0-next.79
-  '@sveltejs/kit': 1.0.0-next.366_svelte@3.49.0+vite@2.9.13
+  '@sveltejs/kit': 1.0.0-next.367_svelte@3.49.0+vite@2.9.13
   '@tinymce/tinymce-svelte': 1.0.0
   '@tiptap/core': 2.0.0-beta.181
   '@tiptap/starter-kit': 2.0.0-beta.190
@@ -89,6 +92,7 @@ dependencies:
   async-mutex: 0.3.2
   aws-sdk: 2.1168.0
   cheerio: 1.0.0-rc.12
+  cropperjs: 1.5.12
   date-fns: 2.28.0
   date-fns-tz: 1.3.5_date-fns@2.28.0
   dayjs: 2.0.0-alpha.2
@@ -107,6 +111,7 @@ dependencies:
   magic-bytes.js: 1.0.12
   material-icons: 1.11.3
   minio: 7.0.28
+  nanoid: 4.0.0
   njwt: 1.2.0
   node-webpmux: 3.1.1
   on-screen-keyboard-detector: 2.3.0_emittery@0.6.0
@@ -134,6 +139,7 @@ devDependencies:
   '@types/sharp': 0.30.4
   '@types/socketcluster-client': 16.0.0
   '@types/socketcluster-server': 16.1.0
+  '@types/tinymce': 4.6.5
   '@typescript-eslint/eslint-plugin': 5.30.0_5mtqsiui4sk53pmkx7i7ue45wm
   '@typescript-eslint/parser': 5.30.0_b5e7v2qnwxfo6hmiq56u52mz3e
   autoprefixer: 10.4.7_postcss@8.4.14
@@ -1027,8 +1033,8 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltejs/kit/1.0.0-next.366_svelte@3.49.0+vite@2.9.13:
-    resolution: {integrity: sha512-TzHIb0D5cTUb/9g+hGuQU0Ja7VneJkQOBeKKHzXjq7RBO6EHOQ64YJXC9LR2jxveWGwZAaqw4PNT5LfySzLs/w==}
+  /@sveltejs/kit/1.0.0-next.367_svelte@3.49.0+vite@2.9.13:
+    resolution: {integrity: sha512-glilWol6iJEf8esQpH0HOzdI4n/xgZtoLa9U9sbg+BZelQXFRRglaGyw+ahjEreBH5MH3/bpIYAPPObQN8Pgbg==}
     engines: {node: '>=16.9'}
     hasBin: true
     peerDependencies:
@@ -1334,6 +1340,12 @@ packages:
     resolution: {integrity: sha512-SZs7ekbP8CN0txVG2xVRH6EgKmEm31BOxA07vkFaETzZz1xh+cbt8BcI0slpymvwhx5dlFnQG2rTlPVQn+iRPQ==}
     dev: false
 
+  /@types/jquery/3.5.14:
+    resolution: {integrity: sha512-X1gtMRMbziVQkErhTQmSe2jFwwENA/Zr+PprCkF63vFq+Yt5PZ4AlKqgmeNlwgn7dhsXEK888eIW2520EpC+xg==}
+    dependencies:
+      '@types/sizzle': 2.3.3
+    dev: true
+
   /@types/js-cookie/3.0.2:
     resolution: {integrity: sha512-6+0ekgfusHftJNYpihfkMu8BWdeHs9EOJuGcSofErjstGPfPGEu9yTu4t460lTzzAMl2cM5zngQJqPMHbbnvYA==}
     dev: true
@@ -1413,6 +1425,10 @@ packages:
       '@types/node': 18.0.0
     dev: true
 
+  /@types/sizzle/2.3.3:
+    resolution: {integrity: sha512-JYM8x9EGF163bEyhdJBpR2QX1R5naCJHC8ucJylJ3w9/CVBaskdQ8WqBf8MmQrd1kRvp/a4TS8HJ+bxzR7ZJYQ==}
+    dev: true
+
   /@types/socketcluster-client/16.0.0:
     resolution: {integrity: sha512-Re5rkp09jcvW95WRBN5q/FIVx9MJZJQPVBpxShLcUnUiMeqXGOO8Ag2RI7dmw4YqKkulpOrk5nl2iUiUC2hUEg==}
     dependencies:
@@ -1445,6 +1461,12 @@ packages:
     dependencies:
       '@types/consumable-stream': 2.0.0
       '@types/writable-consumable-stream': 2.0.0
+    dev: true
+
+  /@types/tinymce/4.6.5:
+    resolution: {integrity: sha512-C5gdEi85rUeYEXzXlwAm9MzvfMI8SooVbBMLLN/BQTeDnHWNtRWAkB6ON9s0lhWZYrmjSgLPrWSe86rjciACEQ==}
+    dependencies:
+      '@types/jquery': 3.5.14
     dev: true
 
   /@types/writable-consumable-stream/2.0.0:
@@ -2197,6 +2219,10 @@ packages:
       ripemd160: 2.0.2
       safe-buffer: 5.2.1
       sha.js: 2.4.11
+    dev: false
+
+  /cropperjs/1.5.12:
+    resolution: {integrity: sha512-re7UdjE5UnwdrovyhNzZ6gathI4Rs3KGCBSc8HCIjUo5hO42CtzyblmWLj6QWVw7huHyDMfpKxhiO2II77nhDw==}
     dev: false
 
   /cross-spawn/4.0.2:
@@ -3944,6 +3970,12 @@ packages:
     resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  /nanoid/4.0.0:
+    resolution: {integrity: sha512-IgBP8piMxe/gf73RTQx7hmnhwz0aaEXYakvqZyE302IXW3HyVNhdNGC+O2MwMAVhLEnvXlvKtGbtJf6wvHihCg==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
+    dev: false
 
   /napi-build-utils/1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}

@@ -1,7 +1,6 @@
 <script lang="ts">
   import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
   import TimeAgo from 'javascript-time-ago';
-  // import ko from 'javascript-time-ago/locale/ko';
   import {isEmpty} from 'lodash-es';
   import {dayjs} from 'dayjs';
   import View from 'svelte-material-icons/Eye.svelte';
@@ -10,6 +9,8 @@
   import type {IUser} from '$lib/types/user';
   import Tag from './Tag.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
+  import Like from 'svelte-material-icons/ThumbUp.svelte';
+  import Dislike from 'svelte-material-icons/ThumbDown.svelte';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -42,7 +43,7 @@
   {/if}
   <ul class="divide-y">
     {#each list as article}
-      <li class="py-4">
+      <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
         <a class="flex justify-between space-x-4" sveltekit:prefetch
            href="/community/{board}/{article._key}">
           <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
@@ -64,7 +65,7 @@
               </span>
             </span>
             <div class="flex flex-grow justify-between">
-              <div class="inline-block select-none flex-shrink-0 justify-between">
+              <div class="inline-block select-none flex-shrink-0 justify-between space-x-1">
                 <span class="inline-block md:hidden lg:hidden text-zinc-400">
                   {article._key}
                 </span>
@@ -73,10 +74,20 @@
                     <!--[{article.comments}]-->
                     <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
                   </span>
-                  {/if}
-                  <span>
-                    <span class="mr-0.5"><View size="1rem" /></span>{article.views ?? 0}
+                {/if}
+                <span>
+                  <span class="mr-0.5"><View size="1rem" /></span>{article.views ?? 0}
+                </span>
+                {#if Object.keys(article.tags).includes('_like')}
+                  <span class="text-sky-400 group-hover:text-sky-600 dark:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    <span class="mr-0.5"><Like size="1rem" /></span>{article.tags._like}
                   </span>
+                {/if}
+                {#if Object.keys(article.tags).includes('_dislike')}
+                  <span class="text-red-400 group-hover:text-red-600 dark:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    <span class="mr-0.5"><Dislike size="1rem" /></span>{article.tags._dislike}
+                  </span>
+                {/if}
               </div>
               <div class="inline-block flex w-max">
                 <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
@@ -99,9 +110,11 @@
           <div class="w-full px-2">
             <ul class="space-x-1">
               {#each Object.keys(article.tags) as tagName}
-                <li class="inline-block">
-                  <Tag count="{article.tags[tagName]}">{tagName}</Tag>
-                </li>
+                {#if !tagName.startsWith('_')}
+                  <li class="inline-block">
+                    <Tag count="{article.tags[tagName]}">{tagName}</Tag>
+                  </li>
+                {/if}
               {/each}
             </ul>
           </div>
