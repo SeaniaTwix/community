@@ -1,7 +1,9 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
-import {S3} from 'aws-sdk';
+import aws from 'aws-sdk';
 import {nanoid} from 'nanoid';
+
+const S3 = aws.S3;
 
 const s3 = new S3({
   accessKeyId: process.env.ACCESS_KEY_ID,
