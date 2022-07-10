@@ -48,7 +48,7 @@ export async function put({params, url, locals, clientAddress, platform}: Reques
   }
 
   try {
-    await comment.vote(locals.user.uid, type);
+    await comment.vote(locals.user.uid, type as any);
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,

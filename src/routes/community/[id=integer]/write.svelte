@@ -79,7 +79,7 @@
 
   const defaultEditorSettings = {
     language: 'ko_KR',
-    plugins: 'image imagetools media searchreplace code autolink autosave',
+    plugins: 'image media searchreplace code autolink autosave',
     toolbar: 'uploadImageRu image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
     autosave_ask_before_unload: false,
     // images_upload_url: '/file/upload',
@@ -87,6 +87,7 @@
     images_upload_handler: (blobInfo: IBlobInfo) => imageUpload(blobInfo.blob()),
     resize: true,
     min_height: 160,
+
 
     file_picker_types: 'image media',
     images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl',
@@ -128,13 +129,14 @@
   let editor: TinyMCE;
   let title = '';
   let content = '';
+  let source = '';
   let tag = '';
   let tags = [];
   let editorLoaded = false;
 
   let addMode = false;
 
-  let uplading = false;
+  let uploading = false;
 
   function fileSelected() {
     f.set(fileUploader.files[0]);
@@ -145,17 +147,18 @@
   }
 
   async function upload() {
-    if (uplading) {
+    if (uploading) {
       return;
     }
 
-    uplading = true;
+    uploading = true;
 
     try {
-      const data: ArticleDto = {
+      const data: ArticleDto<string[]> = {
         views: 0,
         board,
         title,
+        source,
         content, //editorObject.getHTML(),
         tags,
       };
@@ -168,7 +171,7 @@
 
       await goto(`/community/${board}/${id}`);
     } finally {
-      uplading = false;
+      uploading = false;
     }
   }
 
@@ -221,7 +224,7 @@
     if (unsub) {
       unsub();
     }
-  })
+  });
 
 </script>
 
@@ -237,6 +240,8 @@
   <input bind:this={titleInput}
          class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
          type="text" placeholder="제목" bind:value={title}/>
+  <input class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
+         type="text" placeholder="출처" bind:value={source} />
   <div class="min-h-[25rem]">
     {#if !editorLoaded}
       에디터 초기화 중...
@@ -278,9 +283,9 @@
     </span>
   </div>
   <div class="flex space-x-2">
-    <button on:click={upload} on:cursor-not-allowed={uplading}
+    <button on:click={upload} class:cursor-not-allowed={uploading}
             class="items-center flex-grow bg-sky-400 dark:bg-sky-800 rounded-md text-white py-2">
-      {#if uplading}
+      {#if uploading}
         전송 중...
       {:else}
         작성 완료

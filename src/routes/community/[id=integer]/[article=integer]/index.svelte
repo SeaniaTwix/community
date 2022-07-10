@@ -200,7 +200,7 @@
   }
 
   async function vote(type: 'like' | 'dislike') {
-    console.log(type);
+    // console.log(type);
     if (type === 'like') {
       if (liked) {
         liked = false;
@@ -209,8 +209,10 @@
         disliked = false;
         await removeTag('_dislike');
       }
-      liked = true;
-      return await addTag('_like');
+      if (session.uid !== article.author) {
+        liked = true;
+        return await addTag('_like');
+      }
     } else { // vote dislike
       if (disliked) {
         disliked = false;
@@ -219,8 +221,10 @@
         liked = false;
         await removeTag('_like');
       }
-      disliked = true;
-      return await addTag('_dislike');
+      if (session.uid !== article.author) {
+        disliked = true;
+        return await addTag('_dislike');
+      }
     }
   }
 
@@ -322,7 +326,7 @@
   <title>{boardName} - {article.title}</title>
 </svelte:head>
 
-<div class="touch-none hidden"></div>
+<div class="touch-none hidden cursor-not-allowed"></div>
 
 <div class="hidden absolute w-screen h-screen bg-gray-700/50 z-10 top-0">
 
@@ -390,9 +394,10 @@
                   </span>
                 {/if}
                 {#if article.author === session?.uid}
-                  <span class="mt-0.5 cursor-pointer hover:text-sky-400">
+                  <a href="/community/{article.board}/{article._key}/edit"
+                     class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
                     <Edit size="1rem"/>
-                  </span>
+                  </a>
                 {/if}
                 {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
@@ -439,6 +444,8 @@
         <ul class="space-x-2 flex flex-wrap">
           {#if session}
             <li on:click={() => vote('like')}
+                class:cursor-not-allowed={session.uid === article.author}
+                class:cursor-pointer={session.uid !== article.author}
                 class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
               <Tag>
                 {#if liked}
@@ -450,6 +457,8 @@
               </Tag>
             </li>
             <li on:click={() => vote('dislike')}
+                class:cursor-not-allowed={session.uid === article.author}
+                class:cursor-pointer={session.uid !== article.author}
                 class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
               <Tag>
                 {#if disliked}
@@ -463,7 +472,7 @@
           {/if}
           {#each Object.keys(article.tags) as tagName}
             {#if !tagName.startsWith('_')}
-              <li class="inline-block mb-2">
+              <li class="inline-block mb-2 cursor-pointer">
                 <Tag count="{article.tags[tagName]}">{tagName}
                   {#if isMyTag(tagName)}<span class="text-gray-600 leading-none __icon-fix"><RemoveTag
                     size="1rem"/></span>{/if}
@@ -473,7 +482,7 @@
           {/each}
 
           {#if session}
-            <li class="inline-block mb-2">
+            <li class="inline-block mb-2 cursor-pointer">
               <Tag>
                 <Plus size="1rem"/>
                 새 태그 추가

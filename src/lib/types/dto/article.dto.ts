@@ -21,6 +21,9 @@ export class ArticleDto<TagType = Record<string, Record<string, ITag>>> {
   @SafeType({type: String})
   author?: string;
 
+  @SafeType({type: String})
+  source = '';
+
   // @SafeType({type: Number})
   // comments = 0;
 
@@ -30,5 +33,5 @@ export class ArticleDto<TagType = Record<string, Record<string, ITag>>> {
   views = 0;
 
   //
-  tags: TagType;
+  tags: TagType | undefined;
 }

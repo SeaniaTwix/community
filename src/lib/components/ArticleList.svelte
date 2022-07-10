@@ -111,7 +111,7 @@
             <ul class="space-x-1">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
-                  <li class="inline-block">
+                  <li class="inline-block cursor-pointer">
                     <Tag count="{article.tags[tagName]}">{tagName}</Tag>
                   </li>
                 {/if}

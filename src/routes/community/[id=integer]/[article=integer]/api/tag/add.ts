@@ -49,14 +49,23 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
       if (Object.values(reserved).includes(name.slice(1))) {
         const addTag = new AddTagRequest(article, [name]);
 
+        if (await addTag.isMyArticle(locals.user.uid)) {
+          return {
+            status: HttpStatus.NOT_ACCEPTABLE,
+            body: {
+              reason: 'cannot be tagged by yourself that',
+            },
+          };
+        }
+
         if (name === '_like' || name === '_dislike') {
           if (await addTag.isVoteAlready(locals.user.uid)) {
             return {
               status: HttpStatus.NOT_ACCEPTABLE,
               body: {
                 reason: 'you voted this already',
-              }
-            }
+              },
+            };
           }
         }
 
@@ -133,10 +142,19 @@ class AddTagRequest {
   }
 
   async isVoteAlready(userId: string) {
-    const article = await this.article.get();
-    const tags = article.tags[userId];
+    try {
+      const article = await this.article.get();
+      const tags = article.tags![userId];
 
-    return tags?.find((tag: ITag) => tag.name === '_like' || tag.name === '_dislike') !== undefined;
+      return this.tags.filter(tag => Object.keys(tags).includes(tag)).length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  async isMyArticle(userId: string) {
+    const article = await this.article.get();
+    return article.author === userId;
   }
 
 }

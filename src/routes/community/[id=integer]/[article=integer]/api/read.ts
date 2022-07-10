@@ -40,13 +40,13 @@ class ReadArticleRequest {
 
     const article: ArticleDto = await cursor.next();
 
-    console.log(article);
+    // console.log(article);
     article.views += 1;
 
 
     const tags: Record<string, number> = {};
 
-    for (const userTags of Object.values(article.tags)) {
+    for (const userTags of Object.values(article.tags ?? {})) {
       for (const tag of Object.values(userTags) as any[]) {
         const tagName = tag.name;
         tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
@@ -66,13 +66,13 @@ class ReadArticleRequest {
 
     // todo
 
-    const myTags = reader ? article.tags[reader] : undefined;
+    const myTags = reader ? (article.tags ?? {})[reader] : undefined;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     delete article.tags;
 
-    article.tags = tags;
+    (<any>article.tags) = tags;
 
     return {
       ...article,
