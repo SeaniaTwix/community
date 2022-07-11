@@ -32,6 +32,10 @@ export async function get({params, url, locals}: RequestEvent): Promise<RequestH
     status: HttpStatus.OK,
     body: {
       comments: await Promise.all(comments.map(async (comment) => {
+        if (!Object.hasOwn(comment, 'votes')) {
+          comment.myVote = {like: false, dislike: false};
+          return comment;
+        }
         const pubVoteResult = {like: 0, dislike: 0};
         for (const vote of Object.values(comment.votes)) {
           if (vote) {
