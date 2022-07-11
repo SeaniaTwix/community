@@ -2,3 +2,7 @@ img {
   max-width: 100% !important;
   height: auto !important;
 }
+
+p {
+  margin: 0.25rem 0 !important;
+}

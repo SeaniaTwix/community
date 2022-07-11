@@ -20,9 +20,12 @@
   import TimeAgo from 'javascript-time-ago';
   import {ko} from '$lib/time-ko';
   import {dayjs} from 'dayjs';
-  import {createEventDispatcher} from 'svelte';
+  import {createEventDispatcher, tick} from 'svelte';
+  import ky from 'ky-universal';
+  import {afterUpdate} from 'svelte';
 
   const dispatch = createEventDispatcher();
+  let voting = false;
 
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
@@ -61,21 +64,91 @@
     });
   }
 
+  async function vote(type: 'like' | 'dislike', withdrawal: boolean) {
+    const r = withdrawal ? ky.delete : ky.put;
+
+    await r(`/community/${board}/${article}/comments/${comment._key}/api/vote?type=${type}`);
+  }
+
+  async function like() {
+    if (!session || voting || session.uid === comment.author) {
+      return;
+    }
+
+    voting = true;
+
+    try {
+      if (liked) {
+        liked = false;
+        return await vote('like', true);
+      }
+
+      liked = true;
+
+      if (disliked) {
+        disliked = false;
+        await vote('dislike', true);
+      }
+
+      await vote('like', false);
+    } finally {
+      voting = false;
+    }
+  }
+
+  async function dislike() {
+    if (!session || voting || session.uid === comment.author) {
+      return;
+    }
+
+    voting = true;
+
+    try {
+      if (disliked) {
+        disliked = false;
+        return await vote('dislike', true);
+      }
+
+      disliked = true;
+
+      if (liked) {
+        liked = false;
+        await vote('like', true);
+        await tick();
+      }
+
+      await vote('dislike', false);
+    } finally {
+      voting = false;
+    }
+  }
+
   let showInfo = false;
+  export let board: string;
+  export let article: string;
   export let selected = false;
   export let user: IUser;
   export let comment: IComment;
+  export let myVote: {like: boolean, dislike: boolean};
+  let liked = myVote?.like === true;
+  let disliked = myVote?.dislike === true;
+  $: likeCount = comment.votes.like;
+  $: dislikeCount = comment.votes.dislike;
+  // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
+
+
 </script>
 
-<div class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted spacey">
+<div class:ring-2={selected}
+     class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400">
   <div class="space-y-4">
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
         <div on:click={() => {showInfo = !showInfo; selected = !selected}}
              class="flex space-x-2 hover:cursor-pointer group">
-          <div class="w-10 min-h-[2.5rem]">
+          <div class="w-10 min-h-[2.5rem]" on:click={() => console.log(comment)}>
             <CircleAvatar/>
           </div>
           <span class="mt-2.5 group-hover:text-sky-400">
@@ -111,13 +184,25 @@
       {/each}
     </div>
     {#if session}
-      <div class="pt-2 flex justify-between">
-        <span class="">
-          <span class="text-sky-500 hover:text-sky-700 cursor-pointer p-2 sm:p-0">
-            <LikeEmpty size="1rem" /> 0
+      <div class="pt-2 flex justify-between select-none">
+        <span class="space-x-2">
+          <span on:click={like} class:cursor-progress={voting}
+                class="text-sky-500 {session.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
+            {#if liked}
+              <Like size="1rem" />
+            {:else}
+              <LikeEmpty size="1rem" />
+            {/if}
+            {likeCount}
           </span>
-          <span class="text-red-500 hover:text-red-700 cursor-pointer p-2 sm:p-0">
-            <DislikeEmpty size="1rem" /> 0
+          <span on:click={dislike} class:cursor-progress={voting}
+                class="text-red-500 {session.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+            {#if disliked}
+              <Dislike size="1rem" />
+            {:else}
+              <DislikeEmpty size="1rem" />
+            {/if}
+            {dislikeCount}
           </span>
         </span>
         <span>

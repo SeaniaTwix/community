@@ -73,6 +73,15 @@ export async function post({params, locals, request}: RequestEvent): Promise<Req
 
     const data = new EditDto(await request.json());
 
+    if (data.title!.trim().length <= 0) {
+      return {
+        status: HttpStatus.NOT_ACCEPTABLE,
+        body: {
+          reason: 'title zero lenght not allowed',
+        }
+      }
+    }
+
     await edit.update(locals.user.uid, data);
 
     return {
@@ -110,12 +119,14 @@ class EditArticleRequest {
 
   async update(author: string, data: EditDto) {
     const {title, content, tags, source} = data;
+    console.log({title, content, tags, source});
     const newTags: ITag[] = tags.map(tag => ({name: tag, createdAt: new Date, pub: true}));
     await db.query(aql`
       for article in articles
         filter article._key == ${this.id} && article.author == ${author}
           update article with {
             title: ${title},
+            editedAt: ${new Date},
             content: ${content},
             source: ${source ?? ''},
             tags: merge_recursive(article.tags, {

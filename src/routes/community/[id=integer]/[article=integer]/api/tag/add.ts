@@ -80,6 +80,11 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
           };
         }
 
+        Pusher.notify('tag', article, locals.user.uid, {
+          tag: [name],
+          type: 'add',
+        });
+
         return succeed;
       }
 

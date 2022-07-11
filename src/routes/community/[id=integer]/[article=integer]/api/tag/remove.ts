@@ -2,6 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 import {isEmpty, uniq} from 'lodash-es';
+import {Pusher} from '$lib/pusher/server';
 
 export async function del({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
@@ -27,7 +28,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
 
   try {
     await remover.removeAll(locals.user.uid);
-  } catch (e) {
+  } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
@@ -36,8 +37,15 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
     }
   }
 
+  const uniqTagList: string[] = uniq(tagList);
+
+  Pusher.notify('tag', article, locals.user.uid, {
+    tag: uniqTagList,
+    type: 'remove',
+  });
+
   return {
-    status: HttpStatus.GONE,
+    status: HttpStatus.ACCEPTED,
   };
 }
 

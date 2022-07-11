@@ -2,7 +2,7 @@
   import {isEmpty} from 'lodash-es';
 
   export let fallback: IImage = {
-    src: 'https://s3.ap-northeast-2.wasabisys.com/s3.ru.hn/IMG_2775.GIF',
+    src: 'https://s3.ru.hn/IMG_2775.GIF',
     type: 'image/gif',
   };
   export let alt = 'avatar';

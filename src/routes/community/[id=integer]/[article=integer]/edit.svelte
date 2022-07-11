@@ -11,10 +11,10 @@
     try {
       const editableRequest = await fetch(`/community/${id}/${article}/api/edit`);
       const {edit} = await editableRequest.json() as T;
-      const {title, content, tags} = edit;
+      const {title, content, source, tags} = edit;
       const nr = await fetch(`/community/${id}/api/info`);
       const {name} = await nr.json();
-      console.log(edit);
+      // console.log(edit);
       // noinspection TypeScriptUnresolvedFunction
       return {
         status: HttpStatus.OK,
@@ -23,6 +23,7 @@
           article,
           name,
           title,
+          source: source ?? '',
           content,
           tags: Object.values(tags).map(v => v.name),
           editorKey: key,
@@ -139,7 +140,7 @@
     resize: true,
     min_height: 160,
 
-    content_css:'/editor.css',
+    content_css: '/editor.css',
 
     file_picker_types: 'image media',
     images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl',
@@ -201,6 +202,7 @@
       const updateData = {
         title,
         content,
+        source,
         tags,
       }
 
@@ -282,9 +284,10 @@
         이렇게 수정
       {/if}
     </button>
-    <button class="items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
+    <a href="/community/{board}/{article}"
+       class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
       취소
-    </button>
+    </a>
   </div>
 </div>
 

@@ -73,7 +73,7 @@
   import {ko} from '$lib/time-ko';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
-  import {onMount, onDestroy} from 'svelte';
+  import {onMount, onDestroy, tick} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import {fade} from 'svelte/transition';
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
@@ -85,6 +85,7 @@
   import {goto} from '$app/navigation';
   import {inRange} from 'lodash-es';
   import Content from '$lib/components/Content.svelte';
+  import {writable} from 'svelte/store';
 
   /**
    * 게시글 보기
@@ -106,8 +107,8 @@
   export let comments: IComment[];
   let liked = article.myTags?.find((tag) => tag.name === '_like') !== undefined;
   let disliked = article.myTags?.find((tag) => tag.name === '_dislike') !== undefined;
-  let likeCount = article.tags?._like ?? 0;
-  let dislikeCount = article.tags?._dislike ?? 0;
+  $: likeCount = article.tags?._like ?? 0;
+  $: dislikeCount = article.tags?._dislike ?? 0;
 
   /**
    * 대댓글 등의 댓글 id가 들어올 수 있습니다.
@@ -115,6 +116,7 @@
    */
   let relative: string | undefined;
 
+  let commentImageUrl = '';
   let commentContent = '';
 
   let commenting = false;
@@ -132,6 +134,9 @@
     };
     if (relative) {
       commentData.relative = relative;
+    }
+    if (commentImageUrl) {
+      commentData.image = commentImageUrl;
     }
 
     // console.log(commentData);
@@ -209,6 +214,7 @@
         disliked = false;
         await removeTag('_dislike');
       }
+      // noinspection TypeScriptUnresolvedVariable
       if (session.uid !== article.author) {
         liked = true;
         return await addTag('_like');
@@ -221,6 +227,7 @@
         liked = false;
         await removeTag('_like');
       }
+      // noinspection TypeScriptUnresolvedVariable
       if (session.uid !== article.author) {
         disliked = true;
         return await addTag('_dislike');
@@ -241,10 +248,35 @@
     }
   }
 
+  function imageUpload(file: File) {
+    return new Promise<string>(async (resolve, reject) => {
+      try {
+        // const file = blobInfo.blob();
+        const request = await ky.post(`/file/request?type=${file.type}`)
+          .json<{ uploadUrl: string, key: string }>();
+        await ky.put(request.uploadUrl, {
+          body: file,
+          // onDownloadProgress: console.log,
+        });
+        // console.log(blobInfo.blob());
+        resolve(`https://s3.ru.hn/${request.key}`);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  function fileSelected() {
+    f.set(fileUploader.files[0]);
+  }
+
+  let fileUploader: HTMLInputElement;
+  const f = writable<File>(null);
   let subscriptions: Subscription[] = [];
   let pusher: Pusher;
+  let unsub: () => void;
   onMount(async () => {
-    console.log(article);
+    // console.log(article);
 
     pusher = new Pusher(article._key);
 
@@ -256,7 +288,6 @@
       window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling, true);
 
       ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
-
 
       const whileSub = async ({body}) => {
         if (typeof body.author === 'string') {
@@ -277,25 +308,57 @@
         const tags = body.tag as string[];
         const type = body.type as 'add' | 'remove';
         if (tags) {
-          let amount = type === 'add' ? 1 : -1;
           for (const tag of tags) {
-            // noinspection TypeScriptUnresolvedFunction
-            if (Object.keys(article.tags).includes(tag)) {
-              article.tags[tag] += amount;
-            } else if (amount > 0) {
-              article.tags[tag] = 1;
+            if (type === 'add') {
+              // noinspection TypeScriptUnresolvedFunction
+              if (Object.hasOwn(article.tags, tag)) {
+                article.tags[tag] += 1;
+              } else {
+                article.tags[tag] = 1;
+              }
+            } else { // remove
+              if (article.tags[tag] <= 1) {
+                // svelte don't recognize when property deleted
+                const newTags = {...article.tags};
+                delete newTags[tag];
+                article.tags = newTags;
+              } else {
+                article.tags[tag] -= 1;
+              }
             }
           }
         }
       };
 
+      const whenVoteChanged = async ({body}: {body: IMessageVote}) => {
+        if (body.comment) {
+          const comment = comments.find(comment => comment._key === body.comment);
+          if (comment) {
+            if (!comment.votes) {
+              comment.votes = {like: 0, dislike: 0};
+            }
+            const amount = body.amount;
+            await tick();
+            comment.votes[body.type] += amount;
+          }
+          comments = [...comments];
+          await tick();
+        }
+      }
+
       const observable = pusher.observable('comments');
       subscriptions.push(observable.subscribe(whileSub));
       const tagChange = pusher.observable('tag');
       subscriptions.push(tagChange.subscribe(whenTagChanged));
+      const commentVoteChange = pusher.observable('comments:vote');
+      subscriptions.push(commentVoteChange.subscribe(whenVoteChanged as any));
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
 
+      unsub = f.subscribe(async (file) => {
+        if (!file) return;
+        const url = await imageUpload(file);
+      });
     } catch (e) {
       console.error(e);
     }
@@ -320,26 +383,36 @@
   function timeFullFormat(time: Date | number) {
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
   }
+
+  interface IMessageVote {
+    comment: string;
+    type: 'like' | 'dislike';
+    amount: number;
+    author: string;
+  }
 </script>
 
 <svelte:head>
   <title>{boardName} - {article.title}</title>
 </svelte:head>
 
-<div class="touch-none hidden cursor-not-allowed"></div>
+<div id="__index-hidden-for-file-and-class-preload"
+     class="touch-none hidden cursor-not-allowed cursor-progress">
+  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
+</div>
 
 <div class="hidden absolute w-screen h-screen bg-gray-700/50 z-10 top-0">
 
 </div>
 
-<div in:fade
-     class="flex flex-col justify-between __fixed-view">
-  <div class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
+<div class="w-full absolute z-50 bg-white dark:bg-gray-600 px-4">
+  <div id="__breadcrumb"
+       class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto pb-1 border-b dark:border-zinc-500">
     <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
           <a href="/"
-             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white w-max">
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 hover:drop-shadow dark:text-gray-400 dark:hover:text-white dark:hover:shadow-white w-max">
             <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
@@ -356,7 +429,7 @@
                     clip-rule="evenodd"></path>
             </svg>
             <a href="/community/{article.board}"
-               class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 w-max">
+               class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 hover:drop-shadow w-max">
               {boardName}
             </a>
           </div>
@@ -370,7 +443,7 @@
                     clip-rule="evenodd"></path>
             </svg>
             <span class="w-full ml-1 text-sm font-medium text-gray-500 md:ml-2
-             dark:text-gray-400 text-ellipsis overflow-hidden">
+             dark:text-gray-400 text-ellipsis overflow-hidden hover:drop-shadow">
               {article.title}
             </span>
           </div>
@@ -378,6 +451,10 @@
       </ol>
     </nav>
   </div>
+</div>
+
+<div in:fade
+     class="flex flex-col justify-between __fixed-view">
 
   <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
     <div
@@ -387,7 +464,7 @@
           <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
             <h2 class="text-2xl flex-shrink">{article.title}</h2>
             <div class="inline-block flex space-x-2">
-              <div class="py-2 md:py-0">
+              <div class="py-2 md:py-0.5">
                 {#if session && session.uid !== article.author}
                   <span class="mt-0.5 cursor-pointer hover:text-red-600">
                     <Report size="1rem"/>
@@ -399,13 +476,11 @@
                     <Edit size="1rem"/>
                   </a>
                 {/if}
-                {#if article.author === session?.uid || session?.rank <= EUserRanks.Manager}
+                {#if article.author === session?.uid || session?.rank >= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Delete size="1rem"/>
                   </span>
                 {/if}
-              </div>
-              <div class="py-2 md:py-0">
                 {#if session?.rank >= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Admin size="1rem"/>
@@ -437,7 +512,15 @@
           <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
         </div>
       </div>
-      <article class="p-2 min-h-[10rem]">
+      {#if article.source}
+        <div class="rounded-sm overflow-hidden">
+          <p class="px-4 py-2 border-l-2 border-sky-400 select-none dark:bg-zinc-600">
+            출처 <a class="text-sky-300 hover:text-sky-400 transition-colors select-text"
+                  href="{article.source}">{article.source}</a>
+          </p>
+        </div>
+      {/if}
+      <article class="pt-4 pb-2 min-h-[10rem]">
         <Content contents="{contents}"/>
       </article>
       <div class="pt-3">
@@ -496,11 +579,16 @@
     <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
 
 
-      <ul class="space-y-2">
+      <ul class="space-y-3">
 
         {#each comments as comment}
           <li in:fade>
-            <Comment user="{users[comment.author]}" {session} {comment}/>
+            <Comment board="{article.board}"
+                     article="{article._key}"
+                     user="{users[comment.author]}"
+                     myVote="{comment.myVote}"
+                     {session}
+                     {comment}/>
           </li>
         {/each}
 
@@ -549,7 +637,7 @@
           <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
             <Favorite size="1.25rem"/>
           </button>
-          <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+          <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
             <Upload size="1.25rem"/>
           </button>
         </div>

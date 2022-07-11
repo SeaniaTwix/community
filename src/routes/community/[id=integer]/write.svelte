@@ -48,6 +48,7 @@
   import {theme} from '$lib/stores/shared/theme';
   import {writable} from 'svelte/store';
   import type {Editor as TinyMCE, Events} from 'tinymce';
+  import Tag from '$lib/components/Tag.svelte';
 
   type CommandEvent = Events.CommandEvent;
 
@@ -64,23 +65,39 @@
       try {
         // const file = blobInfo.blob();
         const request = await ky.post(`/file/request?type=${file.type}`)
-          .json<{ uploadUrl: string, key: string }>();
-        await ky.put(request.uploadUrl, {
-          body: file,
-          onDownloadProgress: console.log,
-        });
+          .json<IUploadRequestResult>();
+        const body = new FormData();
+        body.set('key', request.prefix + file.name);
+        body.set('acl', 'public-read');
+        body.set('Content-Type', file.type);
+        // body.set('bucket', request.bucket);
+        for (const key of Object.keys(request.presigned.fields)) {
+          body.set(key, request.presigned.fields[key]);
+        }
+        body.append('file', file);
+        console.log(file.type);
+        await ky.post('https://s3.ru.hn', {body});
         // console.log(blobInfo.blob());
-        resolve(`https://s3.ru.hn/${request.key}`);
+        resolve(`https://s3.ru.hn/${request.prefix + file.name}`);
       } catch (e) {
         reject(e);
       }
     });
   }
 
+  interface IUploadRequestResult {
+    prefix: string;
+    bucket: string;
+    presigned: {
+      url: string,
+      fields: Record<string, string>
+    };
+  }
+
   const defaultEditorSettings = {
     language: 'ko_KR',
     plugins: 'image media searchreplace code autolink autosave',
-    toolbar: 'uploadImageRu image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
+    toolbar: 'uploadImageRu image media | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
     autosave_ask_before_unload: false,
     // images_upload_url: '/file/upload',
     // images_upload_base_path: '/file',
@@ -88,9 +105,10 @@
     resize: true,
     min_height: 160,
 
+    content_css: '/editor.css',
 
     file_picker_types: 'image media',
-    images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl',
+    images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl,webm',
     //*
     setup: (_editor) => {
       editor = _editor;
@@ -192,7 +210,7 @@
       return;
     }
     if (event.key === 'Enter') {
-      tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]);
+      tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]).slice(0, 20);
       tag = '';
     }
   }
@@ -240,8 +258,9 @@
   <input bind:this={titleInput}
          class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
          type="text" placeholder="제목" bind:value={title}/>
-  <input class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
-         type="text" placeholder="출처" bind:value={source} />
+  <input
+    class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
+    type="text" placeholder="출처" bind:value={source}/>
   <div class="min-h-[25rem]">
     {#if !editorLoaded}
       에디터 초기화 중...
@@ -264,23 +283,31 @@
     </div>
   </div>
   <div class="text-sm">
-    <div id="__tags" class="space-x-2 inline-block">
+    {#if isNotEmpty(tags)}
+      <p class="mb-1">태그는 최대 20개까지 등록할 수 있습니다.</p>
+    {/if}
+    <ul id="__tags" class="space-x-2 inline-block flex flex-wrap">
       {#each tags as tag}
-        <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1"
-        >{tag}<span class="cursor-pointer"
-                    on:click={() => deleteTag(tag)}><Delete size="1rem"
-                                                            color="rgb(248, 113, 113)"/></span></span>
+        <li>
+          <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1"
+          >{tag}<span class="cursor-pointer"
+                      on:click={() => deleteTag(tag)}><Delete size="1rem"
+                                                              color="rgb(248, 113, 113)"/></span></span>
+
+        </li>
       {/each}
-    </div>
-    <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 transition transition-transform cursor-pointer"
-          on:click={addTagClicked}>
-      {#if addMode}
-        <input bind:this={tagInput} bind:value={tag} type="text" placeholder="태그를 입력하세요... (띄어쓰기로 구분)"
-               on:keydown={detectEnter} class="bg-transparent w-fit min-w-[14rem] focus:outline-none"/>
-      {:else}
-        <Plus size="1rem"/>새 태그 추가
-      {/if}
-    </span>
+      <li on:click={addTagClicked}>
+        <Tag>
+          {#if addMode}
+            <input bind:this={tagInput} bind:value={tag} type="text" placeholder="태그를 입력하세요... (띄어쓰기로 구분)"
+                   on:keydown={detectEnter} class="bg-transparent w-fit min-w-[14rem] focus:outline-none"/>
+          {:else}
+            <Plus size="1rem"/>
+            새 태그 추가
+          {/if}
+        </Tag>
+      </li>
+    </ul>
   </div>
   <div class="flex space-x-2">
     <button on:click={upload} class:cursor-not-allowed={uploading}
@@ -291,9 +318,10 @@
         작성 완료
       {/if}
     </button>
-    <button class="items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
+    <a href="/community/{board}"
+       class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
       취소
-    </button>
+    </a>
   </div>
 </div>
 

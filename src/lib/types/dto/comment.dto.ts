@@ -4,8 +4,18 @@
 
 import {Entity, SafeType} from 'dto-mapping';
 
+export type InternalVoteType = {
+  [userId: string]: {
+    createdAt: Date | string, type: 'like' | 'dislike'
+  }
+};
+export type PublicVoteType = {
+  like: number;
+  dislike: number;
+}
+
 @Entity()
-export class CommentDto {
+export class CommentDto<VoteType = InternalVoteType> {
 
   constructor(_obj: unknown) {
   }
@@ -17,6 +27,14 @@ export class CommentDto {
   @SafeType({type: String})
   // 내용
   content?: string;
+
+  // 코멘트용 이미지 (상단 고정. 단일 이미지)
+  image?: string;
+
+  votes: Partial<VoteType> = {};
+
+  // public only
+  myVote?: {like: boolean, dislike: boolean}; // = {like: false, dislike: false};
 
   // 대댓글 등등 undefined 가능.
   relative?: string;

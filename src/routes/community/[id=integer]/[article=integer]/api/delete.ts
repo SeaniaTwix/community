@@ -22,7 +22,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
   return {
-    status: HttpStatus.GONE,
+    status: HttpStatus.ACCEPTED,
   }
 }
 

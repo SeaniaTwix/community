@@ -5,6 +5,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {Board} from '$lib/community/board/server';
 import {ArticleDto} from '$lib/types/dto/article.dto';
+import type {ClientToServerTagType} from '$lib/types/dto/article.dto';
 import {User} from '$lib/auth/user/server';
 import type {IArticle} from '$lib/types/article';
 import {Article} from '$lib/community/article/server';
@@ -12,7 +13,7 @@ import {Article} from '$lib/community/article/server';
 // noinspection JSUnusedGlobalSymbols
 export async function post({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   console.log('new write')
-  const article = new ArticleDto(await request.json());
+  const article = new ArticleDto<ClientToServerTagType>(await request.json());
   const write = new WriteRequest(article);
 
   if (params.id !== write.boardId) {
@@ -57,7 +58,7 @@ class WriteRequest {
   id?: string;
   private board: Board;
 
-  constructor(private body: ArticleDto) {
+  constructor(private body: ArticleDto<ClientToServerTagType>) {
     if (this.isTitleEmpty || this.isContentEmpty) {
       this.error = 'some field is empty';
     }
@@ -81,7 +82,8 @@ class WriteRequest {
     const tagsList = this.body.tags as string[] ?? [];
     const isNotEmpty = (v: any) => !isEmpty(v);
     const filtered = tagsList.filter(isNotEmpty);
-    return filtered.map(v => v.trim());
+    // tag limit max
+    return filtered.map(v => v.trim()).slice(0, 20);
 
     /*
     const tags = {[userId]: [] as any[]};

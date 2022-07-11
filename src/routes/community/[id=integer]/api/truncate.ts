@@ -1,7 +1,7 @@
 
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
-import db from '../../../../lib/database/instance';
+import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
 // noinspection JSUnusedGlobalSymbols
@@ -24,7 +24,7 @@ export async function del({request, params, locals}: RequestEvent): Promise<Requ
         remove article in article`)
 
   return {
-    status: HttpStatus.GONE,
+    status: HttpStatus.ACCEPTED,
   }
 }
 

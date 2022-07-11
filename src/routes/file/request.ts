@@ -2,6 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import aws from 'aws-sdk';
 import {nanoid} from 'nanoid';
+import type {PresignedPost} from 'aws-sdk/lib/s3/presigned_post';
 
 const S3 = aws.S3;
 
@@ -34,28 +35,43 @@ export async function post({locals, url}: RequestEvent): Promise<RequestHandlerO
   }
 
   const randomId = nanoid(32);
-  let key = `${locals.user.uid}/${randomId}.${type.split('/')[1]}`;
+  const prefix = `uu/${locals.user.uid}/${randomId}/`; // .${type.split('/')[1]}`;
 
-  const s3Params = {
+  const s3Params: PresignedPost.Params = {
     Bucket: process.env.BUCKET_NAME,
-    Key: key,
-    Expires: 180,
-    ContentType: type,
+    Conditions: [
+      ['content-length-range', 1048, 10485760],
+      ['starts-with', '$key', prefix],
+      // ['starts-with', '$bucket', ''],
+      ['starts-with', '$Content-Type', 'image/'],
+      // ['starts-with', '$Content-Type', 'video/webm'],
+      {'x-amz-algorithm': 'AWS4-HMAC-SHA256'},
+      // {'x-amz-server-side-encryption': 'AES256'},
+      {'acl': 'public-read'},
+    ],
+    // Key: key,
+    Expires: 120,
+    // ContentType: type,
   };
 
-  const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
+  // const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
+  const presigned = s3.createPresignedPost(s3Params);
+  console.log(presigned);
 
   // ru.hn only
+  /*
   if (s3Params.Bucket === 'uu') {
     key = `uu/${key}`;
-  }
+  }*/
 
   return {
     status: HttpStatus.CREATED,
     body: {
-      uploadUrl,
-      key,
-    },
+      // uploadUrl,
+      bucket: process.env.BUCKET_NAME,
+      prefix,
+      presigned,
+    } as any,
   };
 }
 

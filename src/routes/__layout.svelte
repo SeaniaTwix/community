@@ -65,7 +65,9 @@
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />
 
 <Nav {boards} {uid} {user} />
-<slot/>
+<main>
+  <slot/>
+</main>
 
 <style lang="scss">
   :global {

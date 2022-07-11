@@ -5,8 +5,12 @@
 import {Entity, SafeType} from 'dto-mapping';
 import type {ITag} from '$lib/types/tag';
 
+export type InternalTagType = Record<string, Record<string, ITag>>;
+export type ClientToServerTagType = string[];
+export type ServerToClientTagType = Record<string, number>;
+
 @Entity()
-export class ArticleDto<TagType = Record<string, Record<string, ITag>>> {
+export class ArticleDto<TagType = InternalTagType> {
   constructor(_obj: any) {}
 
   @SafeType({type: String})

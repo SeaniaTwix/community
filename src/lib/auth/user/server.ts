@@ -6,7 +6,7 @@ import njwt from 'njwt';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
 import type {IUser} from '$lib/types/user';
-import {isStringInteger} from '../../util';
+import {isStringInteger} from '$lib/util';
 import {parseInt} from 'lodash-es';
 
 type UnsafeUser = IUser & { password: string };
