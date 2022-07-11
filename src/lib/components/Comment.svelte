@@ -132,8 +132,8 @@
   export let myVote: {like: boolean, dislike: boolean};
   let liked = myVote?.like === true;
   let disliked = myVote?.dislike === true;
-  $: likeCount = comment.votes.like;
-  $: dislikeCount = comment.votes.dislike;
+  $: likeCount = comment.votes?.like ?? 0;
+  $: dislikeCount = comment.votes?.dislike ?? 0;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
