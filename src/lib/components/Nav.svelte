@@ -41,7 +41,7 @@
     }
     if (event.key === 'Enter') {
       //todo: search
-      goto(`/community/search?q=${searchText}`)
+      goto(`/community/search?q=${encodeURIComponent(searchText)}`)
         .then(async () => {
           searchMode = true;
           await tick();
