@@ -6,7 +6,7 @@ import {client} from '$lib/database/search';
 
 export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
   const q = url.searchParams.get('q') ?? '';
-
+  console.log('q:', q);
   if (isEmpty(q)) {
     return {
       status: HttpStatus.NO_CONTENT,
@@ -90,7 +90,7 @@ class ArticleSearch {
     const settings = await client.index('articles')
       .getSettings();
 
-    if (!settings.filterableAttributes?.find(attr => attr === 'tags')) {
+    if (settings.filterableAttributes?.find(attr => attr === 'tags') !== 'tags') {
       await client.index('articles')
         .updateSettings({
           filterableAttributes: ['tags'],

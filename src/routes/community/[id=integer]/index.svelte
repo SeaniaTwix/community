@@ -33,7 +33,7 @@
       props: {
         list: list.map((item) => {
           const regx = autoTag.exec(item.title.trim());
-          console.log(item.title, regx);
+          // console.log(item.title, regx);
           if (regx) {
             item.autoTag = regx[1];
           }

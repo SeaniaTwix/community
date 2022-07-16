@@ -212,7 +212,7 @@ class WriteRequest {
           id: article.id,
           title: this.title,
           source: data.source,
-          content: striptags(this.content ?? ''),
+          content: striptags(this.content ?? '').replace(/&nbsp;/, ''),
           tags: await article.getAllTagsCounted(),
           createdAt: (new Date(data.createdAt!)).getTime(),
         }
