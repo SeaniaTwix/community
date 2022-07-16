@@ -2,7 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 
-export async function put({params}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function PUT({params}: RequestEvent): Promise<RequestHandlerOutput> {
   const viewCount = new AddViewCountRequest(params.article);
 
   if (!await viewCount.isArticleExists()) {

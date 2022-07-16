@@ -39,7 +39,7 @@
 <script lang="ts">
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Delete from 'svelte-material-icons/Delete.svelte';
-  import _ from 'lodash-es';
+  import _, {uniq} from 'lodash-es';
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
@@ -49,6 +49,8 @@
   import {writable} from 'svelte/store';
   import type {Editor as TinyMCE, Events} from 'tinymce';
   import Tag from '$lib/components/Tag.svelte';
+  import {upload as imageUpload} from '$lib/file/uploader';
+  import {defaultEditorSettings, darkThemes} from '$lib/editor/settings';
 
   type CommandEvent = Events.CommandEvent;
 
@@ -60,56 +62,9 @@
 
   $: dark = $theme.mode === 'dark';
 
-  function imageUpload(file: File) {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        // const file = blobInfo.blob();
-        const request = await ky.post(`/file/request?type=${file.type}`)
-          .json<IUploadRequestResult>();
-        const body = new FormData();
-        body.set('key', request.prefix + file.name);
-        body.set('acl', 'public-read');
-        body.set('Content-Type', file.type);
-        // body.set('bucket', request.bucket);
-        for (const key of Object.keys(request.presigned.fields)) {
-          body.set(key, request.presigned.fields[key]);
-        }
-        body.append('file', file);
-        console.log(file.type);
-        await ky.post('https://s3.ru.hn', {body});
-        // console.log(blobInfo.blob());
-        resolve(`https://s3.ru.hn/${request.prefix + file.name}`);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
 
-  interface IUploadRequestResult {
-    prefix: string;
-    bucket: string;
-    presigned: {
-      url: string,
-      fields: Record<string, string>
-    };
-  }
-
-  const defaultEditorSettings = {
-    language: 'ko_KR',
-    plugins: 'image media searchreplace code autolink autosave',
-    toolbar: 'uploadImageRu image media | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
-    autosave_ask_before_unload: false,
-    // images_upload_url: '/file/upload',
-    // images_upload_base_path: '/file',
-    images_upload_handler: (blobInfo: IBlobInfo) => imageUpload(blobInfo.blob()),
-    resize: true,
-    min_height: 160,
-
-    content_css: '/editor.css',
-
-    file_picker_types: 'image media',
-    images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl,webm',
-    //*
+  const settings = {
+    ...defaultEditorSettings,
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
@@ -120,24 +75,15 @@
           // console.log(editor);
         },
       });
-    }, // */
-  };
-
-  interface IBlobInfo {
-    base64: () => any;
-    blob: () => File;
-    blobUri: () => any;
-    filename: () => any;
-    id: () => any;
-    name: () => any;
-    uri: () => any;
+    },
   }
 
-  const darkEditorSettings = {
-    ...defaultEditorSettings,
-    skin: 'oxide-dark',
-    content_css: 'dark',
-  };
+  const settingsDark = {
+    ...settings,
+    ...darkThemes,
+  }
+
+
 
   // let editorObject: Editor;
 
@@ -151,6 +97,7 @@
   let tag = '';
   let tags = [];
   let editorLoaded = false;
+  let registeredAutoTag: string | undefined;
 
   let addMode = false;
 
@@ -162,6 +109,15 @@
 
   function insertImage(imageUrl: string) {
     editor.insertContent(`<img src="${imageUrl}" alt="uploaded-at-${new Date}" />`);
+  }
+
+  function insertVideo(videoUrl: string) {
+    editor.insertContent(
+      `<video controls width="560" height="360" preload="metadata" muted>
+         <source src="${videoUrl}" type="video/webm" />
+         사용 중이신 브라우저는 비디오 태그가 지원되지 않습니다.
+       </video>`
+    )
   }
 
   async function upload() {
@@ -179,6 +135,7 @@
         source,
         content, //editorObject.getHTML(),
         tags,
+        images: false,
       };
 
       const response = await ky.post(`/community/${board}/api/write`, {
@@ -227,14 +184,47 @@
     console.log(type, event);
   }
 
+  const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+
+  async function detectAutoTag(event: KeyboardEvent) {
+    const index = Math.max(title.indexOf(')'), title.indexOf(']'));
+    if (registeredAutoTag && index < 0) {
+      tags = uniq(tags.filter(t => t !== registeredAutoTag));
+      registeredAutoTag = undefined;
+      return;
+    }
+
+    let resultAutoTag = autoTag.exec(title);
+    if (!resultAutoTag) {
+      // what? idk.
+      resultAutoTag = autoTag.exec(title);
+    }
+    if (resultAutoTag) {
+      if (registeredAutoTag) {
+        tags = uniq(tags.filter(t => t !== registeredAutoTag));
+      }
+
+      registeredAutoTag = resultAutoTag[1];
+      tags = uniq([registeredAutoTag, ...tags].slice(0, 20));
+    }
+  }
+
   let unsub: () => void;
   onMount(() => {
     titleInput.focus();
 
     unsub = f.subscribe(async (file) => {
       if (!file) return;
+      // noinspection TypeScriptUnresolvedFunction
+      if (!['image', 'video'].includes(file.type.split('/')[0])) {
+        return;
+      }
       const url = await imageUpload(file);
-      insertImage(url);
+      if (file.type.startsWith('video')) {
+        insertVideo(url);
+      } else {
+        insertImage(url);
+      }
     });
   });
 
@@ -255,7 +245,7 @@
 </div>
 
 <div class="mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
-  <input bind:this={titleInput}
+  <input bind:this={titleInput} on:keyup={detectAutoTag}
          class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
          type="text" placeholder="제목" bind:value={title}/>
   <input
@@ -269,7 +259,7 @@
       {#if dark}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
-                conf="{darkEditorSettings}"
+                conf="{settingsDark}"
                 bind:value={content}
                 on:resizeeditor={console.log}
                 on:keydown={(e) => detectPaste(e, 'down')}
@@ -277,26 +267,33 @@
       {:else}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
-                conf="{defaultEditorSettings}"
+                conf="{settings}"
                 bind:value={content}/>
       {/if}
     </div>
   </div>
-  <div class="text-sm">
+  <div class="text-sm space-y-2">
     {#if isNotEmpty(tags)}
-      <p class="mb-1">태그는 최대 20개까지 등록할 수 있습니다.</p>
+      <p>
+        {#if registeredAutoTag}
+          자동 태그가 활성화 되었습니다. 자동 태그를 포함해
+        {/if}
+        태그는 최대 20개까지 등록할 수 있습니다.
+      </p>
     {/if}
-    <ul id="__tags" class="space-x-2 inline-block flex flex-wrap">
+    <ul id="__tags" class="inline-block flex flex-wrap space-x-2">
       {#each tags as tag}
-        <li>
-          <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1"
-          >{tag}<span class="cursor-pointer"
-                      on:click={() => deleteTag(tag)}><Delete size="1rem"
-                                                              color="rgb(248, 113, 113)"/></span></span>
+        <li class="inline-block">
+          <Tag>
+            {tag}
+            <span class="cursor-pointer"
+                  on:click={() => deleteTag(tag)}><Delete size="1rem"
+                                                          color="rgb(248, 113, 113)"/></span>
+          </Tag>
 
         </li>
       {/each}
-      <li on:click={addTagClicked}>
+      <li class="inline-block" on:click={addTagClicked}>
         <Tag>
           {#if addMode}
             <input bind:this={tagInput} bind:value={tag} type="text" placeholder="태그를 입력하세요... (띄어쓰기로 구분)"
@@ -308,6 +305,9 @@
         </Tag>
       </li>
     </ul>
+    <div>
+      <h3>내가 자주 사용하는 태그...</h3>
+    </div>
   </div>
   <div class="flex space-x-2">
     <button on:click={upload} class:cursor-not-allowed={uploading}

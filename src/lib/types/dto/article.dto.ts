@@ -5,7 +5,7 @@
 import {Entity, SafeType} from 'dto-mapping';
 import type {ITag} from '$lib/types/tag';
 
-export type InternalTagType = Record<string, Record<string, ITag>>;
+export type InternalTagType = ITag[];
 export type ClientToServerTagType = string[];
 export type ServerToClientTagType = Record<string, number>;
 
@@ -27,6 +27,9 @@ export class ArticleDto<TagType = InternalTagType> {
 
   @SafeType({type: String})
   source = '';
+
+  @SafeType({type: Boolean})
+  images = false;
 
   // @SafeType({type: Number})
   // comments = 0;

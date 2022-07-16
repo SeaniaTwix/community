@@ -1,7 +1,7 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
-import {toInteger} from 'lodash-es';
+import {isEmpty, toInteger} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import HttpStatus from 'http-status-codes';
 import {CommentDto} from '$lib/types/dto/comment.dto';
@@ -9,8 +9,13 @@ import type {PublicVoteType} from '$lib/types/dto/comment.dto';
 import {Pusher} from '$lib/pusher/server';
 import {isStringInteger} from '$lib/util';
 import type {IArangoDocumentIdentifier} from '$lib/database';
+import {UrlRegexSafe} from '$lib/url-regex-safe';
+import {unified} from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeSanitize from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
 
-export async function get({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
   const comment = new CommentRequest(article);
   if (!await comment.article.exists) {
@@ -44,7 +49,7 @@ export async function get({params, url, locals}: RequestEvent): Promise<RequestH
         }
         (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
         try {
-          if (locals.user.uid) {
+          if (locals.user?.uid) {
             const cursor = await db.query(aql`
             for comment in comments
               filter comment._key == ${comment._key}
@@ -65,21 +70,32 @@ export async function get({params, url, locals}: RequestEvent): Promise<RequestH
   };
 }
 
-export async function post({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
-  const {article} = params;
+export async function POST({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+  const {id, article} = params;
 
   const comment = new CommentRequest(article);
 
-  if (!await comment.article.exists) {
+  try {
+    const articleData = await comment.article.get();
+
+    if (!articleData || articleData.board !== id) {
+      return {
+        status: HttpStatus.BAD_GATEWAY,
+        body: {
+          reason: 'article is not exists',
+        },
+      };
+    }
+  } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
-        reason: 'article is not exists',
+        reason: e.toString(),
       },
     };
   }
 
-  const data = await request.json() ;
+  const data = await request.json();
 
 
   let commentData: CommentDto;
@@ -89,9 +105,9 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
-        reason: e as any
-      }
-    }
+        reason: e as any,
+      },
+    };
   }
   // console.log(commentData);
 
@@ -100,29 +116,72 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
   try {
     if (!locals.user) {
       // noinspection ExceptionCaughtLocallyJS
-      throw new Error('user invalid')
+      throw new Error('user invalid');
+    }
+
+    let content = commentData.content ?? '';
+
+    const sanitized = await unified()
+      .use(rehypeParse, {fragment: true})
+      .use(rehypeSanitize, {
+        tagNames: [],
+      })
+      .use(rehypeStringify)
+      .process(content ?? '');
+
+    const urlFound = sanitized.value.toString().match(UrlRegexSafe());
+
+    if (urlFound) {
+      content = content
+        .split('\n')
+        .map((line) => {
+          return line.split(' ')
+            .map((text) => {
+              if (urlFound.includes(text)) {
+                const protocolExists = /^https?:\/\//.test(text);
+                const full = protocolExists ? text : `https://${text}`;
+                return `<a class="text-sky-300 hover:text-sky-400 transition-colors select-text" href="${full}">${full}</a>`;
+              } else {
+                return `<span>${text}</span>`;
+              }
+            })
+            .join(' ');
+        }).join('\n');
     }
 
     cd = {
       votes: {},
       article: commentData.article,
-      content: commentData.content,
-      relative: commentData.relative
+      content,
+      relative: commentData.relative,
     };
+
+    if (commentData.image) {
+      cd.image = commentData.image;
+    }
+
+    if (isEmpty(content) && !cd.image) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        body: {
+          reason: 'you have to write more than one character or upload image',
+        },
+      };
+    }
 
     await comment.add(locals.user.uid, cd);
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
-        reason: e.toString()
-      }
-    }
+        reason: e.toString(),
+      },
+    };
   }
 
   try {
     if (cd) {
-      await Pusher.notify('comments', article, locals.user.uid, cd);
+      await Pusher.notify('comments', `${article}@${id}`, locals.user.uid, cd);
     }
   } catch (e) {
     console.error(e);
@@ -133,7 +192,7 @@ export async function post({params, request, locals}: RequestEvent): Promise<Req
     body: {
       author: locals.user.uid,
       added: cd as any,
-    }
+    },
   };
 }
 
@@ -144,25 +203,13 @@ class CommentRequest {
     this.article = new Article(articleId);
   }
 
-  async list(amount: number, page = 1) {
+  list(amount: number, page = 1) {
     // console.log('list:', this.article.id)
-    const cursor = await db.query(aql`
-      for comment in comments
-        sort comment.createdAt asc
-        filter comment.article == ${this.article.id} limit ${(page - 1) * amount}, ${amount}
-        return comment`);
-    return await cursor.all();
+    return this.article.getComments(page, amount);
   }
 
-  async add(userId: string, comment: CommentDto) {
-    const cursor = await db.query(aql`
-      insert merge(${comment}, {
-        author: ${userId},
-        createdAt: ${new Date()},
-        "like": 0,
-        dislike: 0
-      }) into comments return NEW`)
-    return await cursor.next();
+  add(userId: string, comment: CommentDto) {
+    return this.article.addComment(userId, comment);
   }
 
 }

@@ -5,7 +5,7 @@ import {isStringInteger} from '$lib/util';
 import type {IUser} from '$lib/types/user';
 import {isEmpty, uniq} from 'lodash-es';
 
-export async function get({url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({url}: RequestEvent): Promise<RequestHandlerOutput> {
   const id = url.searchParams.get('id');
   if (!id) {
     const ids = url.searchParams.get('ids');

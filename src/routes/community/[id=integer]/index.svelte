@@ -1,8 +1,8 @@
 <script lang="ts" context="module">
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import type {ArticleDto} from '$lib/types/dto/article.dto';
   import type {IUser} from '$lib/types/user';
   import HttpStatus from 'http-status-codes';
+  import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
   export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
@@ -14,7 +14,7 @@
       }
     }
     const res = await fetch(`${url.pathname}/api/list`);
-    const {list} = await res.json() as {list: ArticleDto[]};
+    const {list} = await res.json() as {list: ArticleItemDto[]};
     const id = params.id;
     const authors = list.map(a => a.author).join(',');
     const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
@@ -26,26 +26,41 @@
       }
     }
 
+    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+
     return {
       status: 200,
-      props: {list, id, params, name, users,},
+      props: {
+        list: list.map((item) => {
+          const regx = autoTag.exec(item.title.trim());
+          console.log(item.title, regx);
+          if (regx) {
+            item.autoTag = regx[1];
+          }
+          return item;
+        }),
+        id, params, name, users,},
     }
   }
 </script>
 <script lang="ts">
   import ArticleList from '$lib/components/ArticleList.svelte';
   import {onMount} from 'svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
+  import Search from '$lib/components/Search.svelte';
 
-  export let list: ArticleDto[];
-  export let id: string;
+  import {afterNavigate} from '$app/navigation';
+
+  export let list: ArticleItemDto[];
   export let params;
+  export let id: string = params.id;
   export let name: string;
   export let users: Record<string, IUser>;
 
-  onMount(() => {
-    id = params.id;
-  })
+  afterNavigate(({from, to}) => {
+    const page = to.searchParams.get('page');
 
+  });
   // console.log(id, params);
 </script>
 
@@ -53,8 +68,10 @@
   <title>게시판 - {name}</title>
 </svelte:head>
 
+<div class="justify-between flex-col flex-row"></div>
+
 <!-- todo: move to __layout -->
-<div class="w-10/12 md:w-4/5 lg:w-3/4 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
+<div class="w-11/12 md:w-4/5 lg:w-3/4 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
@@ -77,10 +94,12 @@
   <div class="flex justify-between">
     <h2 class="text-2xl">
       {name}
+      <!--
       <span class="inline sm:hidden">none</span>
       <span class="hidden sm:inline md:hidden">sm</span>
       <span class="hidden sm:hidden md:inline lg:hidden">md</span>
       <span class="hidden sm:hidden md:hidden lg:inline">lg</span>
+      -->
     </h2>
     <a href="/community/{params.id}/write"
        class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
@@ -90,13 +109,16 @@
     </a>
   </div>
   <ArticleList board={id} {list} {users} />
+  <div class="pb-8 space-y-2">
+    <Pagination base="/community/{params.id}" q="page" current="1" max="5" />
+  </div>
 </div>
 
 <style lang="scss">
   // ios bottom gap
   // noinspection CssOverwrittenProperties
   .__mobile-bottom-fix {
-    margin-bottom: 0;
+    margin-bottom: 1rem;
     // noinspection CssInvalidFunction
     margin-bottom: constant(safe-area-inset-bottom);
     margin-bottom: env(safe-area-inset-bottom);

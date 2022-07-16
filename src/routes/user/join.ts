@@ -3,7 +3,7 @@ import {User} from '$lib/auth/user/server';
 import {newLoginHeaders} from './login';
 import HttpStatus from 'http-status-codes';
 
-export async function post({request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
   let login: RegisterRequest;
 
   try {

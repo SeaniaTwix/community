@@ -1,7 +1,7 @@
 import type {RequestHandlerOutput} from '@sveltejs/kit';
 import {dayjs} from 'dayjs';
 
-export async function post(): Promise<RequestHandlerOutput> {
+export async function POST(): Promise<RequestHandlerOutput> {
   return {
     status: 201,
     headers: newLogoutHeader(),

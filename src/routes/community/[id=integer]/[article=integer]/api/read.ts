@@ -4,8 +4,9 @@ import {aql} from 'arangojs';
 import {User} from '$lib/auth/user/server';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
 import HttpStatus from 'http-status-codes';
+import type {ClientToServerTagType} from '$lib/types/dto/article.dto';
 
-export async function get({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
 
   try {
@@ -36,22 +37,26 @@ class ReadArticleRequest {
     const cursor = await db.query(aql`
       for article in articles
         filter article._key == ${this.article} and article.board == ${this.board}
-          return article`);
+          let savedTags = (
+            for tag in tags
+              filter tag.target == article._key && tag.pub
+                return tag)
+          let ts = (
+            for t in savedTags
+              collect names = t.name
+              return names)
+          let mt = (
+            for t in savedTags
+              filter t.user == ${reader ?? ''}
+                collect names = t.name
+                return names)
+          
+          return merge(article, {tags: ts, myTags: mt})`);
 
-    const article: ArticleDto = await cursor.next();
+    const article: ArticleDto<ClientToServerTagType> = await cursor.next();
 
-    // console.log(article);
+    // it won't be affect to real data
     article.views += 1;
-
-
-    const tags: Record<string, number> = {};
-
-    for (const userTags of Object.values(article.tags ?? {})) {
-      for (const tag of Object.values(userTags) as any[]) {
-        const tagName = tag.name;
-        tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
-      }
-    }
 
     const uid = article.author;
     if (!uid) {
@@ -64,20 +69,20 @@ class ReadArticleRequest {
       return null;
     }
 
-    // todo
+    const tags: Record<string, number> = {};
 
-    const myTags = reader ? (article.tags ?? {})[reader] : undefined;
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    delete article.tags;
-
-    (<any>article.tags) = tags;
+    for (const tag of article.tags ?? []) {
+      if (tags[tag]) {
+        tags[tag] += 1;
+      } else {
+        tags[tag] = 1;
+      }
+    }
 
     return {
       ...article,
       user: {name: user.id},
-      myTags,
+      tags,
     }
 
   }

@@ -4,7 +4,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {EUserRanks} from '$lib/types/user-ranks';
 
-export async function del({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
   const permanent = !!url.searchParams.get('permanant');
 

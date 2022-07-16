@@ -3,7 +3,6 @@
                   @typescript-eslint/no-unused-vars*/
 
 import {Entity, SafeType} from 'dto-mapping';
-import type {ITag} from '../tag';
 
 @Entity()
 export class EditDto {

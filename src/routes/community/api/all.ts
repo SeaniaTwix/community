@@ -2,7 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
-export async function get(_: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET(_: RequestEvent): Promise<RequestHandlerOutput> {
   return {
     status: 200,
     body: {

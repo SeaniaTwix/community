@@ -1,6 +1,9 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
+import type {CommentDto} from '$lib/types/dto/comment.dto';
+import type {ITag} from '$lib/types/tag';
+import type {IArticle} from '$lib/types/article';
 
 export class Article {
 
@@ -10,7 +13,7 @@ export class Article {
   constructor(readonly id: string) {
   }
 
-  async get(): Promise<ArticleDto> {
+  async get(): Promise<IArticle> {
     const cursor = await db.query(aql`
       for article in articles
         filter article._key == ${this.id}
@@ -31,12 +34,53 @@ export class Article {
     });
   }
 
+  async getComments(page: number, amount: number) {
+    const cursor = await db.query(aql`
+      for comment in comments
+        sort comment.createdAt asc
+        filter comment.article == ${this.id} limit ${(page - 1) * amount}, ${amount}
+        return comment`);
+    return await cursor.all();
+  }
+
   addViewCount() {
     return db.query(aql`
       for article in articles
         filter article._key == ${this.id}
         let v = article.views != null ? article.views + 1 : 1
         update article with { views: v } in articles`);
+  }
+
+  /**
+   * pub 태그만 가져옵니다.
+   */
+  async getAllTags(): Promise<ITag[]> {
+    const cursor = await db.query(aql`
+      for tag in tags
+        filter tag.target == ${this.id} && tag.pub
+          return tag`);
+    return await cursor.all();
+  }
+
+  async getAllTagsCounted(): Promise<Record<string, number>> {
+    const tags = await this.getAllTags();
+    const result: Record<string, number> = {};
+    for (const tag of tags) {
+      if (!Object.hasOwn(result, tag.name)) {
+        result[tag.name] = 1;
+      } else {
+        result[tag.name] += 1;
+      }
+    }
+    return result;
+  }
+
+  async getAllMyTags(user: string): Promise<ITag[]> {
+    const cursor = await db.query(aql`
+      for tag in tags
+        filter tag.target == ${this.id} && tag.pub && tag.user == ${user}
+          return tag`);
+    return await cursor.all();
   }
 
   /**
@@ -50,11 +94,27 @@ export class Article {
     }
 
     const newTags = tags.map((tag) => ({
+      target: this.id,
+      user: userId,
       name: tag,
       createdAt: new Date,
       pub: true,
     }));
 
+    return await db.query(aql`
+      for newTag in ${newTags}
+        let sameTag = (
+          for savedTag in tags
+            filter newTag.target == savedTag.target && newTag.name == savedTag.name && newTag.user == savedTag.user
+              return savedTag)
+        let len = length(sameTag)
+        filter len <= 0 || (len > 0 && sameTag[0].pub == false)
+          upsert { _key: sameTag[0]._key } 
+            insert newTag 
+            update { _key: sameTag[0]._key, pub: true }
+          in tags`)
+
+    /*
     return await db.query(aql`
       for article in articles
         filter article._key == ${this.id}
@@ -67,14 +127,40 @@ export class Article {
             tags: merge_recursive(article.tags, {
               ${userId}: append(userTags, tags)
             })
-          } in articles`);
+          } in articles`);*/
   }
 
-  async removeTags(userId: string, tags: string[]) {
+  /**
+   * 해당 게시물에 지금까지 자신이 입력한 태그를 모두 지우고
+   * 새 태그를 등록합니다.
+   */
+  async updateTags(userId: string, tags: string[]) {
     if (tags.find(tag => /\s/.test(tag))) {
       throw new Error('whitespace not allowed in tag');
     }
 
+    await db.query(aql`
+      for savedTag in tags
+        filter savedTag.target == ${this.id} && savedTag.user == ${userId}
+          update savedTag with {pub: false} in tags`);
+
+    return this.addTags(userId, tags);
+  }
+
+  removeTags(userId: string, tags: string[]) {
+    if (tags.find(tag => /\s/.test(tag))) {
+      throw new Error('whitespace not allowed in tag');
+    }
+
+    console.log(tags, this.id, userId);
+
+    return db.query(aql`
+      for savedTag in tags
+        filter savedTag.name in ${tags} && savedTag.target == ${this.id} && savedTag.user == ${userId}
+          update savedTag with {pub: false} in tags`);
+
+
+    /*
     const r = await db.query(aql`
       for article in articles
         filter article._key == ${this.id}
@@ -89,7 +175,18 @@ export class Article {
             }
           }) in articles`);
 
-    console.dir(await r.next(), {depth: 3})
+    console.dir(await r.next(), {depth: 3}) */
+  }
+
+  async addComment(userId: string, comment: CommentDto) {
+    const cursor = await db.query(aql`
+      insert merge(${comment}, {
+        author: ${userId},
+        createdAt: ${new Date()},
+        "like": 0,
+        dislike: 0
+      }) into comments return NEW`)
+    return await cursor.next();
   }
 
 }

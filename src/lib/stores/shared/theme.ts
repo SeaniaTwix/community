@@ -1,5 +1,5 @@
 import {writable} from 'svelte/store';
-import {CookieParser} from '../../cookie-parser';
+import {CookieParser} from '$lib/cookie-parser';
 
 export function createWritableStore<T>(key: string, startValue: T) {
   const {subscribe, set} = writable<T>(startValue);
@@ -29,3 +29,4 @@ function getTheme() {
 }
 
 export const theme = createWritableStore('theme', { mode: getTheme() });
+export const iosStatusBar = createWritableStore('statusBar', { mode: getTheme() });

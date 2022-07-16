@@ -4,18 +4,22 @@ import {aql} from 'arangojs';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
 import {isStringInteger} from '$lib/util';
 import HttpStatus from 'http-status-codes';
-import _ from 'lodash-es';
+import {parseInt} from 'lodash-es';
+import {Board} from '$lib/community/board/server';
 
-export async function get({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!isStringInteger(params.id)) {
     return {
       status: HttpStatus.BAD_REQUEST,
-    }
+    };
   }
 
   const board = new ListBoardRequest(params.id);
-  const amount = _.toInteger(url.searchParams.get('amount')) ?? 30;
-  const list = await board.getListRecents(amount) as any[];
+  const pageParam = url.searchParams.get('page') ?? '1';
+  const page = isStringInteger(pageParam) ? parseInt(pageParam) : 1;
+  const amountParam = url.searchParams.get('amount') ?? '30';
+  const amount = isStringInteger(amountParam) ? parseInt(amountParam) : 30;
+  const list = await board.getListRecents(page, amount) as any[];
 
   // todo: find diff way for mapping tags count (in aql if available)
 
@@ -30,35 +34,26 @@ export async function get({params, url}: RequestEvent): Promise<RequestHandlerOu
         article.tags = tags;
         return article;
       }),
-    }
-  }
+      maxPage: await board.getMaxPage(amount),
+    },
+  };
 }
 
 class ListBoardRequest {
-  constructor(private readonly id: string) {
+  private readonly board: Board;
+
+  constructor(id: string) {
+    this.board = new Board(id);
   }
 
-  async getListRecents(amount = 30): Promise<ArticleDto[]> {
+  getMaxPage(amount: number) {
+    return this.board.getMaxPage(amount);
+  }
+
+  getListRecents(page = 1, amount = 25): Promise<ArticleDto[]> {
     if (amount > 50) {
       throw new Error('too many');
     }
-
-    // console.log(amount)
-
-    const cursor = await db.query(aql`
-      for article in articles
-        sort article.createdAt desc
-        let isPub = article.pub == null || article.pub == true
-        filter article.board == ${this.id} && isPub
-          let c = length(for c in comments filter c.article == article._key return c)
-          let tags = (
-            for userId in attributes(is_object(article.tags) ? article.tags : {})
-              for tag in article.tags[userId]
-                return tag.name)
-          
-          
-          return merge(article, {comments: c, tags: tags})`);
-
-    return await cursor.all();
+    return this.board.getRecentArticles(page, amount);
   }
 }

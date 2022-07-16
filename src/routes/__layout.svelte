@@ -47,21 +47,28 @@
   import { classList } from 'svelte-body';
   import {onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
+  import {iosStatusBar} from '$lib/stores/shared/theme.js';
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
     if (cookies?.theme === 'dark') {
       const html = document.querySelector('html');
       html.classList.add('dark');
+      theme = '#394150';
+    } else {
+      theme = '#FFF';
     }
   })
 
+  $: theme = $iosStatusBar === 'light' ? '#FFFFFF' : '#394150';
   export let uid;
   export let boards: string[] = [];
   export let user: IUser;
   // console.log(uid)
 </script>
-
+<svelte:head>
+  <meta name="theme-color" content="{theme}" />
+</svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />
 
 <Nav {boards} {uid} {user} />

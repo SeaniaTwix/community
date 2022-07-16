@@ -13,6 +13,43 @@ export class Board {
     return await cursor.next();
   }
 
+  async getMaxPage(amount = 30): Promise<number> {
+    const cursor = await db.query(aql`return ceil(length(articles) / ${amount})`);
+    return await cursor.next();
+  }
+
+  async getRecentArticles(page: number, amount: number) {
+    /*
+    const cursor = await db.query(aql`
+      for article in articles
+        sort article.createdAt desc
+        limit ${(page - 1) * amount}, ${amount}
+        let isPub = article.pub == null || article.pub == true
+        filter article.board == ${this.id} && isPub
+          let c = length(for c in comments filter c.article == article._key return c)
+          let tags = (
+            for userId in attributes(is_object(article.tags) ? article.tags : {})
+              for tag in article.tags[userId]
+                return tag.name)
+          
+          
+          return merge(article, {comments: c, tags: tags})`);*/
+    const cursor = await db.query(aql`
+      for article in articles
+        sort article.createdAt desc
+        limit ${(page - 1) * amount}, ${amount}
+        let isPub = article.pub == null || article.pub == true
+        filter article.board == ${this.id} && isPub
+          let c = length(for c in comments filter c.article == article._key return c)
+          let tags = (
+            for savedTag in tags
+              filter savedTag.target == article._key && savedTag.pub
+                return savedTag.name)
+          return merge(article, {comments: c, tags: tags})`)
+
+    return await cursor.all();
+  }
+
   get name(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       db.query(aql`

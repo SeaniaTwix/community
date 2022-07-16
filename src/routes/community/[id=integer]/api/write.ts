@@ -9,10 +9,17 @@ import type {ClientToServerTagType} from '$lib/types/dto/article.dto';
 import {User} from '$lib/auth/user/server';
 import type {IArticle} from '$lib/types/article';
 import {Article} from '$lib/community/article/server';
+import {load as loadHtml} from 'cheerio';
+import {unified} from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
+import {client} from '$lib/database/search';
+import {striptags} from 'striptags';
 
 // noinspection JSUnusedGlobalSymbols
-export async function post({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
-  console.log('new write')
+export async function POST({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+  // console.log('new write')
   const article = new ArticleDto<ClientToServerTagType>(await request.json());
   const write = new WriteRequest(article);
 
@@ -45,6 +52,12 @@ export async function post({request, params, locals}: RequestEvent): Promise<Req
     };
   }
 
+  try {
+    await write.saveToSearchEngine();
+  } catch (e) {
+    console.log(e);
+  }
+
   return {
     status: write.status,
     body: {
@@ -57,6 +70,7 @@ class WriteRequest {
   error: string | null = null;
   id?: string;
   private board: Board;
+  private article?: Article;
 
   constructor(private body: ArticleDto<ClientToServerTagType>) {
     if (this.isTitleEmpty || this.isContentEmpty) {
@@ -76,6 +90,10 @@ class WriteRequest {
 
   get title(): string | undefined {
     return this.body.title?.trim();
+  }
+
+  get source(): string {
+    return this.body.source ?? '';
   }
 
   get tags(): string[] {
@@ -101,6 +119,17 @@ class WriteRequest {
 
   get content(): string | undefined {
     return this.body.content?.trim();
+  }
+
+  get isImageExists(): boolean {
+    const content = this.content;
+    if (!content) {
+      return false;
+    }
+
+    const $ = loadHtml(content);
+    const images = $('img');
+    return images.length > 0;
   }
 
   private get isBoardExists(): Promise<boolean> {
@@ -129,9 +158,20 @@ class WriteRequest {
       return;
     }
 
+    const sanitizedContent = await unified()
+      .use(rehypeParse, {fragment: true})
+      .use(rehypeSanitize, {
+        ...defaultSchema,
+        tagNames: [...defaultSchema.tagNames ?? [], 'source']
+      })
+      .use(rehypeStringify)
+      .process(this.content ?? '')
+
     const data: Partial<IArticle> = {
+      source: this.source,
+      views: 0,
       title: this.title,
-      content: this.content,
+      content: sanitizedContent.value.toString(),
       // lazy
       tags: {},
       author: userId,
@@ -139,15 +179,45 @@ class WriteRequest {
       board: this.boardId!,
       pub: true,
       locked: false,
+      images: this.isImageExists,
     };
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);
     const {_key} = await cursor.next();
 
     this.id = _key;
-    const article = new Article(_key);
+    this.article = new Article(_key);
 
-    await article.addTags(userId, this.tags);
+    // auto tag server side code
+
+    /*
+    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+    const resultAutoTag = autoTag.exec(data.title!);
+    let tags = this.tags;
+    if (resultAutoTag) {
+      const autoTagText = resultAutoTag[1];
+      tags = [autoTagText, ...tags];
+    } // */
+
+    await this.article.addTags(userId, this.tags);
+  }
+
+  async saveToSearchEngine() {
+    const article = new Article(this.id!);
+    const data = await article.get();
+    await client.index('articles')
+      .addDocuments([
+        {
+          board: this.boardId,
+          id: article.id,
+          title: this.title,
+          source: data.source,
+          content: striptags(this.content ?? ''),
+          tags: await article.getAllTagsCounted(),
+          createdAt: (new Date(data.createdAt!)).getTime(),
+        }
+      ]);
+
   }
 
   get status(): number {

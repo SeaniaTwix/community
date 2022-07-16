@@ -86,6 +86,9 @@
   import {inRange} from 'lodash-es';
   import Content from '$lib/components/Content.svelte';
   import {writable} from 'svelte/store';
+  import EditImage from '$lib/components/EditImage.svelte';
+  import {upload} from '$lib/file/uploader';
+  import {nanoid} from 'nanoid';
 
   /**
    * 게시글 보기
@@ -105,8 +108,8 @@
   export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
-  let liked = article.myTags?.find((tag) => tag.name === '_like') !== undefined;
-  let disliked = article.myTags?.find((tag) => tag.name === '_dislike') !== undefined;
+  let liked = article.myTags?.includes('_like');
+  let disliked = article.myTags?.includes('_dislike');
   $: likeCount = article.tags?._like ?? 0;
   $: dislikeCount = article.tags?._dislike ?? 0;
 
@@ -120,6 +123,16 @@
   let commentContent = '';
 
   let commenting = false;
+
+  let showingImageEditor = false;
+  let mobileInputMode = false;
+  let mobileTextInput: HTMLTextAreaElement;
+  let mobileInputLastCursor = 0;
+  let generalScrollView: HTMLDivElement;
+
+  let commentImageUploadSrc = '';
+  let commentImageUploadFileInfo: File;
+  let editedImage: Blob;
 
   async function addComment() {
     if (!session && !commenting) {
@@ -135,21 +148,34 @@
     if (relative) {
       commentData.relative = relative;
     }
+    /*
     if (commentImageUrl) {
       commentData.image = commentImageUrl;
+    }*/
+    if (!isEmpty(commentImageUploadSrc)) {
+      const data = editedImage ? editedImage : commentImageUploadFileInfo;
+      const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
+      const name = 'UZ-is-Kawaii.png';
+      commentData.image = await upload(data, type, name);
     }
 
-    // console.log(commentData);
-    // return;
-    const result = await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
-      json: commentData,
-    }).json();
+    try {
 
-    // console.log(result);
+      // console.log(commentData);
+      // return;
+      await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
+        json: commentData,
+      }); // .json();
 
-    commentContent = '';
+      // console.log(result);
 
-    commenting = false;
+    } finally {
+      commentContent = '';
+      commenting = false;
+      mobileTextInput?.blur();
+      cancelImageUpload();
+    }
+
   }
 
   function detectSend(event: KeyboardEvent) {
@@ -166,19 +192,21 @@
 
   function isMyTag(tagName: string): boolean {
     // console.log(tagName, article.myTags)
-    return article.myTags?.find(tag => tag.name === tagName) !== undefined;
+    return article.myTags?.includes(tagName)
   }
 
 
   let prevVisualViewport = 0;
+  let isKeyboardVisible = false;
   const fixIosKeyboardScrolling = () => {
     const currentVisualViewport = window.visualViewport.height;
+    console.log(currentVisualViewport, prevVisualViewport);
 
-    const isKeyboardVisible = prevVisualViewport > currentVisualViewport;
+    isKeyboardVisible = prevVisualViewport > currentVisualViewport;
     let changed = prevVisualViewport - currentVisualViewport;
 
     if (isKeyboardVisible) {
-      if (inRange(changed, -50, 50)) {
+      if (inRange(changed, -30, 30)) {
         changed = prevVisualViewport - changed;
       }
       window.scrollTo(0, changed);
@@ -248,11 +276,23 @@
     }
   }
 
-  function imageUpload(file: File) {
+  function openImageEditor() {
+    showingImageEditor = true;
+  }
+
+  function closeImageEditor() {
+    showingImageEditor = false;
+  }
+
+  function imageLoadCompletedInComment(element: HTMLImageElement) {
+    URL.revokeObjectURL(element.src);
+  }
+
+  function imageUpload(file: File | Blob, type?: string) {
     return new Promise<string>(async (resolve, reject) => {
       try {
         // const file = blobInfo.blob();
-        const request = await ky.post(`/file/request?type=${file.type}`)
+        const request = await ky.post(`/file/request?type=${file.type ?? type}`)
           .json<{ uploadUrl: string, key: string }>();
         await ky.put(request.uploadUrl, {
           body: file,
@@ -266,34 +306,92 @@
     });
   }
 
+  // so hacky
+  //*
+  function focusOutTextArea(event: Event) {
+    console.log('body:', document.body.scrollHeight)
+  } //*/
+
   function fileSelected() {
-    f.set(fileUploader.files[0]);
+    fileChangeListener.set(fileUploader.files[0]);
+  }
+
+  function blockMobileScroll(event: Event) {
+    event.preventDefault();
+  }
+
+  async function enableMobileInput() {
+    mobileInputMode = true;
+    await tick();
+    mobileTextInput.focus();
+    await tick();
+    mobileTextInput.selectionStart = mobileInputLastCursor;
+    mobileTextInput.selectionEnd = mobileInputLastCursor;
+
+    visualViewport.addEventListener('touchmove', blockMobileScroll, true);
+  }
+
+  let lastScrollTop = 0;
+  function disableMobileInput() {
+    setTimeout(() => {
+      visualViewport.removeEventListener('touchmove', blockMobileScroll, true);
+
+      mobileInputMode = false;
+      mobileInputLastCursor = mobileTextInput.selectionEnd;
+      setTimeout(() => {
+        generalScrollView.scrollTop = lastScrollTop;
+      }, 5);
+    }, 10);
+  }
+
+  function saveLastScroll(event: Event) {
+    const target = event.target as HTMLDivElement;
+    if (target && !mobileInputMode) {
+      lastScrollTop = target.scrollTop;
+      // console.log('lastScrollTop:', lastScrollTop);
+    }
+  }
+
+  function cancelImageUpload() {
+    commentImageUploadSrc = '';
+    commentImageUploadFileInfo = undefined;
+    editedImage = undefined;
+  }
+
+  async function imageEditedInComment(event: CustomEvent<Blob>) {
+    commentImageUploadSrc = URL.createObjectURL(event.detail);
+    editedImage = event.detail;
+    await tick();
+    closeImageEditor();
   }
 
   let fileUploader: HTMLInputElement;
-  const f = writable<File>(null);
+  const fileChangeListener = writable<File>(null);
   let subscriptions: Subscription[] = [];
   let pusher: Pusher;
   let unsub: () => void;
   onMount(async () => {
     // console.log(article);
 
-    pusher = new Pusher(article._key);
+    pusher = new Pusher(`${article._key}@${article.board}`);
 
-    document.body.classList.add('overflow-hidden', 'touch-none');
+    document.body.classList.add('overflow-hidden');
+    // document.addEventListener('scroll', focusOutTextArea, true);
+    // console.log(window.visualViewport.height);
 
     try {
       prevVisualViewport = window.visualViewport.height;
 
-      window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling, true);
+      // window.visualViewport.addEventListener('resize', fixIosKeyboardScrolling, true);
 
       ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
 
       const whileSub = async ({body}) => {
+        console.log('comment:', body);
         if (typeof body.author === 'string') {
           await userNameExistingCheck(body.author);
 
-          if (body.content) {
+          if (body.content || body.image) {
             const newComment: IComment = {
               ...body,
               createdAt: new Date,
@@ -348,6 +446,7 @@
 
       const observable = pusher.observable('comments');
       subscriptions.push(observable.subscribe(whileSub));
+      console.log(subscriptions);
       const tagChange = pusher.observable('tag');
       subscriptions.push(tagChange.subscribe(whenTagChanged));
       const commentVoteChange = pusher.observable('comments:vote');
@@ -355,9 +454,11 @@
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
 
-      unsub = f.subscribe(async (file) => {
+      unsub = fileChangeListener.subscribe(async (file) => {
         if (!file) return;
-        const url = await imageUpload(file);
+        // const url = await imageUpload(file);
+        commentImageUploadFileInfo = file;
+        commentImageUploadSrc = URL.createObjectURL(file);
       });
     } catch (e) {
       console.error(e);
@@ -370,11 +471,11 @@
     }
     pusher?.close();
     try {
-
-      window?.visualViewport.removeEventListener('resize', fixIosKeyboardScrolling, true);
+      // document.removeEventListener('scroll', focusOutTextArea, true);
+      //window?.visualViewport.removeEventListener('resize', fixIosKeyboardScrolling, true);
       // window.document.body.removeEventListener('scroll', preventScrolling, true);
 
-      document.body.classList.remove('overflow-hidden', 'touch-none');
+      document.body.classList.remove('overflow-hidden');
     } catch {
       // no window. it's ok.
     }
@@ -390,14 +491,46 @@
     amount: number;
     author: string;
   }
+
+  let fileDragging = false;
+
+  function fileDrag(event: DragEvent) {
+    if (event.dataTransfer.types.includes('Files')) {
+      fileDragging = true;
+    }
+  }
+
+  function fileDragLeaveCheck(event: DragEvent) {
+    fileDragging = false;
+  }
+
+  async function fileDrop(event: DragEvent) {
+    await tick();
+    fileDragging = false;
+    const uploadPending = event.dataTransfer.files.item(0);
+    if (uploadPending.type.startsWith('image')) {
+      commentImageUploadSrc = URL.createObjectURL(uploadPending);
+      commentImageUploadFileInfo = uploadPending;
+    }
+  }
 </script>
 
 <svelte:head>
   <title>{boardName} - {article.title}</title>
 </svelte:head>
 
+<svelte:body on:dragover|preventDefault={fileDrag} />
+
+{#if fileDragging}
+  <div on:drop|preventDefault={fileDrop}
+       on:dragleave|preventDefault={fileDragLeaveCheck}
+       class="absolute top-0 z-[12] left-0 w-full h-screen bg-white/50">
+    file drag
+  </div>
+{/if}
+
 <div id="__index-hidden-for-file-and-class-preload"
-     class="touch-none hidden cursor-not-allowed cursor-progress">
+     class="touch-none hidden cursor-not-allowed cursor-progress overscroll-none">
   <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
 </div>
 
@@ -405,7 +538,11 @@
 
 </div>
 
-<div class="w-full absolute z-50 bg-white dark:bg-gray-600 px-4">
+{#if showingImageEditor}
+  <EditImage on:close={closeImageEditor} on:save={imageEditedInComment} bind:src="{commentImageUploadSrc}" />
+{/if}
+
+<div class="w-full absolute z-[11] bg-white dark:bg-gray-600 px-4">
   <div id="__breadcrumb"
        class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto pb-1 border-b dark:border-zinc-500">
     <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
@@ -453,203 +590,277 @@
   </div>
 </div>
 
-<div in:fade
-     class="flex flex-col justify-between __fixed-view">
-
-  <div class="p-4 space-y-4 overflow-y-scroll flex-grow">
-    <div
-      class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
-      <div class="space-y-2 mb-4">
-        <div class="flex justify-between">
-          <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
-            <h2 class="text-2xl flex-shrink">{article.title}</h2>
-            <div class="inline-block flex space-x-2">
-              <div class="py-2 md:py-0.5">
-                {#if session && session.uid !== article.author}
+<div in:fade class="flex flex-col justify-between" class:__fixed-view={!mobileInputMode}>
+  {#if !mobileInputMode}
+    <div bind:this={generalScrollView}
+         class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow"
+         on:scroll={saveLastScroll}>
+      <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between">
+            <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
+              <h2 class="text-2xl flex-shrink">{article.title}</h2>
+              <div class="inline-block flex space-x-2">
+                <div class="py-2 md:py-0.5">
+                  {#if session && session.uid !== article.author}
                   <span class="mt-0.5 cursor-pointer hover:text-red-600">
                     <Report size="1rem"/>
                   </span>
-                {/if}
-                {#if article.author === session?.uid}
-                  <a href="/community/{article.board}/{article._key}/edit"
-                     class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
-                    <Edit size="1rem"/>
-                  </a>
-                {/if}
-                {#if article.author === session?.uid || session?.rank >= EUserRanks.Manager}
+                  {/if}
+                  {#if article.author === session?.uid}
+                    <a href="/community/{article.board}/{article._key}/edit"
+                       class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
+                      <Edit size="1rem"/>
+                    </a>
+                  {/if}
+                  {#if article.author === session?.uid || session?.rank >= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Delete size="1rem"/>
                   </span>
-                {/if}
-                {#if session?.rank >= EUserRanks.Manager}
+                  {/if}
+                  {#if session?.rank >= EUserRanks.Manager}
                   <span class="mt-0.5 cursor-pointer hover:text-red-400">
                     <Admin size="1rem"/>
                   </span>
-                {/if}
+                  {/if}
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col md:flex-col">
+              <span><View size="1rem"/> {article.views ?? 1}</span>
+
+              <button data-tooltip-target="tooltip-time-specific" type="button">
+                <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+                  {timeAgo.format(new Date(article.createdAt))}
+                </time>
+              </button>
+
+              <div id="tooltip-time-specific" role="tooltip"
+                   class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
+                작성 시간: {timeFullFormat(article.createdAt)}
+                <div class="tooltip-arrow" data-popper-arrow></div>
               </div>
             </div>
           </div>
-          <div class="flex flex-col md:flex-col">
-            <span><View size="1rem"/> {article.views ?? 1}</span>
-
-            <button data-tooltip-target="tooltip-time-specific" type="button">
-              <time class="text-zinc-500 dark:text-zinc-300 text-sm">
-                {timeAgo.format(new Date(article.createdAt))}
-              </time>
-            </button>
-
-            <div id="tooltip-time-specific" role="tooltip"
-                 class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
-              작성 시간: {timeFullFormat(article.createdAt)}
-              <div class="tooltip-arrow" data-popper-arrow></div>
+          <div class="flex space-x-3">
+            <div class="w-12 min-h-[3rem] inline-block">
+              <CircleAvatar/>
             </div>
+            <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
           </div>
         </div>
-        <div class="flex space-x-3">
-          <div class="w-12 min-h-[3rem] inline-block">
-            <CircleAvatar/>
+        {#if article.source}
+          <div class="rounded-sm overflow-hidden">
+            <p class="px-4 py-2 border-l-2 border-sky-400 select-none dark:bg-zinc-600">
+              출처 <a class="text-sky-300 hover:text-sky-400 transition-colors select-text"
+                    href="{article.source}">{article.source}</a>
+            </p>
           </div>
-          <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
-        </div>
-      </div>
-      {#if article.source}
-        <div class="rounded-sm overflow-hidden">
-          <p class="px-4 py-2 border-l-2 border-sky-400 select-none dark:bg-zinc-600">
-            출처 <a class="text-sky-300 hover:text-sky-400 transition-colors select-text"
-                  href="{article.source}">{article.source}</a>
-          </p>
-        </div>
-      {/if}
-      <article class="pt-4 pb-2 min-h-[10rem]">
-        <Content contents="{contents}"/>
-      </article>
-      <div class="pt-3">
-        <ul class="space-x-2 flex flex-wrap">
-          {#if session}
-            <li on:click={() => vote('like')}
-                class:cursor-not-allowed={session.uid === article.author}
-                class:cursor-pointer={session.uid !== article.author}
-                class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
-              <Tag>
-                {#if liked}
-                  <Like size="1rem"/>
-                {:else}
-                  <LikeEmpty size="1rem"/>
-                {/if}
-                {likeCount}
-              </Tag>
-            </li>
-            <li on:click={() => vote('dislike')}
-                class:cursor-not-allowed={session.uid === article.author}
-                class:cursor-pointer={session.uid !== article.author}
-                class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
-              <Tag>
-                {#if disliked}
-                  <Dislike size="1rem"/>
-                {:else}
-                  <DislikeEmpty size="1rem"/>
-                {/if}
-                {dislikeCount}
-              </Tag>
-            </li>
-          {/if}
-          {#each Object.keys(article.tags) as tagName}
-            {#if !tagName.startsWith('_')}
-              <li class="inline-block mb-2 cursor-pointer">
-                <Tag count="{article.tags[tagName]}">{tagName}
-                  {#if isMyTag(tagName)}<span class="text-gray-600 leading-none __icon-fix"><RemoveTag
-                    size="1rem"/></span>{/if}
+        {/if}
+        <article class="pt-4 pb-2 min-h-[10rem]">
+          <Content contents="{contents}" nsfw="{!!article.tags['후방']}"/>
+        </article>
+        <div class="pt-3">
+          <ul class="space-x-2 flex flex-wrap">
+            {#if session}
+              <li on:click={() => vote('like')}
+                  class:cursor-not-allowed={session.uid === article.author}
+                  class:cursor-pointer={session.uid !== article.author}
+                  class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
+                <Tag>
+                  {#if liked}
+                    <Like size="1rem"/>
+                  {:else}
+                    <LikeEmpty size="1rem"/>
+                  {/if}
+                  {likeCount}
+                </Tag>
+              </li>
+              <li on:click={() => vote('dislike')}
+                  class:cursor-not-allowed={session.uid === article.author}
+                  class:cursor-pointer={session.uid !== article.author}
+                  class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
+                <Tag>
+                  {#if disliked}
+                    <Dislike size="1rem"/>
+                  {:else}
+                    <DislikeEmpty size="1rem"/>
+                  {/if}
+                  {dislikeCount}
                 </Tag>
               </li>
             {/if}
+            {#each Object.keys(article.tags) as tagName}
+              {#if !tagName.startsWith('_')}
+                <li class="inline-block mb-2 cursor-pointer">
+                  <Tag count="{article.tags[tagName]}">{tagName}
+                    {#if isMyTag(tagName)}<span class="text-gray-600 leading-none __icon-fix"><RemoveTag
+                      size="1rem"/></span>{/if}
+                  </Tag>
+                </li>
+              {/if}
+            {/each}
+
+            {#if session}
+              <li class="inline-block mb-2 cursor-pointer">
+                <Tag>
+                  <Plus size="1rem"/>
+                  <span>새 태그 추가</span>
+                </Tag>
+              </li>
+            {/if}
+          </ul>
+        </div>
+      </div>
+
+      <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
+
+
+        <ul class="space-y-3">
+
+          {#each comments as comment}
+            <li in:fade>
+              <Comment board="{article.board}"
+                       article="{article._key}"
+                       user="{users[comment.author]}"
+                       myVote="{comment.myVote}"
+                       {session}
+                       {comment}/>
+            </li>
           {/each}
 
-          {#if session}
-            <li class="inline-block mb-2 cursor-pointer">
-              <Tag>
-                <Plus size="1rem"/>
-                새 태그 추가
-              </Tag>
-            </li>
+        </ul>
+
+        <p class="mt-8 text-zinc-500 text-lg text-center">
+          {#if isEmpty(comments)}
+            댓글이 없어요...
+          {:else}
+            끝
           {/if}
+        </p>
+      </div>
+    </div>
+  {:else}
+
+
+
+    <div class="mt-6 p-2">
+      <h2 class="text-xl mb-2">댓글 작성 중...</h2>
+
+      <div class="overflow-hidden rounded-t-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
+        <div class="px-2">
+          {#if isEmpty(commentImageUploadSrc)}
+            <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+              <Favorite size="1.25rem"/>
+            </button>
+            <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+              <Upload size="1.25rem"/>
+            </button>
+          {:else}
+            <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer ">
+              <span><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
+            </button>
+          {/if}
+        </div>
+        <div class="flex flex-grow">
+
+          {#if !isEmpty(commentImageUploadSrc)}
+            <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
+              <img class="w-full h-full object-cover bg-white dark:bg-gray-600"
+                   on:load={imageLoadCompletedInComment}
+                   src="{commentImageUploadSrc}" alt="upload preview" />
+            </div>
+          {/if}
+          <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
+              <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
+                        on:keydown={detectSend}
+                        bind:value={commentContent}
+                        bind:this={mobileTextInput}
+                        on:blur={disableMobileInput}
+                        placeholder="댓글을 입력하세요..."></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <button on:click={addComment} class="py-2 bg-sky-200 dark:bg-sky-800 w-full">작성</button>
+    </div>
+
+
+
+  {/if}
+  {#if !mobileInputMode}
+    <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
+      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {session ? '9' : '2'}rem;">
+        <ul class="space-y-2">
+          <li>
+            <!-- todo: add page parameter -->
+            <button on:click={() => goto(`/community/${article.board}/`)}
+                    class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
+                  text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
+              <span><Back size="1rem"/></span>
+            </button>
+          </li>
+          <li>
+            <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
+         text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
+              <span><Up size="1rem"/></span>
+            </button>
+          </li>
+          <li>
+            <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
+         text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
+              <span><Down size="1rem"/></span>
+            </button>
+          </li>
         </ul>
       </div>
-    </div>
-
-    <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
-
-
-      <ul class="space-y-3">
-
-        {#each comments as comment}
-          <li in:fade>
-            <Comment board="{article.board}"
-                     article="{article._key}"
-                     user="{users[comment.author]}"
-                     myVote="{comment.myVote}"
-                     {session}
-                     {comment}/>
-          </li>
-        {/each}
-
-      </ul>
-
-      <p class="mt-8 text-zinc-500 text-lg text-center">
-        {#if isEmpty(comments)}
-          댓글이 없어요...
-        {:else}
-          끝
-        {/if}
-      </p>
-    </div>
-  </div>
-
-  <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
-    <div class="absolute" style="bottom: {session ? '9' : '2'}rem; left: -0.5rem;">
-      <ul class="space-y-2">
-        <li>
-          <!-- todo: add page parameter -->
-          <button on:click={() => goto(`/community/${article.board}/`)}
-                  class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
-                  text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Back size="1rem"/></span>
-          </button>
-        </li>
-        <li>
-          <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
-         text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Up size="1rem"/></span>
-          </button>
-        </li>
-        <li>
-          <button class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
-         text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
-            <span><Down size="1rem"/></span>
-          </button>
-        </li>
-      </ul>
-    </div>
-    {#if session}
-      <div
-        class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
-        <div class="px-2">
-          <input type="file" class="hidden"/>
-          <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
-            <Favorite size="1.25rem"/>
-          </button>
-          <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
-            <Upload size="1.25rem"/>
-          </button>
+      {#if session}
+        <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
+          <div class="px-2">
+            {#if isEmpty(commentImageUploadSrc)}
+              <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+                <Favorite size="1.25rem"/>
+              </button>
+              <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+                <Upload size="1.25rem"/>
+              </button>
+            {:else}
+              <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer ">
+                <span><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
+              </button>
+            {/if}
+          </div>
+          <div class="w-full flex flex-row grow shrink-0">
+            <div class="flex flex-grow">
+              {#if !isEmpty(commentImageUploadSrc)}
+                <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
+                  <img class="w-full h-full object-cover bg-white dark:bg-gray-600"
+                       on:load={imageLoadCompletedInComment}
+                       src="{commentImageUploadSrc}" alt="upload preview" />
+                </div>
+              {/if}
+              <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
+              <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
+                        on:keydown={detectSend} bind:value={commentContent}
+                        placeholder="댓글을 입력하세요..."></textarea>
+                <div id="__textarea-mobile"
+                     on:click={enableMobileInput} on:dblclick|preventDefault
+                     class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none">
+                  {#if isEmpty(commentContent)}
+                    <span class="text-[#9DA3AE]">댓글을 입력하세요...</span>
+                  {:else}
+                    {commentContent}
+                  {/if}
+                </div>
+              </div>
+            </div>
+            <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">작성</button>
+          </div>
         </div>
-        <div class="w-full flex flex-row grow shrink-0">
-      <textarea class="bg-gray-100 dark:bg-gray-300 p-4 grow h-full focus:outline-none shadow-md dark:text-gray-800"
-                on:keydown={detectSend} bind:value={commentContent}
-                placeholder="댓글을 입력하세요..."></textarea>
-          <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">작성</button>
-        </div>
-      </div>
-    {/if}
-  </div>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -657,13 +868,31 @@
   .__fixed-view {
     height: calc(100vh - 62px);
     // for mobile
-    @supports (-webkit-appearance:none) {
-      height: calc(var(--vh, 1vh) * 100 - 62px - env(safe-area-inset-bottom));
+    @supports (-webkit-touch-callout: none) {
+      height: calc(var(--vh, 1vh) * 100 - 62px );
+      // padding-bottom: env(safe-area-inset-bottom);
     }
   }
 
-  .__comment-input {
+  // https://stackoverflow.com/questions/35361986/css-gradient-checkerboard-pattern
+  .__bg-checkerboard {
+    background-image: linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
 
+  #__textarea-general {
+    display: block;
+    @supports (-webkit-touch-callout: none) {
+      display: none;
+    }
+  }
+
+  #__textarea-mobile {
+    display: none;
+    @supports (-webkit-touch-callout: none) {
+      display: block;
+    }
   }
 
   .__circle {
@@ -677,7 +906,5 @@
         margin-top: 2px;
       }
     }
-
-
   }
 </style>

@@ -7,8 +7,11 @@ import {Entity, SafeType} from 'dto-mapping';
 @Entity()
 export class ArticleItemDto {
 
+  // 자동 태그 (페이지 전용)
+  autoTag?: string;
+
   @SafeType({type: String})
-  name?: string;
+  title?: string;
 
   author?: IUser;
 

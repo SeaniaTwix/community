@@ -5,6 +5,12 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'BinggraeMelona'; /* 'Tanugo'; */
+  src: url("https://s3.ru.hn/fonts/umeboshi_.woff");
+  unicode-range: U+4e00-9fbf, U+3040-309f, U+30A0-30FF;
+}
+
 * {
   font-family: 'BinggraeMelona', serif;
 }

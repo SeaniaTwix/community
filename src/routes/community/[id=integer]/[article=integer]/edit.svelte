@@ -45,11 +45,11 @@
   import {onDestroy, onMount, tick} from 'svelte';
   import type {Editor as TinyMCE, Events} from 'tinymce';
   import Editor from '@tinymce/tinymce-svelte';
-  import _ from 'lodash-es';
+  import _, {uniq} from 'lodash-es';
   import {assets} from '$app/paths';
   import {goto} from '$app/navigation';
-
-  console.log('assets:', assets);
+  import {darkThemes, defaultEditorSettings} from '$lib/editor/settings';
+  import {upload as imageUpload} from '$lib/file/uploader';
 
   export let title = '';
   export let source = '';
@@ -65,6 +65,7 @@
   let addMode = false;
   let editor: TinyMCE;
   let updating = false;
+  let registeredAutoTag: string | undefined;
 
   export let editorKey: string;
   export let article: string;
@@ -72,24 +73,6 @@
   export let name: string;
 
   $: dark = $theme.mode === 'dark';
-
-  function imageUpload(file: File) {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        // const file = blobInfo.blob();
-        const request = await ky.post(`/file/request?type=${file.type}`)
-          .json<{ uploadUrl: string, key: string }>();
-        await ky.put(request.uploadUrl, {
-          body: file,
-          onDownloadProgress: console.log,
-        });
-        // console.log(blobInfo.blob());
-        resolve(`https://s3.ru.hn/${request.key}`);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
 
   function fileSelected() {
     f.set(fileUploader.files[0]);
@@ -129,22 +112,9 @@
     tags = tags.filter(v => v !== target);
   }
 
-  const defaultEditorSettings = {
-    language: 'ko_KR',
-    plugins: 'image media searchreplace code autolink autosave',
-    toolbar: 'uploadImageRu image | undo redo | blocks | bold italic | alignleft aligncentre alignright alignjustify | indent outdent | bullist numlist | searchreplace code removeformat restoredraft',
-    autosave_ask_before_unload: false,
-    // images_upload_url: '/file/upload',
-    // images_upload_base_path: '/file',
-    images_upload_handler: (blobInfo: IBlobInfo) => imageUpload(blobInfo.blob()),
-    resize: true,
-    min_height: 160,
 
-    content_css: '/editor.css',
-
-    file_picker_types: 'image media',
-    images_file_types: 'jpeg,jpg,jpe,jfi,png,gif,webp,avif,jxl',
-    //*
+  const settings = {
+    ...defaultEditorSettings,
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
@@ -155,23 +125,37 @@
           // console.log(editor);
         },
       });
-    }, // */
-  };
+    },
+  }
 
-  const darkEditorSettings = {
-    ...defaultEditorSettings,
-    skin: 'oxide-dark',
-    content_css: 'dark',
-  };
+  const settingsDark = {
+    ...settings,
+    ...darkThemes,
+  }
 
-  interface IBlobInfo {
-    base64: () => any;
-    blob: () => File;
-    blobUri: () => any;
-    filename: () => any;
-    id: () => any;
-    name: () => any;
-    uri: () => any;
+  const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+
+  async function detectAutoTag(event: KeyboardEvent) {
+    const index = Math.max(title.indexOf(')'), title.indexOf(']'));
+    if (registeredAutoTag && index < 0) {
+      tags = uniq(tags.filter(t => t !== registeredAutoTag));
+      registeredAutoTag = undefined;
+      return;
+    }
+
+    let resultAutoTag = autoTag.exec(title);
+    if (!resultAutoTag) {
+      // what? idk.
+      resultAutoTag = autoTag.exec(title);
+    }
+    if (resultAutoTag) {
+      if (registeredAutoTag) {
+        tags = uniq(tags.filter(t => t !== registeredAutoTag));
+      }
+
+      registeredAutoTag = resultAutoTag[1];
+      tags = uniq([registeredAutoTag, ...tags].slice(0, 20));
+    }
   }
 
   let unsub: () => void;
@@ -243,7 +227,7 @@
       {#if dark}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
-                conf="{darkEditorSettings}"
+                conf="{settingsDark}"
                 bind:value={content}
                 on:resizeeditor={console.log}
                 on:keydown={(e) => detectPaste(e, 'down')}
@@ -251,7 +235,7 @@
       {:else}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
-                conf="{defaultEditorSettings}"
+                conf="{settings}"
                 bind:value={content}/>
       {/if}
     </div>

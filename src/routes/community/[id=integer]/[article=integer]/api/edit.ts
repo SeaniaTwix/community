@@ -5,11 +5,18 @@ import {EditDto} from '$lib/types/dto/edit.dto';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import type {ITag} from '$lib/types/tag';
+import {load as loadHtml} from 'cheerio';
+import {unified} from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
+import {client} from '$lib/database/search';
+import {striptags} from 'striptags';
 
 /**
  * 편집 전용 게시글 내용 소스 가져오기
  */
-export async function get({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -48,7 +55,7 @@ export async function get({params, locals}: RequestEvent): Promise<RequestHandle
   }
 }
 
-export async function post({params, locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({params, locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -78,15 +85,19 @@ export async function post({params, locals, request}: RequestEvent): Promise<Req
         status: HttpStatus.NOT_ACCEPTABLE,
         body: {
           reason: 'title zero lenght not allowed',
-        }
-      }
+        },
+      };
     }
 
     await edit.update(locals.user.uid, data);
 
+    edit.updateSearchEngine(id, data)
+      .then()
+      .catch()
+
     return {
       status: HttpStatus.CREATED,
-    }
+    };
 
   } catch (e: any) {
     return {
@@ -110,28 +121,67 @@ class EditArticleRequest {
   }
 
   async getEditable(userId: string) {
-    const {title, content, tags, author, source} = await this.article.get();
+    const {title, content, author, source} = await this.article.get();
     if (userId !== author) {
       throw new Error('your not author');
     }
-    return {title, content, tags: tags![userId], source};
+    const userTags = await this.article.getAllMyTags(userId);
+    return {title, content, tags: userTags, source};
+  }
+
+  async isImageExists(): Promise<boolean> {
+    const {content} = await this.article.get();
+    if (!content) {
+      return false;
+    }
+
+    const $ = loadHtml(content);
+    const images = $('img');
+    return images.length > 0;
   }
 
   async update(author: string, data: EditDto) {
     const {title, content, tags, source} = data;
-    console.log({title, content, tags, source});
-    const newTags: ITag[] = tags.map(tag => ({name: tag, createdAt: new Date, pub: true}));
+
+    const sanitizedContent = await unified()
+      .use(rehypeParse, {fragment: true})
+      .use(rehypeSanitize, {
+        ...defaultSchema,
+        tagNames: [...defaultSchema.tagNames as any[], 'source'],
+      })
+      .use(rehypeStringify)
+      .process(content ?? '');
+
+    /*
+    const newTags: ITag[] = tags.map(tag => ({
+      target: this.id, user:author, name: tag, createdAt: new Date, pub: true
+    })); // */
+
+    const isImageExists = await this.isImageExists();
     await db.query(aql`
       for article in articles
         filter article._key == ${this.id} && article.author == ${author}
           update article with {
             title: ${title},
             editedAt: ${new Date},
-            content: ${content},
+            content: ${sanitizedContent.value.toString()},
             source: ${source ?? ''},
-            tags: merge_recursive(article.tags, {
-              ${author}: ${newTags}
-            })
+            images: ${isImageExists},
           } in articles`);
+    await this.article.updateTags(author, tags);
+  }
+
+  async updateSearchEngine(board: string, data: EditDto) {
+    await client.index('articles')
+      .updateDocuments([
+        {
+          board,
+          id: this.id,
+          title: data.title,
+          source: data.source,
+          content: striptags(data.content ?? '').replace(/&nbsp;/, ''),
+          tags: await this.article.getAllTagsCounted(),
+        }
+      ])
   }
 }

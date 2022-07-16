@@ -30,7 +30,7 @@ export class Pusher {
   }
 
   observable(about: PushAbout): Observable<{ body: CommentDto, socket: WebSocket }> {
-    const dev = window.location.host.startsWith('localhost');
+    const dev = window.location.host.startsWith('localhost') || window.location.host.startsWith('192');
     const url = dev ? 'ws://localhost:50000' : 'wss://push.ru.hn'
     const ws = new WebSocket(`${url}/subscribe/${this.target}/${about}`);
 

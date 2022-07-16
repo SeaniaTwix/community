@@ -5,7 +5,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
 // noinspection JSUnusedGlobalSymbols
-export async function del({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function DELETE({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.NOT_ACCEPTABLE,

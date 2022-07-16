@@ -1,9 +1,10 @@
+// noinspection NonAsciiCharacters
+
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {Pusher} from '$lib/pusher/server';
-import type {ITag} from '$lib/types/tag';
 
 /**
  * 예약된 태그들입니다.
@@ -19,7 +20,7 @@ const reserved = {
   '어그로': '03',
 };
 
-export async function put({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function PUT({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -37,7 +38,7 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
 
   const tagList = uniq(names.split(',').map(t => t.trim()));
   const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@]+$/g;
-  const {article} = params;
+  const {id, article} = params;
 
   for (const name of tagList) {
     /**
@@ -80,10 +81,14 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
           };
         }
 
-        Pusher.notify('tag', article, locals.user.uid, {
-          tag: [name],
-          type: 'add',
-        });
+        try {
+          await Pusher.notify('tag', `${article}@${id}`, '0' /*locals.user.uid*/, {
+            tag: [name],
+            type: 'add',
+          });
+        } catch {
+          //
+        }
 
         return succeed;
       }
@@ -121,10 +126,14 @@ export async function put({params, url, locals}: RequestEvent): Promise<RequestH
     };
   }
 
-  Pusher.notify('tag', article, locals.user.uid, {
-    tag: uniqTagList,
-    type: 'add',
-  });
+  try {
+    Pusher.notify('tag', `${article}@${id}`, locals.user.uid, {
+      tag: uniqTagList,
+      type: 'add',
+    }).then();
+  } catch (e) {
+    //
+  }
 
 
   return {
@@ -148,10 +157,8 @@ class AddTagRequest {
 
   async isVoteAlready(userId: string) {
     try {
-      const article = await this.article.get();
-      const tags = article.tags![userId];
-
-      return this.tags.filter(tag => Object.keys(tags).includes(tag)).length > 0;
+      const tags = await this.article.getAllMyTags(userId);
+      return tags.find(tag => tag.name === '_like' || tag.name === '_dislike');
     } catch {
       return false;
     }

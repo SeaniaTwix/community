@@ -14,7 +14,7 @@ const s3 = new S3({
   endpoint: process.env.S3_ENDPOINT,
 });
 
-export async function post({locals, url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({locals, url}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type');
   if (!type) {
     return {
@@ -43,7 +43,6 @@ export async function post({locals, url}: RequestEvent): Promise<RequestHandlerO
       ['content-length-range', 1048, 10485760],
       ['starts-with', '$key', prefix],
       // ['starts-with', '$bucket', ''],
-      ['starts-with', '$Content-Type', 'image/'],
       // ['starts-with', '$Content-Type', 'video/webm'],
       {'x-amz-algorithm': 'AWS4-HMAC-SHA256'},
       // {'x-amz-server-side-encryption': 'AES256'},
@@ -53,6 +52,12 @@ export async function post({locals, url}: RequestEvent): Promise<RequestHandlerO
     Expires: 120,
     // ContentType: type,
   };
+
+  if (type.startsWith('video')) {
+    s3Params.Conditions!.push(['starts-with', '$Content-Type', 'video/webm']);
+  } else {
+    s3Params.Conditions!.push(['starts-with', '$Content-Type', 'image/']);
+  }
 
   // const uploadUrl = await s3.getSignedUrlPromise('putObject', s3Params);
   const presigned = s3.createPresignedPost(s3Params);

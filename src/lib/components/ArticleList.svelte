@@ -11,12 +11,11 @@
   import CircleAvatar from './CircleAvatar.svelte';
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
+  import Image from 'svelte-material-icons/Image.svelte';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
   export let users: Record<string, IUser>;
-
-  // console.log(users);
 
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
@@ -50,7 +49,9 @@
           <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
             <span class="flex justify-between">
               <span class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
-                {article.title}
+                {#if article.autoTag}
+                  <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a
+                  >{/if}{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}
               </span>
               <!-- i have no idea to make no duplicated elements... -->
               <span class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
@@ -69,9 +70,13 @@
                 <span class="inline-block md:hidden lg:hidden text-zinc-400">
                   {article._key}
                 </span>
+                {#if article.images}
+                  <span>
+                    <span class="mr-0.5"><Image size="1rem" /></span>
+                  </span>
+                {/if}
                 {#if article?.comments}
                   <span>
-                    <!--[{article.comments}]-->
                     <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
                   </span>
                 {/if}
@@ -111,8 +116,10 @@
             <ul class="space-x-1">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
-                  <li class="inline-block cursor-pointer">
-                    <Tag count="{article.tags[tagName]}">{tagName}</Tag>
+                  <li class="inline-block">
+                    <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
+                      <Tag count="{article.tags[tagName]}">{tagName}</Tag>
+                    </a>
                   </li>
                 {/if}
               {/each}

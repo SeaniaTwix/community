@@ -7,7 +7,7 @@ import {aql} from 'arangojs';
  * 게시판 생성
  */
 
-export async function post({request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
   const body = new BoardDto(await request.json());
   const board = new AddBoardRequest(body);
 

@@ -4,7 +4,7 @@ import {Article} from '$lib/community/article/server';
 import {isEmpty, uniq} from 'lodash-es';
 import {Pusher} from '$lib/pusher/server';
 
-export async function del({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -14,7 +14,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
     };
   }
 
-  const {article} = params;
+  const {id, article} = params;
 
   const names = url.searchParams.get('name');
 
@@ -39,7 +39,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
 
   const uniqTagList: string[] = uniq(tagList);
 
-  Pusher.notify('tag', article, locals.user.uid, {
+  await Pusher.notify('tag', `${article}@${id}`, locals.user.uid, {
     tag: uniqTagList,
     type: 'remove',
   });

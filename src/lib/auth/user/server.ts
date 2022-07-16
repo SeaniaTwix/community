@@ -149,7 +149,7 @@ export class User {
     }
   }
 
-  token(type: 'user' | 'refesh', payload: Rec<unknown> = {}): njwt.Jwt {
+  token(type: 'user' | 'refresh', payload: Rec<unknown> = {}): njwt.Jwt {
     return njwt.create({
       iss: 'https://ru.hn/',
       sub: `user/${this.id}`,

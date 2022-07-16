@@ -22,7 +22,7 @@
   import {dayjs} from 'dayjs';
   import {createEventDispatcher, tick} from 'svelte';
   import ky from 'ky-universal';
-  import {afterUpdate} from 'svelte';
+  import Image from './Image.svelte';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -142,7 +142,7 @@
 </script>
 
 <div class:ring-2={selected}
-     class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400">
+     class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600">
   <div class="space-y-4">
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
@@ -178,9 +178,18 @@
     {/if}
   </div>
   <div class="flex flex-col justify-between p-2 pt-4 divide-y divide-dotted">
-    <div class="flex-grow pb-4">
+    <div class="flex-grow pb-4 __comment-contents">
+      {#if comment.image}
+        <div>
+          <Image src="{comment.image}">
+            <p>
+              <img src="{comment.image}" alt="{comment.image}" />
+            </p>
+          </Image>
+        </div>
+      {/if}
       {#each comment.content.split('\n') as line}
-        <p>{line}</p>
+        <p class="__contents-line">{@html line}</p>
       {/each}
     </div>
     {#if session}
@@ -223,7 +232,7 @@
               <Edit size="1rem"/>
             </span>
           {/if}
-          {#if comment.author === session?.uid || session?.rank <= EUserRanks.Manager}
+          {#if comment.author === session?.uid || session?.rank >= EUserRanks.Manager}
             <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
                   on:click={() => onDeleteClicked(comment._key)}>
               <Delete size="1rem"/>
@@ -241,3 +250,13 @@
     {/if}
   </div>
 </div>
+
+<style lang="scss">
+  :global {
+    .__contents-line {
+      p {
+        display: inline-block;
+      }
+    }
+  }
+</style>

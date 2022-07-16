@@ -4,16 +4,35 @@ import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
 import {Mutex} from 'async-mutex';
 import type {ArrayCursor} from 'arangojs/cursor';
+import type {EnsureFulltextIndexOptions} from 'arangojs/indexes';
 // import type {MutexInterface} from 'async-mutex';
 
 const mutex = new Mutex;
 
 export default class DefaultDatabase {
-  private static url = 'http://localhost:8529';
+  private static url = process.env.DB_ENDPOINT ?? 'http://localhost:8529';
   private static readonly dbName = 'community';
   private static readonly requireCollections = [
-    'users', 'boards', 'articles', 'comments',
+    'users', 'boards', 'articles', 'comments', 'tags', 'alias'
   ];
+  private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
+    'articles': [
+      {
+        fields: ['title'],
+        inBackground: false,
+        minLength: 1,
+        name: 'title',
+        type: 'fulltext'
+      },
+      {
+        fields: ['content'],
+        inBackground: false,
+        minLength: 1,
+        name: 'content',
+        type: 'fulltext'
+      }
+    ]
+  }
 
   private static get info(): IDatabaseInfo {
     return {
@@ -67,6 +86,15 @@ export default class DefaultDatabase {
     if (created > 0) {
       console.log('필요한 컬렉션을 모두 생성했습니다.');
     }
+
+    for (const collectionName in DefaultDatabase.fulltextRequires) {
+      const collection = this.db.collection(collectionName);
+      const settings = DefaultDatabase.fulltextRequires[collectionName];
+      for (const setting of settings) {
+        await collection.ensureIndex(setting);
+      }
+    }
+
     console.log('데이터베이스 사용 준비가 완료되었습니다.');
   }
 

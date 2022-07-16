@@ -2,6 +2,7 @@
   import Image from '$lib/components/Image.svelte';
 
   export let contents: string[] = [];
+  export let nsfw = false;
 
   const youtubeUrlFind =
     /<a href="https:\/\/(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?(.*?)"/;
@@ -17,7 +18,7 @@
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen></iframe>
   {:else if content.startsWith('<p><img ')}
-    <Image>{@html content}</Image>
+    <Image {nsfw} {content} />
   {:else}
     {@html content}
   {/if}

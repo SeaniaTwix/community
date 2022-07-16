@@ -5,7 +5,7 @@ import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
 
 // noinspection JSUnusedGlobalSymbols
-export async function post({request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
   console.log('new login')
   const login = new LoginRequest(await request.json() as LoginDto);
   const user = new User(login.id);
@@ -35,7 +35,7 @@ export async function newLoginHeaders(user: User) {
   const expire = dayjs().add(10, 'minute').toDate();
   token.setExpiration(expire);
 
-  const refresh = user.token('refesh');
+  const refresh = user.token('refresh');
   const expireRefresh = dayjs().add(1, 'day').toDate();
   refresh.setExpiration(expireRefresh);
 

@@ -16,19 +16,53 @@ global.btoa = btoa;
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({event, resolve}: HandleParameter): Promise<Response> {
   let result: GetUserReturn | undefined;
-  try {
-    result = await getUser(event.request.headers.get('cookie'));
-    if (result?.newToken) {
-      event.locals.user = result.user;
+  let newRefresh: njwt.Jwt | undefined;
 
-      const response = await resolve(event);
-      const expire = dayjs().add(15, 'minute').toDate().toUTCString();
-      response.headers.set('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
-      return response;
+  try {
+    const cookie = event.request.headers.get('cookie');
+    if (!_.isEmpty(cookie)) {
+      const {token, refresh} = (new CookieParser(cookie!)).get();
+
+      // token이 유효할 때 혹은 token이 만료 되었지만 리프레시 토큰이 유효할 때
+      // 유저 값을 반환합니다.
+      result = await getUser(token, refresh);
+      // extends refresh
+      try {
+        if (refresh) {
+          const r = njwt.verify(refresh, key);
+          if (r) {
+            const exp = r.body.toJSON().exp as number * 1000;
+            const now = Date.now();
+            // console.log('limit:', exp - 18000000, ' now: ', now, exp - 18000000 <= now, (exp - 18000000 - now) / 1000 / 60 / 60);
+            if (exp - 18000000 <= now) {
+              const user = new User(r.body.toJSON().uid as string);
+              newRefresh = user.token('refresh');
+              const expireRefresh = dayjs().add(1, 'day').toDate();
+              newRefresh.setExpiration(expireRefresh);
+            }
+          }
+        }
+      } catch {
+        //
+      }
     }
   } catch (e) {
     // console.error('[hooks]', event.request.headers.get('cookie'), e);
   }
+
+  if (result?.newToken) {
+    event.locals.user = result.user;
+
+    const response = await resolve(event);
+    const expire = dayjs().add(15, 'minute').toDate().toUTCString();
+    response.headers.append('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
+    if (newRefresh) {
+      const expireRefresh = dayjs().add(1, 'day').toDate();
+      response.headers.append('set-cookie', `refresh=${newRefresh.compact()}; Path=/; Expires=${expireRefresh.toUTCString()}; SameSite=Strict; HttpOnly;`);
+    }
+    return response;
+  }
+
 
   if (!result) {
     // noinspection ES6RedundantAwait
@@ -41,7 +75,7 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
 
   try {
     if (result?.newToken) {
-      response.headers.set('set-cookie', result.newToken);
+      response.headers.append('set-cookie', result.newToken);
     }
   } catch {
     console.trace('error');
@@ -72,13 +106,8 @@ async function refreshJwt(token: string) {
 }
 
 type GetUserReturn = { user: JwtUser, newToken?: string };
-async function getUser(cookie: string | null): Promise<GetUserReturn | undefined> {
+async function getUser(token?: string, refresh?: string): Promise<GetUserReturn | undefined> {
 
-  if (_.isEmpty(cookie)) {
-    return undefined;
-  }
-
-  const {token, refresh} = (new CookieParser(cookie!)).get();
   if (!token) {
     if (refresh) {
       try {

@@ -6,7 +6,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {Pusher} from '$lib/pusher/server';
 
-export async function get({params, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -56,7 +56,7 @@ const errorUserNotSigned = {
   },
 };
 
-export async function put({params, url, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function PUT({params, url, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
     return error(type);
@@ -66,7 +66,7 @@ export async function put({params, url, locals, clientAddress, platform}: Reques
     return errorUserNotSigned;
   }
 
-  const {article, comment} = params;
+  const {id, article, comment} = params;
 
   const commentVote = new CommentVoteRequest(comment);
 
@@ -95,7 +95,7 @@ export async function put({params, url, locals, clientAddress, platform}: Reques
   }
 
   try {
-    await Pusher.notify('comments:vote', article, '0' /*locals.user.uid*/, {
+    await Pusher.notify('comments:vote', `${article}@${id}`, '0' /*locals.user.uid*/, {
       comment,
       type,
       amount: 1,
@@ -110,7 +110,7 @@ export async function put({params, url, locals, clientAddress, platform}: Reques
   };
 }
 
-export async function del({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
     return error(type);
@@ -121,7 +121,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
 
-  const {article, comment} = params;
+  const {id, article, comment} = params;
 
   const vote = new CommentVoteRequest(comment);
 
@@ -141,7 +141,7 @@ export async function del({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
   try {
-    await Pusher.notify('comments:vote', article, '0' /*locals.user.uid*/, {
+    await Pusher.notify('comments:vote', `${article}@${id}`, '0' /*locals.user.uid*/, {
       comment,
       type,
       amount: -1,
