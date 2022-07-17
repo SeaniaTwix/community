@@ -30,6 +30,12 @@
 <script lang="ts">
   import Tag from '$lib/components/Tag.svelte';
 
+  import {dayjs} from 'dayjs';
+
+  function timeFullFormat(time: Date) {
+    return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 mm분');
+  }
+
   export let result;
   export let q = '';
 </script>
@@ -40,23 +46,29 @@
       {#each result as hit}
         <li class="group">
           <a sveltekit:prefetch href="/community/{hit.board}/{hit.id}">
-            <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1">
-              <h2 class="text-xl group-hover:text-sky-400">{hit.title}</h2>
-              <p>{hit.content}</p>
+            <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1 flex flex-row justify-between">
+              <div class="flex-grow w-full">
+                <h2 class="text-xl group-hover:text-sky-400">{hit.title}</h2>
+                <p>{hit.content}</p>
 
-              {#if !isEmpty(hit.tags)}
-                <div class="pb-2">
-                  <ul class="space-x-2">
-                    {#each Object.keys(hit.tags) as tagName}
-                      <li class="inline-block">
-                        <a href="/community/search?q={encodeURIComponent('#' + tagName)}">
-                          <Tag count="{hit.tags[tagName]}">{tagName}</Tag>
-                        </a>
-                      </li>
-                    {/each}
-                  </ul>
-                </div>
-              {/if}
+                {#if !isEmpty(hit.tags)}
+                  <div class="pb-2">
+                    <ul class="space-x-2">
+                      {#each Object.keys(hit.tags) as tagName}
+                        <li class="inline-block">
+                          <a href="/community/search?q={encodeURIComponent('#' + tagName)}">
+                            <Tag count="{hit.tags[tagName]}">{tagName}</Tag>
+                          </a>
+                        </li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
+              </div>
+              <div class="text-right flex flex-col justify-between">
+                <p>작성자: {hit.author.name}</p>
+                <time class="pb-3 invisible sm:visible" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
+              </div>
             </div>
           </a>
 

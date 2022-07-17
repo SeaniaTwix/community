@@ -16,6 +16,7 @@ import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
+import type {IUser} from '$lib/types/user';
 
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -205,6 +206,8 @@ class WriteRequest {
   async saveToSearchEngine() {
     const article = new Article(this.id!);
     const data = await article.get();
+    // @ts-ignore
+    const user: IUser & { password: string } = await User.getByUniqueId(data.author!);
     await client.index('articles')
       .addDocuments([
         {
@@ -212,6 +215,10 @@ class WriteRequest {
           id: article.id,
           title: this.title,
           source: data.source,
+          author: {
+            uid: user._key,
+            name: user.id,
+          },
           content: striptags(this.content ?? '').replace(/&nbsp;/, ''),
           tags: await article.getAllTagsCounted(),
           createdAt: (new Date(data.createdAt!)).getTime(),
