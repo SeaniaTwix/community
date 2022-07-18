@@ -88,8 +88,11 @@ export class User {
     });
   }
 
-  static async findByUniqueId(uid: string): Promise<User | null> {
+  static async findByUniqueId(uid?: string): Promise<User | null> {
     // console.trace('3');
+    if (!uid) {
+      return null;
+    }
     if (!isStringInteger(uid)) {
       return null;
     }
@@ -103,7 +106,10 @@ export class User {
     return new User(id);
   }
 
-  static async getByUniqueId(uid: string): Promise<UnsafeUser | null> {
+  static async getByUniqueId(uid?: string): Promise<UnsafeUser | null> {
+    if (!uid) {
+      return null;
+    }
     try {
       // console.trace('4');
       const cursor = await db.query(aql`

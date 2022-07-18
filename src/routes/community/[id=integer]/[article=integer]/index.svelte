@@ -83,12 +83,11 @@
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
-  import {inRange} from 'lodash-es';
+  import {inRange, remove} from 'lodash-es';
   import Content from '$lib/components/Content.svelte';
   import {writable} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
   import {upload} from '$lib/file/uploader';
-  import {nanoid} from 'nanoid';
 
   /**
    * 게시글 보기
@@ -192,6 +191,7 @@
 
   function isMyTag(tagName: string): boolean {
     // console.log(tagName, article.myTags)
+    // noinspection TypeScriptUnresolvedFunction
     return article.myTags?.includes(tagName)
   }
 
@@ -365,6 +365,15 @@
     closeImageEditor();
   }
 
+  async function deleteComment(comment: IComment) {
+    try {
+      await ky.delete(
+        `/community/${article.board}/${article._key}/comments/${comment._key}/api/manage`)
+    } catch {
+      // todo: alert delete failed
+    }
+  }
+
   let fileUploader: HTMLInputElement;
   const fileChangeListener = writable<File>(null);
   let subscriptions: Subscription[] = [];
@@ -386,7 +395,7 @@
 
       ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
 
-      const whileSub = async ({body}) => {
+      const whenCommentChanged = async ({body}) => {
         console.log('comment:', body);
         if (typeof body.author === 'string') {
           await userNameExistingCheck(body.author);
@@ -397,6 +406,21 @@
               createdAt: new Date,
             };
             comments = [...comments, newComment];
+          }
+
+          if (body.type === 'del') {
+            const key = body.target;
+            // comments = comments.filter((c: IComment) => c._key !== key);
+            const target = comments.find(comment => comment._key === key) as IComment & {deleted: boolean};
+            if (target) {
+              target.deleted = true;
+            }
+            console.log(target);
+            comments = [...comments];
+          }
+
+          if (body.type === 'edit') {
+            // todo edit comment
           }
         }
       };
@@ -445,7 +469,7 @@
       }
 
       const observable = pusher.observable('comments');
-      subscriptions.push(observable.subscribe(whileSub));
+      subscriptions.push(observable.subscribe(whenCommentChanged));
       console.log(subscriptions);
       const tagChange = pusher.observable('tag');
       subscriptions.push(tagChange.subscribe(whenTagChanged));
@@ -495,6 +519,7 @@
   let fileDragging = false;
 
   function fileDrag(event: DragEvent) {
+    // noinspection TypeScriptUnresolvedFunction
     if (event.dataTransfer.types.includes('Files')) {
       fileDragging = true;
     }
@@ -524,8 +549,10 @@
 {#if fileDragging}
   <div on:drop|preventDefault={fileDrop}
        on:dragleave|preventDefault={fileDragLeaveCheck}
-       class="absolute top-0 z-[12] left-0 w-full h-screen bg-white/50">
-    file drag
+       class="absolute top-0 z-[12] left-0 w-full h-screen bg-white/50 dark:bg-gray-700/50">
+    <span class="__center-text text-white px-4 py-2 bg-gray-900/50 rounded-md">
+      파일을 떨어뜨려 업로드 혹은 편집 할 수 있습니다.
+    </span>
   </div>
 {/if}
 
@@ -694,7 +721,7 @@
               {#if !tagName.startsWith('_')}
                 <li class="inline-block mb-2 cursor-pointer">
                   <Tag count="{article.tags[tagName]}">{tagName}
-                    {#if isMyTag(tagName)}<span class="text-gray-600 leading-none __icon-fix"><RemoveTag
+                    {#if isMyTag(tagName)}<span class="text-gray-600 dark:text-gray-400 leading-none __icon-fix"><RemoveTag
                       size="1rem"/></span>{/if}
                   </Tag>
                 </li>
@@ -719,11 +746,12 @@
         <ul class="space-y-3">
 
           {#each comments as comment}
-            <li in:fade>
+            <li in:fade class="relative">
               <Comment board="{article.board}"
                        article="{article._key}"
                        user="{users[comment.author]}"
                        myVote="{comment.myVote}"
+                       on:delete={() => deleteComment(comment)}
                        {session}
                        {comment}/>
             </li>
@@ -897,6 +925,14 @@
 
   .__circle {
     border-radius: 50%;
+  }
+
+  .__center-text {
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 
   :global {

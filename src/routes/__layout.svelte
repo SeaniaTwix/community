@@ -7,7 +7,7 @@
   export async function load({session, url, fetch}: LoadEvent): Promise<LoadOutput> {
     try {
       const response = await fetch(`${url.origin}/community/api/all`);
-      const {boards} = await response.json<{boards: BoardItemDto[]}>();
+      const {boards} = await response.json<{ boards: BoardItemDto[] }>();
 
       let user: IUser;
 
@@ -28,13 +28,13 @@
           uid: session?.uid,
           boards,
           user,
-        }
-      }
+        },
+      };
     } catch (e) {
       return {
         status: HttpStatus.BAD_GATEWAY,
         error: e.toString(),
-      }
+      };
     }
 
   }
@@ -44,13 +44,18 @@
   import '../styles/tailwind.css';
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
-  import { classList } from 'svelte-body';
+  import {classList} from 'svelte-body';
   import {onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
   import {iosStatusBar} from '$lib/stores/shared/theme.js';
+  import Notifications from '$lib/components/Notifications.svelte';
+
+  // eslint-disable-next-line no-redeclare
+  declare var theme: string;
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
+    // noinspection TypeScriptUnresolvedVariable
     if (cookies?.theme === 'dark') {
       const html = document.querySelector('html');
       html.classList.add('dark');
@@ -58,7 +63,7 @@
     } else {
       theme = '#FFF';
     }
-  })
+  });
 
   $: theme = $iosStatusBar === 'light' ? '#FFFFFF' : '#394150';
   export let uid;
@@ -67,11 +72,12 @@
   // console.log(uid)
 </script>
 <svelte:head>
-  <meta name="theme-color" content="{theme}" />
+  <meta name="theme-color" content="{theme}"/>
 </svelte:head>
-<svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'} />
+<svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 
-<Nav {boards} {uid} {user} />
+<Nav {boards} {uid} {user}/>
+<Notifications/>
 <main>
   <slot/>
 </main>

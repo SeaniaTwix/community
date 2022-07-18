@@ -1,11 +1,13 @@
 import DefaultDatabase from './index';
 
 class Database {
+  private static stored: DefaultDatabase;
+
   static get instance(): DefaultDatabase {
-    if (!(<any>global).__db_stored) {
-      (<any>global).__db_stored = new DefaultDatabase();
+    if (!Database.stored) {
+      Database.stored = new DefaultDatabase();
     }
-    return (<any>global).__db_stored;
+    return Database.stored;
   }
 }
 

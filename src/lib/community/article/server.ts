@@ -4,6 +4,7 @@ import type {ArticleDto} from '$lib/types/dto/article.dto';
 import type {CommentDto} from '$lib/types/dto/comment.dto';
 import type {ITag} from '$lib/types/tag';
 import type {IArticle} from '$lib/types/article';
+import type {IComment} from '$lib/types/comment';
 
 export class Article {
 
@@ -38,8 +39,10 @@ export class Article {
     const cursor = await db.query(aql`
       for comment in comments
         sort comment.createdAt asc
-        filter comment.article == ${this.id} limit ${(page - 1) * amount}, ${amount}
-        return comment`);
+        let isPub = comment.pub == null || comment.pub
+        filter comment.article == ${this.id} && isPub
+         limit ${(page - 1) * amount}, ${amount}
+         return comment`);
     return await cursor.all();
   }
 
@@ -178,7 +181,7 @@ export class Article {
     console.dir(await r.next(), {depth: 3}) */
   }
 
-  async addComment(userId: string, comment: CommentDto) {
+  async addComment(userId: string, comment: CommentDto): Promise<IComment> {
     const cursor = await db.query(aql`
       insert merge(${comment}, {
         author: ${userId},

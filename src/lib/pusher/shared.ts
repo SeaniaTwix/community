@@ -1,1 +1,1 @@
-export type PushAbout = 'comments' | 'comments:vote' | 'tag'
+export type PushAbout = 'comments' | 'comments:vote' | 'tag' | 'voting'

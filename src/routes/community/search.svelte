@@ -21,7 +21,7 @@
     return {
       status: 200,
       props: {
-        result: result.hits,
+        result: result?.hits ?? [],
         q,
       },
     };
@@ -52,7 +52,7 @@
                 <p>{hit.content}</p>
 
                 {#if !isEmpty(hit.tags)}
-                  <div class="pb-2">
+                  <div class="py-2">
                     <ul class="space-x-2">
                       {#each Object.keys(hit.tags) as tagName}
                         <li class="inline-block">
@@ -67,7 +67,7 @@
               </div>
               <div class="text-right flex flex-col justify-between">
                 <p>작성자: {hit.author.name}</p>
-                <time class="pb-3 invisible sm:visible" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
+                <time class="pb-2 invisible sm:visible w-max" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
               </div>
             </div>
           </a>

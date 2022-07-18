@@ -70,7 +70,7 @@ class ArticleSearch {
         && !this._titles.includes(q)
         && !this._exclTitles.includes(q);
     });
-    console.log(this);
+    // console.log(this);
   }
 
   private static transformTagCondition(tagCondition: string) {

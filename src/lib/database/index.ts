@@ -13,7 +13,7 @@ export default class DefaultDatabase {
   private static url = process.env.DB_ENDPOINT ?? 'http://localhost:8529';
   private static readonly dbName = 'community';
   private static readonly requireCollections = [
-    'users', 'boards', 'articles', 'comments', 'tags', 'alias'
+    'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications',
   ];
   private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
     'articles': [

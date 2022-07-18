@@ -14,6 +14,9 @@ import {unified} from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
+import {Notifications} from '$lib/notifications/server';
+import {User} from '$lib/auth/user/server';
+import type {IComment} from '$lib/types/comment';
 
 export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
@@ -112,6 +115,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
   // console.log(commentData);
 
   let cd: CommentDto;
+  let savedComment: IComment;
 
   try {
     if (!locals.user) {
@@ -153,6 +157,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       votes: {},
       article: commentData.article,
       content,
+      pub: true,
       relative: commentData.relative,
     };
 
@@ -169,7 +174,8 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       };
     }
 
-    await comment.add(locals.user.uid, cd);
+    savedComment = await comment.add(locals.user.uid, cd);
+
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
@@ -187,6 +193,22 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     console.error(e);
   }
 
+  try {
+    if (cd) {
+      const {author} = await comment.article.get();
+      const user = await User.findByUniqueId(author);
+      if (user) {
+        const noti = new Notifications(user);
+        noti.send('articles', 'comments', {
+          value: savedComment._key,
+          target: article,
+        }, locals.user.uid).then().catch();
+      }
+    }
+  } catch (e) {
+    // todo: error handling when notification failed
+  }
+
   return {
     status: HttpStatus.CREATED,
     body: {
@@ -195,6 +217,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     },
   };
 }
+
 
 class CommentRequest {
   article: Article;

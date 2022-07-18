@@ -28,6 +28,9 @@ export class CommentDto<VoteType = InternalVoteType> {
   // 내용
   content?: string;
 
+  @SafeType({type: Boolean})
+  pub: boolean = true;
+
   // 코멘트용 이미지 (상단 고정. 단일 이미지)
   image?: string;
 

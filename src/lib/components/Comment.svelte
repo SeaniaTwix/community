@@ -23,6 +23,7 @@
   import {createEventDispatcher, tick} from 'svelte';
   import ky from 'ky-universal';
   import Image from './Image.svelte';
+  import {striptags} from 'striptags';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -47,9 +48,11 @@
   }
 
   function onEditClicked(id: string) {
+    /*
     dispatch('edit', {
       id,
-    });
+    }); // */
+    editMode = true;
   }
 
   function onDeleteClicked(id: string) {
@@ -123,6 +126,14 @@
     }
   }
 
+  async function confirmEdit() {
+
+  }
+
+  function cancelEdit() {
+    editMode = false;
+  }
+
   let showInfo = false;
   export let board: string;
   export let article: string;
@@ -134,6 +145,9 @@
   let disliked = myVote?.dislike === true;
   $: likeCount = comment.votes?.like ?? 0;
   $: dislikeCount = comment.votes?.dislike ?? 0;
+  let editMode = false;
+  let content = striptags(comment.content);
+  $: deleted = (<any>comment)?.deleted === true;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
   export let session: App.Session;
@@ -141,7 +155,12 @@
 
 </script>
 
-<div class:ring-2={selected}
+{#if deleted}
+  <div class="absolute p-2 rounded-md shadow-md min-h-[8rem] w-full">
+    <p class="text-center mt-12">이 댓글은 작성자나 관리자에 의해 삭제되었습니다.<span class="text-red-700 dark:text-red-500 cursor-pointer select-none ml-2 hover:underline">신고하기</span></p>
+  </div>
+{/if}
+<div class:ring-2={selected} class:invisible={deleted}
      class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600">
   <div class="space-y-4">
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
@@ -177,8 +196,9 @@
       </div>
     {/if}
   </div>
-  <div class="flex flex-col justify-between p-2 pt-4 divide-y divide-dotted">
-    <div class="flex-grow pb-4 __comment-contents">
+  <div class="flex flex-col justify-between p-2 pt-4"
+       class:divide-y={!editMode} class:divide-dotted={!editMode}>
+    <div class="flex-grow __comment-contents" class:pb-4={!editMode}>
       {#if comment.image}
         <div>
           <Image src="{comment.image}">
@@ -188,12 +208,19 @@
           </Image>
         </div>
       {/if}
-      {#each comment.content.split('\n') as line}
-        <p class="__contents-line">{@html line}</p>
-      {/each}
+      {#if !editMode}
+        {#each comment.content.split('\n') as line}
+          <p class="p-1 __contents-line">{@html line}</p>
+        {/each}
+      {:else}
+        <textarea class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"
+                  bind:value={content}></textarea>
+
+      {/if}
     </div>
     {#if session}
-      <div class="pt-2 flex justify-between select-none">
+      {#if !editMode}
+        <div class="pt-2 flex justify-between select-none">
         <span class="space-x-2">
           <span on:click={like} class:cursor-progress={voting}
                 class="text-sky-500 {session.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
@@ -214,39 +241,49 @@
             {dislikeCount}
           </span>
         </span>
-        <span>
+          <span>
           <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
                 on:click={() => onReplyClicked(comment._key)}>
             <Messages size="1rem"/>
           </span>
 
-          {#if session && session.uid !== comment.author}
+            {#if session && session.uid !== comment.author}
             <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
                   on:click={() => onReportClicked(comment._key)}>
               <Report size="1rem"/>
             </span>
           {/if}
-          {#if session?.uid === comment.author}
+            {#if session?.uid === comment.author}
             <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
                   on:click={() => onEditClicked(comment._key)}>
               <Edit size="1rem"/>
             </span>
           {/if}
-          {#if comment.author === session?.uid || session?.rank >= EUserRanks.Manager}
+            {#if comment.author === session?.uid || session?.rank >= EUserRanks.Manager}
             <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
                   on:click={() => onDeleteClicked(comment._key)}>
               <Delete size="1rem"/>
             </span>
           {/if}
 
-          {#if session?.rank >= EUserRanks.Manager}
+            {#if session?.rank >= EUserRanks.Manager}
             <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
                   on:click={() => onLockClicked(comment._key)}>
               <Admin size="1rem"/>
             </span>
           {/if}
         </span>
-      </div>
+        </div>
+      {:else}
+        <div class="flex space-x-2 w-full">
+          <button on:click={confirmEdit} class="bg-sky-400 text-white dark:bg-sky-700 rounded-md py-2 w-full shadow-md">
+            수정 완료
+          </button>
+          <button on:click={cancelEdit} class="bg-red-400 text-white dark:bg-red-700 rounded-md py-2 w-full shadow-md">
+            취소
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 </div>
@@ -258,5 +295,13 @@
         display: inline-block;
       }
     }
+  }
+
+  .__center-text {
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 </style>

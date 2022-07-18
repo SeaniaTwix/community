@@ -40,7 +40,11 @@ export class Board {
         limit ${(page - 1) * amount}, ${amount}
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub
-          let c = length(for c in comments filter c.article == article._key return c)
+          let c = length(
+            for comment in comments
+              let isCoPub = comment.pub == null || comment.pub
+              filter comment.article == article._key && isCoPub
+                return comment)
           let tags = (
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub

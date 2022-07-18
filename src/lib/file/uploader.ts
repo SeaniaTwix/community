@@ -20,7 +20,7 @@ export function upload(file: File | Blob, type?: string, name?: string) {
       // console.log(file.type);
       await ky.post('https://s3.ru.hn', {body});
       // console.log(blobInfo.blob());
-      resolve(`https://s3.ru.hn/${request.prefix + (<File>file).name ?? name}`);
+      resolve(`https://s3.ru.hn/${request.prefix + n ?? `UZ-is-Kawaii.${t.split('/')[1]}`}`);
     } catch (e) {
       reject(e);
     }
