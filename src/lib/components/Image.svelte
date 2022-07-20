@@ -84,8 +84,6 @@
       }
     }
 
-    console.log(width, height);
-
     folded = element.height > 968; //968;
   }
 

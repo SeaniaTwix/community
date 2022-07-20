@@ -32,7 +32,7 @@
       return timeAgo.format(d);
     }
 
-    return dayjs(d).format('YY년 M월 D일')
+    return dayjs(d).format('YY년 M월 D일');
   }
 </script>
 
@@ -43,71 +43,73 @@
   <ul class="divide-y">
     {#each list as article}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
-        <a class="flex justify-between space-x-4" sveltekit:prefetch
-           href="/community/{board}/{article._key}">
-          <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
-          <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
-            <span class="flex justify-between">
-              <span class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
-                {#if article.autoTag}
-                  <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a
-                  >{/if}{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}
-              </span>
-              <!-- i have no idea to make no duplicated elements... -->
-              <span class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
-                <span class="w-6 max-h-6">
-                  <CircleAvatar border="sm" />
+        <a sveltekit:prefetch href="/community/{board}/{article._key}">
+          <div class="flex justify-between space-x-4">
+            <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
+            <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
+              <div class="flex justify-between">
+                <span class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
+                  {#if article.autoTag}
+                    <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
+                  {/if}{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}
                 </span>
-                <span>
+                <!-- i have no idea to make no duplicated elements... -->
+                <div class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
+                  <span class="w-6 max-h-6">
+                    <CircleAvatar border="sm"/>
+                  </span>
                   <a class="cursor-pointer hover:text-sky-400
-                            underline decoration-dashed decoration-sky-400"
-                     href="/user/profile/{article.author}">{users[article.author]?.id}</a>
-                </span>
-              </span>
-            </span>
-            <div class="flex flex-grow justify-between">
-              <div class="inline-block select-none flex-shrink-0 justify-between space-x-1">
+                          underline decoration-dashed decoration-sky-400"
+                     href="/user/profile/{article.author}">
+                    <span>{users[article.author]?.id} 1</span>
+                  </a>
+                </div>
+              </div>
+              <div class="flex flex-grow justify-between">
+                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1">
                 <span class="inline-block md:hidden lg:hidden text-zinc-400">
                   {article._key}
                 </span>
-                {#if article.images}
+                  {#if article.images}
+                    <span>
+                      <span class="mr-0.5"><Image size="1rem"/></span>
+                    </span>
+                  {/if}
+                  {#if article?.comments}
+                    <span>
+                      <span class="mr-0.5"><Comment size="1rem"/></span>{article.comments}
+                    </span>
+                  {/if}
                   <span>
-                    <span class="mr-0.5"><Image size="1rem" /></span>
+                    <span class="mr-0.5"><View size="1rem"/></span>{article.views ?? 0}
                   </span>
-                {/if}
-                {#if article?.comments}
-                  <span>
-                    <span class="mr-0.5"><Comment size="1rem" /></span>{article.comments}
-                  </span>
-                {/if}
-                <span>
-                  <span class="mr-0.5"><View size="1rem" /></span>{article.views ?? 0}
-                </span>
-                {#if Object.keys(article.tags).includes('_like')}
-                  <span class="text-sky-400 group-hover:text-sky-600 dark:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                    <span class="mr-0.5"><Like size="1rem" /></span>{article.tags._like}
-                  </span>
-                {/if}
-                {#if Object.keys(article.tags).includes('_dislike')}
-                  <span class="text-red-400 group-hover:text-red-600 dark:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                    <span class="mr-0.5"><Dislike size="1rem" /></span>{article.tags._dislike}
-                  </span>
-                {/if}
-              </div>
-              <div class="inline-block flex w-max">
-                <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
-                  <span class="w-6 max-h-6 inline-block mt-[-1px]">
-                    <CircleAvatar border="sm" />
-                  </span>
-                  <a class="cursor-pointer hover:text-sky-400 inline-block align-super
-                              underline decoration-dashed decoration-sky-400"
-                     href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+                  {#if Object.keys(article.tags).includes('_like')}
+                    <span
+                      class="text-sky-400 group-hover:text-sky-600 dark:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                      <span class="mr-0.5"><Like size="1rem"/></span>{article.tags._like}
+                    </span>
+                  {/if}
+                  {#if Object.keys(article.tags).includes('_dislike')}
+                    <span
+                      class="text-red-400 group-hover:text-red-600 dark:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                      <span class="mr-0.5"><Dislike size="1rem"/></span>{article.tags._dislike}
+                    </span>
+                  {/if}
                 </div>
-                <span class="text-right inline-block flex-shrink-0 min-w-[7rem]">
-                  {formatDate(article.createdAt)}
-                </span>
+                <div class="inline-block flex w-max">
+                  <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
+                  <span class="w-6 max-h-6 inline-block mt-[-1px]">
+                    <CircleAvatar border="sm"/>
+                  </span>
+                    <a class="cursor-pointer hover:text-sky-400 inline-block align-super
+                              underline decoration-dashed decoration-sky-400"
+                       href="/user/profile/{article.author}">{users[article.author]?.id}</a>
+                  </div>
+                  <span class="text-right inline-block flex-shrink-0 min-w-[7rem]">
+                    {formatDate(article.createdAt)}
+                  </span>
+                </div>
               </div>
-
             </div>
           </div>
         </a>
