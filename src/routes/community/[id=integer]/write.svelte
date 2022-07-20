@@ -39,7 +39,7 @@
 <script lang="ts">
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Delete from 'svelte-material-icons/Delete.svelte';
-  import _, {uniq} from 'lodash-es';
+  import _, {isEmpty, uniq} from 'lodash-es';
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
@@ -90,7 +90,7 @@
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
   let fileUploader: HTMLInputElement;
-  let editor: TinyMCE;
+  let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
   let title = '';
   let content = '';
   let source = '';
@@ -126,6 +126,8 @@
     }
 
     uploading = true;
+
+    addSizeAllImages();
 
     try {
       const data: ArticleDto<string[]> = {
@@ -207,6 +209,21 @@
       registeredAutoTag = resultAutoTag[1];
       tags = uniq([registeredAutoTag, ...tags].slice(0, 20));
     }
+  }
+
+  function addSizeAllImages() {
+    const imgs = editor.iframeElement.contentWindow.document.querySelectorAll('img');
+    for (const img of imgs) {
+      if (isEmpty(img.getAttribute('width'))) {
+        img.width = img.naturalWidth;
+      }
+      if (isEmpty(img.getAttribute('height'))) {
+        img.height = img.naturalHeight;
+      }
+    }
+
+    // force refresh content to editor
+    editor.insertContent('');
   }
 
   let unsub: () => void;

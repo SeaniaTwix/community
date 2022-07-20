@@ -45,7 +45,7 @@
   import {onDestroy, onMount, tick} from 'svelte';
   import type {Editor as TinyMCE, Events} from 'tinymce';
   import Editor from '@tinymce/tinymce-svelte';
-  import _, {uniq} from 'lodash-es';
+  import _, {isEmpty, uniq} from 'lodash-es';
   import {assets} from '$app/paths';
   import {goto} from '$app/navigation';
   import {darkThemes, defaultEditorSettings} from '$lib/editor/settings';
@@ -63,7 +63,7 @@
   const f = writable<File>(null);
   let tag = '';
   let addMode = false;
-  let editor: TinyMCE;
+  let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
   let updating = false;
   let registeredAutoTag: string | undefined;
 
@@ -182,6 +182,8 @@
 
     updating = true;
 
+    addSizeAllImages();
+
     try {
       const updateData = {
         title,
@@ -200,6 +202,25 @@
     } finally {
       updating = false;
     }
+  }
+
+  function editorLoadedEvent() {
+    editorLoaded = true;
+  }
+
+  function addSizeAllImages() {
+    const imgs = editor.iframeElement.contentWindow.document.querySelectorAll('img');
+    for (const img of imgs) {
+      if (isEmpty(img.getAttribute('width'))) {
+        img.width = img.naturalWidth;
+      }
+      if (isEmpty(img.getAttribute('height'))) {
+        img.height = img.naturalHeight;
+      }
+    }
+
+    // force refresh content to editor
+    editor.insertContent('');
   }
 
 </script>
@@ -225,7 +246,7 @@
     {/if}
     <div class:hidden={!editorLoaded}>
       {#if dark}
-        <Editor on:init={() => (editorLoaded = true)}
+        <Editor on:init={editorLoadedEvent}
                 apiKey="{editorKey}"
                 conf="{settingsDark}"
                 bind:value={content}
@@ -233,7 +254,7 @@
                 on:keydown={(e) => detectPaste(e, 'down')}
                 on:keyup={(e) => detectPaste(e, 'up')}/>
       {:else}
-        <Editor on:init={() => (editorLoaded = true)}
+        <Editor on:init={editorLoadedEvent}
                 apiKey="{editorKey}"
                 conf="{settings}"
                 bind:value={content}/>

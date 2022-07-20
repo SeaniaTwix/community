@@ -18,8 +18,8 @@
   let isFavorite = false;
   let forceShow = false;
   let folded = false;
-  let width: number;
-  let height: number;
+  let width = imgObj?.attribs?.width;
+  let height = imgObj?.attribs?.height;
   let isImageSizeDefined = false;
 
   async function addFavorite() {
@@ -50,37 +50,38 @@
   }
 
   function addImageSize(element: HTMLImageElement) {
-    console.log('addImageSize');
+    console.log('addImageSize', element.width, element.height);
     isImageSizeDefined = true;
     // check preloaded
     if (!imgObj) {
       element.style.width = `${element.naturalWidth}px`;
     } else {
-      let w = element.getAttribute('width');
-      if (!w) {
-        w = element.style.width;
-        if (isEmpty(w)) {
-          w = element.naturalWidth.toString();
+      if (!width) {
+        let w = element.getAttribute('width');
+        if (!w) {
+          w = element.style.width;
+          if (isEmpty(w)) {
+            w = element.naturalWidth.toString();
+          }
+        }
+
+        if (parseInt(onlyNumber(w)) > 0) {
+          width = onlyNumber(w).toString();
         }
       }
 
-      width = onlyNumber(w) ?? 0;
-
-      if (width > 0) {
-        element.width = width;
-      }
-
-      let h = element.getAttribute('height');
-      if (!h) {
-        h = element.style.height;
-        if (isEmpty(h)) {
-          h = element.naturalHeight.toString();
+      if (!height) {
+        let h = element.getAttribute('height');
+        if (!h) {
+          h = element.style.height;
+          if (isEmpty(h)) {
+            h = element.naturalHeight.toString();
+          }
         }
-      }
 
-      height = onlyNumber(h) ?? 0;
-      if (height > 0) {
-        element.height = height;
+        if (parseInt(onlyNumber(h)) > 0) {
+          height = onlyNumber(h).toString();
+        }
       }
     }
 
@@ -88,7 +89,7 @@
   }
 
   function autoNaturalSize(element: HTMLImageElement) {
-    element.addEventListener('load', () => addImageSize(img));
+    addImageSize(element)
   }
 
   function show() {
@@ -130,8 +131,10 @@
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
       <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다"
-           use:autoNaturalSize class:blur-2xl={nsfw && !forceShow} bind:this={img}
-           width="{imgObj?.attribs?.width ?? width}" height="{imgObj?.attribs?.height ?? height}" />
+           bind:this={img}
+           on:load={() => autoNaturalSize(img)}
+           class:blur-2xl={nsfw && !forceShow}
+           {width} {height} />
     </span>
     {#if folded}
       <div on:click={() => (folded = false)}
