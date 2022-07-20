@@ -65,7 +65,10 @@
       }
 
       width = onlyNumber(w) ?? 0;
-      element.width = width;
+
+      if (width > 0) {
+        element.width = width;
+      }
 
       let h = element.getAttribute('height');
       if (!h) {
@@ -76,7 +79,9 @@
       }
 
       height = onlyNumber(h) ?? 0;
-      element.height = height;
+      if (height > 0) {
+        element.height = height;
+      }
     }
 
     console.log(width, height);
