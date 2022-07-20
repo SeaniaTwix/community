@@ -134,7 +134,7 @@
       </li>
     </ul>
     <ul class="__flat-menu p-2 space-x-1 items-center hidden md:inline-block
-             lg:inline-block overflow-x-scroll">
+             lg:inline-block overflow-x-scroll overflow-y-hidden">
       <li>
         <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md dark:hover:bg-gray-500
                 transition-colors"
@@ -221,6 +221,13 @@
   ul.__flat-menu {
     li {
       display: inline-block;
+    }
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
     }
   }
 </style>
