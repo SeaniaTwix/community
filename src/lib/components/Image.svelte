@@ -4,16 +4,23 @@
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
   import {load} from 'cheerio';
+  import {isEmpty, parseInt} from 'lodash-es';
 
   export let content = '';
-  let _ = load(content) as any;
+  let _ = load(content);
+  // noinspection TypeScriptValidateTypes
   const imgObj = _('img')?.[0];
+  console.log('img:', imgObj);
+  let img: HTMLImageElement;
   export let src: string | undefined;
   export let nsfw = false;
   let loading = true;
   let isFavorite = false;
   let forceShow = false;
   let folded = false;
+  let width: number;
+  let height: number;
+  let isImageSizeDefined = false;
 
   async function addFavorite() {
     if (loading) {
@@ -31,16 +38,54 @@
   }
 
   onMount(() => {
-  })
+    addImageSize(img);
+  });
 
-  function autoNaturalWidth(element: HTMLImageElement) {
-    element.addEventListener('load', () => {
-      // check preloaded
-      if (!imgObj) {
-        element.style.width = `${element.naturalWidth}px`;
+  function onlyNumber(text: string): number | undefined {
+    try {
+      return parseInt(/\d+/.exec(text)[0]);
+    } catch {
+      return undefined;
+    }
+  }
+
+  function addImageSize(element: HTMLImageElement) {
+    console.log('addImageSize');
+    isImageSizeDefined = true;
+    // check preloaded
+    if (!imgObj) {
+      element.style.width = `${element.naturalWidth}px`;
+    } else {
+      let w = element.getAttribute('width');
+      if (!w) {
+        w = element.style.width;
+        if (isEmpty(w)) {
+          w = element.naturalWidth.toString();
+        }
       }
-      folded = element.height > 968; //968;
-    })
+
+      width = onlyNumber(w) ?? 0;
+      element.width = width;
+
+      let h = element.getAttribute('height');
+      if (!h) {
+        h = element.style.height;
+        if (isEmpty(h)) {
+          h = element.naturalHeight.toString();
+        }
+      }
+
+      height = onlyNumber(h) ?? 0;
+      element.height = height;
+    }
+
+    console.log(width, height);
+
+    folded = element.height > 968; //968;
+  }
+
+  function autoNaturalSize(element: HTMLImageElement) {
+    element.addEventListener('load', () => addImageSize(img));
   }
 
   function show() {
@@ -79,11 +124,11 @@
       </p>
     {/if}
     <span class="relative transition-all __target {folded ? '__folded-image' : '__unfolded-image'}"
-          class:blur-2xl={nsfw && !forceShow}
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
-      <img use:autoNaturalWidth src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다"
-           width="{imgObj?.attribs?.width}" height="{imgObj?.attribs?.height}" />
+      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다"
+           use:autoNaturalSize class:blur-2xl={nsfw && !forceShow} bind:this={img}
+           width="{imgObj?.attribs?.width ?? width}" height="{imgObj?.attribs?.height ?? height}" />
     </span>
     {#if folded}
       <div on:click={() => (folded = false)}
