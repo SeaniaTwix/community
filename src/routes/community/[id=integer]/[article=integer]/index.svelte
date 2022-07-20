@@ -545,7 +545,7 @@
   <meta property="og:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
   <meta property="og:title" content="{article.title}">
   <meta property="og:description" content="{striptags(article.content)}">
-  {#if mainImage && !!article.tags['후방']}
+  {#if mainImage && !article.tags['후방']}
     <meta property="og:image" content="{mainImage}">
   {/if}
 
@@ -554,7 +554,7 @@
   <meta property="twitter:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
   <meta property="twitter:title" content="{article.title}">
   <meta property="twitter:description" content="{striptags(article.content)}">
-  {#if mainImage && !!article.tags['후방']}
+  {#if mainImage && !article.tags['후방']}
     <meta property="twitter:image" content="{mainImage}">
   {/if}
 
