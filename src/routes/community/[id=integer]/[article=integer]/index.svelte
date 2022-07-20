@@ -3,7 +3,7 @@
   import type {IComment} from '$lib/types/comment';
   import type {IUser} from '$lib/types/user';
   import {uniq, isEmpty} from 'lodash-es';
-  import {load as cheerio} from 'cheerio';
+  import * as cheerio from 'cheerio';
   import {ArticleDto} from '$lib/types/dto/article.dto';
 
   export async function load({params, fetch, session}: LoadEvent): Promise<LoadOutput> {
@@ -11,13 +11,13 @@
     const {name} = await nr.json();
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
     const {article} = await res.json() as ArticleDto;
-    const $ = cheerio(`<div class="__top">${article.content}</div>`);
+    const $ = cheerio.load(`<div class="__top">${article.content}</div>`);
     // @ts-ignore
     const elems = $('.__top:first > *').toArray();
     const contents = [];
     for (const elem of elems) {
       // console.log(elem);
-      contents.push(cheerio(elem).html());
+      contents.push(cheerio.load(elem).html());
     }
     const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
     const {user} = await ar.json();
@@ -38,6 +38,12 @@
       }
     }
 
+    const findImages = cheerio.load(article.content)('img').toArray();
+    let mainImage: string;
+    if (findImages.length > 0) {
+      mainImage = findImages[0].attribs['src'];
+    }
+
     return {
       status: 200,
       props: {
@@ -48,6 +54,7 @@
         author: user,
         comments,
         users: userInfo,
+        mainImage,
       },
     };
   }
@@ -88,6 +95,8 @@
   import {writable} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
   import {upload} from '$lib/file/uploader';
+  import {striptags} from 'striptags';
+  import {page} from '$app/stores';
 
   /**
    * 게시글 보기
@@ -107,7 +116,10 @@
   export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
+  export let mainImage: string | undefined;
+  // noinspection TypeScriptUnresolvedFunction
   let liked = article.myTags?.includes('_like');
+  // noinspection TypeScriptUnresolvedFunction
   let disliked = article.myTags?.includes('_dislike');
   $: likeCount = article.tags?._like ?? 0;
   $: dislikeCount = article.tags?._dislike ?? 0;
@@ -195,26 +207,7 @@
     return article.myTags?.includes(tagName)
   }
 
-
   let prevVisualViewport = 0;
-  let isKeyboardVisible = false;
-  const fixIosKeyboardScrolling = () => {
-    const currentVisualViewport = window.visualViewport.height;
-    console.log(currentVisualViewport, prevVisualViewport);
-
-    isKeyboardVisible = prevVisualViewport > currentVisualViewport;
-    let changed = prevVisualViewport - currentVisualViewport;
-
-    if (isKeyboardVisible) {
-      if (inRange(changed, -30, 30)) {
-        changed = prevVisualViewport - changed;
-      }
-      window.scrollTo(0, changed);
-    } else {
-      window.scrollTo(0, 0);
-      prevVisualViewport = window.visualViewport.height;
-    }
-  };
 
   async function addTag(tags: string) {
     const t = tags.includes(',')
@@ -542,6 +535,29 @@
 
 <svelte:head>
   <title>{boardName} - {article.title}</title>
+
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="{article.title}">
+  <meta name="description" content="{striptags(article.content)}">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
+  <meta property="og:title" content="{article.title}">
+  <meta property="og:description" content="{striptags(article.content)}">
+  {#if mainImage}
+    <meta property="og:image" content="{mainImage}">
+  {/if}
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
+  <meta property="twitter:title" content="{article.title}">
+  <meta property="twitter:description" content="{striptags(article.content)}">
+  {#if mainImage}
+    <meta property="twitter:image" content="{mainImage}">
+  {/if}
+
 </svelte:head>
 
 <svelte:body on:dragover|preventDefault={fileDrag} />
