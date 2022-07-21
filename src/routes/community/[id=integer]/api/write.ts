@@ -24,6 +24,22 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
   const article = new ArticleDto<ClientToServerTagType>(await request.json());
   const write = new WriteRequest(article);
 
+  if (isEmpty(write.title)) {
+    return {
+      status: HttpStatus.NOT_ACCEPTABLE,
+      body: {
+        reason: 'title is too short',
+      }
+    }
+  } else if (write.title!.length > 48) {
+    return {
+      status: HttpStatus.NOT_ACCEPTABLE,
+      body: {
+        reason: 'title is too long',
+      }
+    }
+  }
+
   if (params.id !== write.boardId) {
     return {
       status: HttpStatus.BAD_GATEWAY,

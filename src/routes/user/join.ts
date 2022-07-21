@@ -50,6 +50,12 @@ class RegisterRequest {
     if (this.id.length > 16) {
       throw new Error('id is too long');
     }
+    if (this.password.length < 6) {
+      throw new Error('pw is too short');
+    }
+    if (this.password.length > 128) {
+      throw new Error('pw is too long');
+    }
     if (!/^[a-zA-Z가-힣\d_]+$/.test(this.id)) {
       throw new Error('some character is not allowed');
     }

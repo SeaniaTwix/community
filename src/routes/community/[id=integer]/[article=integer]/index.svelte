@@ -816,7 +816,7 @@
             </div>
           {/if}
           <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
-              <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
+              <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none"
                         on:keydown={detectSend}
                         bind:value={commentContent}
                         bind:this={mobileTextInput}

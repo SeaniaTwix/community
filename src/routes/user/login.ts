@@ -3,11 +3,19 @@ import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
+import {inRange} from 'lodash-es';
 
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
   console.log('new login')
   const login = new LoginRequest(await request.json() as LoginDto);
+
+  if (!inRange(login.id.length, 3, 16)) {
+    return {
+      status: HttpStatus.NOT_ACCEPTABLE,
+    }
+  }
+
   const user = new User(login.id);
 
   if (!await user.verify(login.password)) {

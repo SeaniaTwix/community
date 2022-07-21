@@ -5,6 +5,7 @@ import type {CommentDto} from '$lib/types/dto/comment.dto';
 import type {ITag} from '$lib/types/tag';
 import type {IArticle} from '$lib/types/article';
 import type {IComment} from '$lib/types/comment';
+import {inRange} from 'lodash-es';
 
 export class Article {
 
@@ -87,7 +88,7 @@ export class Article {
   }
 
   /**
-   * 태그를 추가합니다. (누적도 동일)
+   * 태그를 추가합니다. (누적도 동일) 1~36 글자 외의 태그는 자동으로 제거 됩니다.
    * @param userId 태그 추가를 요청한 사용자 유니크 아이디입니다.
    * @param tags 추가할 태그 이름들입니다.
    */
@@ -96,13 +97,14 @@ export class Article {
       throw new Error('whitespace not allowed in tag');
     }
 
-    const newTags = tags.map((tag) => ({
-      target: this.id,
-      user: userId,
-      name: tag,
-      createdAt: new Date,
-      pub: true,
-    }));
+    const newTags = tags.filter(tag => inRange(tag.trim().length, 1, 36))
+      .map((tag) => ({
+        target: this.id,
+        user: userId,
+        name: tag,
+        createdAt: new Date,
+        pub: true,
+      }));
 
     return await db.query(aql`
       for newTag in ${newTags}
