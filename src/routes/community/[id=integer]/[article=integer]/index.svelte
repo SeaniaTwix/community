@@ -641,8 +641,8 @@
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
         <div class="space-y-2 mb-4">
           <div class="flex justify-between">
-            <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
-              <h2 class="text-2xl flex-shrink">{article.title}</h2>
+            <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
+              <h2 class="text-2xl flex-shrink truncate">{article.title}</h2>
               <div class="inline-block flex space-x-2">
                 <div class="py-2 md:py-0.5">
                   {#if session && session.uid !== article.author}
@@ -670,9 +670,9 @@
               </div>
             </div>
             <div class="flex flex-col md:flex-col">
-              <span><View size="1rem"/> {article.views ?? 1}</span>
+              <span class="w-max"><View size="1rem"/> {article.views ?? 1}</span>
 
-              <button data-tooltip-target="tooltip-time-specific" type="button">
+              <button class=" w-max" data-tooltip-target="tooltip-time-specific" type="button">
                 <time class="text-zinc-500 dark:text-zinc-300 text-sm">
                   {timeAgo.format(new Date(article.createdAt))}
                 </time>
