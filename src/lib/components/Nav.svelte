@@ -152,7 +152,7 @@
         </li>
       {/each}
     </ul>
-    <ul class="__flat-menu p-2 space-x-1 items-center">
+    <ul class="__flat-menu p-2 space-x-1 items-center whitespace-nowrap min-w-0">
       {#if showSearch}
 
         <li>

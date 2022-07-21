@@ -61,8 +61,8 @@
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
-              <div class="flex justify-between truncate">
-                <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
+              <div class="flex justify-between min-w-0">
+                <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden truncate">
                   {#if article.autoTag}
                     <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
                   {/if}<span>{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}</span>
@@ -73,7 +73,7 @@
                     <CircleAvatar fallback="{toImageSource(article.author)}" border="sm"/>
                   </div>
                   <a class="cursor-pointer hover:text-sky-400
-                          underline decoration-dashed decoration-sky-400"
+                          underline decoration-dashed decoration-sky-400 w-max max-w-[9rem] truncate"
                      href="/user/profile/{article.author}">
                     <span>{users[article.author]?.id}</span>
                   </a>
