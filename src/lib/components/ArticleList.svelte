@@ -44,8 +44,8 @@
     {#each list as article}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
         <a href="/community/{board}/{article._key}">
-          <div class="flex justify-between space-x-4">
-            <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
+          <div class="flex justify-between">
+            <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
               <div class="flex justify-between truncate">
                 <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">

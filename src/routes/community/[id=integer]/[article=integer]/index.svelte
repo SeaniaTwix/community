@@ -281,24 +281,6 @@
     URL.revokeObjectURL(element.src);
   }
 
-  function imageUpload(file: File | Blob, type?: string) {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        // const file = blobInfo.blob();
-        const request = await ky.post(`/file/request?type=${file.type ?? type}`)
-          .json<{ uploadUrl: string, key: string }>();
-        await ky.put(request.uploadUrl, {
-          body: file,
-          // onDownloadProgress: console.log,
-        });
-        // console.log(blobInfo.blob());
-        resolve(`https://s3.ru.hn/${request.key}`);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
-
   // so hacky
   //*
   function focusOutTextArea(event: Event) {
@@ -488,10 +470,6 @@
     }
     pusher?.close();
     try {
-      // document.removeEventListener('scroll', focusOutTextArea, true);
-      //window?.visualViewport.removeEventListener('resize', fixIosKeyboardScrolling, true);
-      // window.document.body.removeEventListener('scroll', preventScrolling, true);
-
       document.body.classList.remove('overflow-hidden');
     } catch {
       // no window. it's ok.
@@ -642,9 +620,9 @@
         <div class="space-y-2 mb-4">
           <div class="flex justify-between">
             <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
-              <h2 class="text-2xl flex-shrink truncate">{article.title}</h2>
-              <div class="inline-block flex space-x-2">
-                <div class="py-2 md:py-0.5">
+              <h2 class="text-2xl flex-shrink">{article.title}</h2>
+              <div class="inline-block flex space-x-2 pr-4">
+                <div class="w-max py-2 md:py-0.5">
                   {#if session && session.uid !== article.author}
                   <span class="mt-0.5 cursor-pointer hover:text-red-600">
                     <Report size="1rem"/>
@@ -672,7 +650,7 @@
             <div class="flex flex-col md:flex-col">
               <span class="w-max"><View size="1rem"/> {article.views ?? 1}</span>
 
-              <button class=" w-max" data-tooltip-target="tooltip-time-specific" type="button">
+              <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
                 <time class="text-zinc-500 dark:text-zinc-300 text-sm">
                   {timeAgo.format(new Date(article.createdAt))}
                 </time>
