@@ -97,7 +97,7 @@
     <div class="bg-white dark:bg-gray-700 dark:text-zinc-200 w-9/12 h-screen shadow-black
                 shadow-md z-[15]">
       <div class="p-2 block w-full shadow-md text-xl ">
-        <span class="px-4 py-2">루온</span>
+        <span class="px-4 py-2">루헨</span>
       </div>
 
       <div class="p-2 mt-1 text-lg">

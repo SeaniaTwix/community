@@ -43,21 +43,21 @@
   <ul class="divide-y">
     {#each list as article}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
-        <a sveltekit:prefetch href="/community/{board}/{article._key}">
+        <a href="/community/{board}/{article._key}">
           <div class="flex justify-between space-x-4">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
               <div class="flex justify-between truncate">
-                <p class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
+                <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
                   {#if article.autoTag}
                     <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
-                  {/if}{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}
-                </p>
+                  {/if}<span>{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}</span>
+                </div>
                 <!-- i have no idea to make no duplicated elements... -->
                 <div class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
-                  <span class="w-6 max-h-6">
+                  <div class="w-6 max-h-6">
                     <CircleAvatar border="sm"/>
-                  </span>
+                  </div>
                   <a class="cursor-pointer hover:text-sky-400
                           underline decoration-dashed decoration-sky-400"
                      href="/user/profile/{article.author}">
