@@ -294,6 +294,10 @@
       p {
         display: inline-block;
       }
+
+      span, a {
+        overflow-wrap: break-word;
+      }
     }
   }
 

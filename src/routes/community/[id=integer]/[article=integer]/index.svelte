@@ -588,9 +588,9 @@
 <div class="w-full absolute z-[11] bg-white dark:bg-gray-600 px-4">
   <div id="__breadcrumb"
        class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto pb-1 border-b dark:border-zinc-500">
-    <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
-      <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
+    <nav class="flex ml-4 grow-0 shrink w-full w-min-0" aria-label="Breadcrumb">
+      <ol class="flex flex-row items-center space-x-1 md:space-x-3 w-full truncate">
+        <li class="inline-flex items-center flex-shrink-0">
           <a href="/"
              class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 hover:drop-shadow dark:text-gray-400 dark:hover:text-white dark:hover:shadow-white w-max">
             <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -600,7 +600,7 @@
             홈
           </a>
         </li>
-        <li>
+        <li class="flex-shrink-0">
           <div class="flex items-center">
             <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
                  xmlns="http://www.w3.org/2000/svg">
@@ -614,8 +614,8 @@
             </a>
           </div>
         </li>
-        <li aria-current="page">
-          <div class="flex items-center text-ellipsis overflow-hidden">
+        <li class="flex-shrink min-w-0" aria-current="page">
+          <div class="flex items-center text-ellipsis overflow-hidden min-w-0">
             <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
                  xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd"
@@ -623,7 +623,7 @@
                     clip-rule="evenodd"></path>
             </svg>
             <span class="w-full ml-1 text-sm font-medium text-gray-500 md:ml-2
-             dark:text-gray-400 text-ellipsis overflow-hidden hover:drop-shadow">
+             dark:text-gray-400 hover:drop-shadow truncate">
               {article.title}
             </span>
           </div>

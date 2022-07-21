@@ -46,13 +46,13 @@
         <a sveltekit:prefetch href="/community/{board}/{article._key}">
           <div class="flex justify-between space-x-4">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block">{article._key}</span>
-            <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12">
-              <div class="flex justify-between">
-                <span class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
+            <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
+              <div class="flex justify-between truncate">
+                <p class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden">
                   {#if article.autoTag}
                     <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
                   {/if}{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}
-                </span>
+                </p>
                 <!-- i have no idea to make no duplicated elements... -->
                 <div class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
                   <span class="w-6 max-h-6">
@@ -61,15 +61,15 @@
                   <a class="cursor-pointer hover:text-sky-400
                           underline decoration-dashed decoration-sky-400"
                      href="/user/profile/{article.author}">
-                    <span>{users[article.author]?.id} 1</span>
+                    <span>{users[article.author]?.id}</span>
                   </a>
                 </div>
               </div>
-              <div class="flex flex-grow justify-between">
-                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1">
-                <span class="inline-block md:hidden lg:hidden text-zinc-400">
-                  {article._key}
-                </span>
+              <div class="flex flex-grow flex-shrink-0 justify-between">
+                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4">
+                  <span class="inline-block md:hidden lg:hidden text-zinc-400">
+                    {article._key}
+                  </span>
                   {#if article.images}
                     <span>
                       <span class="mr-0.5"><Image size="1rem"/></span>
@@ -98,9 +98,9 @@
                 </div>
                 <div class="inline-block flex w-max">
                   <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
-                  <span class="w-6 max-h-6 inline-block mt-[-1px]">
+                  <div class="w-6 max-h-6 inline-block mt-[-1px]">
                     <CircleAvatar border="sm"/>
-                  </span>
+                  </div>
                     <a class="cursor-pointer hover:text-sky-400 inline-block align-super
                               underline decoration-dashed decoration-sky-400"
                        href="/user/profile/{article.author}">{users[article.author]?.id}</a>
