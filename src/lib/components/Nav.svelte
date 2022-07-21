@@ -152,7 +152,7 @@
         </li>
       {/each}
     </ul>
-    <ul class="__flat-menu p-2 space-x-1 items-center whitespace-nowrap min-w-0">
+    <ul class="__flat-menu flex p-2 space-x-1 items-center whitespace-nowrap min-w-0 overflow-hidden">
       {#if showSearch}
 
         <li>
@@ -186,7 +186,7 @@
         <li>
           <a sveltekit:prefetch aria-label="내 프로필" href="/user"
              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
-                  dark:hover:bg-gray-500">
+                  dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
             {user?.id ?? '알 수 없음'}
           </a>
         </li>

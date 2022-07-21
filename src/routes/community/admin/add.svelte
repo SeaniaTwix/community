@@ -33,7 +33,7 @@
   <title>어드민 콘솔 - 게시판 추가</title>
 </svelte:head>
 
-<div class="w-3/12 rounded-md p-4 shadow-md mx-auto">
+<div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 rounded-md p-4 shadow-md mx-auto">
   <form on:submit|preventDefault class="space-y-4">
     <input class="w-full outline outline-sky-400 rounded-md p-2" bind:value={name}
            type="text" placeholder="게시판 이름">

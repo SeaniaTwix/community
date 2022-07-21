@@ -232,7 +232,7 @@
   <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
 </div>
 
-<div class="mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
+<div class="__mobile-bottom-fix mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
   <input bind:this={titleInput}
          class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
          type="text" placeholder="제목" bind:value={title}/>
@@ -319,5 +319,14 @@
     .tox-tinymce {
       border: 1.5px solid rgb(56, 189, 248) !important;
     } // */
+  }
+
+  // ios bottom gap
+  // noinspection CssOverwrittenProperties
+  .__mobile-bottom-fix {
+    margin-bottom: 1rem;
+    // noinspection CssInvalidFunction
+    margin-bottom: constant(safe-area-inset-bottom);
+    margin-bottom: env(safe-area-inset-bottom);
   }
 </style>
