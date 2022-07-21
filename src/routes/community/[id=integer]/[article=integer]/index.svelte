@@ -464,6 +464,25 @@
     }
   });
 
+  function toImageSource(uid: string): IImage {
+    // @ts-ignore
+    let avatar = users[uid]?.avatar;
+    if (!avatar) {
+      // @ts-ignore
+      avatar = author?.avatar;
+    }
+    if (!avatar) {
+      return undefined;
+    }
+    const type = avatar.split('.')[1];
+    return {src: avatar, type,};
+  }
+
+  interface IImage {
+    src: string
+    type: string
+  }
+
   onDestroy(() => {
     for (const sub of subscriptions) {
       sub.unsubscribe();
@@ -665,7 +684,7 @@
           </div>
           <div class="flex space-x-3">
             <div class="w-12 min-h-[3rem] inline-block">
-              <CircleAvatar/>
+              <CircleAvatar fallback="{toImageSource(article.author)}"/>
             </div>
             <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
           </div>

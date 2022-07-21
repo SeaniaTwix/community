@@ -153,6 +153,19 @@
   export let session: App.Session;
 
 
+  function toImageSource(): IImage {
+    const avatar = user?.avatar;
+    if (!avatar) {
+      return undefined;
+    }
+    const type = avatar.split('.')[1];
+    return {src: avatar, type,};
+  }
+
+  interface IImage {
+    src: string
+    type: string
+  }
 </script>
 
 {#if deleted}
@@ -168,7 +181,7 @@
         <div on:click={() => {showInfo = !showInfo; selected = !selected}}
              class="flex space-x-2 hover:cursor-pointer group">
           <div class="w-10 min-h-[2.5rem]" on:click={() => console.log(comment)}>
-            <CircleAvatar/>
+            <CircleAvatar fallback="{toImageSource()}"/>
           </div>
           <span class="mt-2.5 group-hover:text-sky-400">
             {user?.id ?? '[이름을 불러지 못 했습니다]'}

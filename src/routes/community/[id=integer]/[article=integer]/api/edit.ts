@@ -12,6 +12,7 @@ import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
+import {isEmpty} from 'lodash-es';
 
 /**
  * 편집 전용 게시글 내용 소스 가져오기
@@ -80,13 +81,20 @@ export async function POST({params, locals, request}: RequestEvent): Promise<Req
 
     const data = new EditDto(await request.json());
 
-    if (data.title!.trim().length <= 0) {
+    if (isEmpty(data.title)) {
       return {
         status: HttpStatus.NOT_ACCEPTABLE,
         body: {
-          reason: 'title zero lenght not allowed',
-        },
-      };
+          reason: 'title is too short',
+        }
+      }
+    } else if (data.title!.length > 48) {
+      return {
+        status: HttpStatus.NOT_ACCEPTABLE,
+        body: {
+          reason: 'title is too long',
+        }
+      }
     }
 
     await edit.update(locals.user.uid, data);
@@ -129,15 +137,15 @@ class EditArticleRequest {
     return {title, content, tags: userTags, source};
   }
 
-  async isImageExists(): Promise<boolean> {
+  async getImage(): Promise<string> {
     const {content} = await this.article.get();
     if (!content) {
-      return false;
+      return '';
     }
 
     const $ = loadHtml(content);
     const images = $('img');
-    return images.length > 0;
+    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '')
   }
 
   async update(author: string, data: EditDto) {
@@ -157,17 +165,18 @@ class EditArticleRequest {
       target: this.id, user:author, name: tag, createdAt: new Date, pub: true
     })); // */
 
-    const isImageExists = await this.isImageExists();
+    const edited = {
+      title,
+      editedAt: new Date,
+      content: sanitizedContent.value.toString(),
+      source: source ?? '',
+      images: await this.getImage(),
+    };
+
     await db.query(aql`
       for article in articles
         filter article._key == ${this.id} && article.author == ${author}
-          update article with {
-            title: ${title},
-            editedAt: ${new Date},
-            content: ${sanitizedContent.value.toString()},
-            source: ${source ?? ''},
-            images: ${isImageExists},
-          } in articles`);
+          update article with ${edited} in articles`);
     await this.article.updateTags(author, tags);
   }
 

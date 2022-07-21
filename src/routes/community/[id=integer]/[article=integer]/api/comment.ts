@@ -104,6 +104,16 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
   let commentData: CommentDto;
   try {
     commentData = new CommentDto(data);
+
+    if (isEmpty(commentData.content) && isEmpty(commentData.image)) {
+      return {
+        status: HttpStatus.NOT_ACCEPTABLE,
+        body: {
+          reason: 'content is require'
+        }
+      }
+    }
+
   } catch (e) {
     return {
       status: HttpStatus.BAD_GATEWAY,

@@ -18,7 +18,26 @@ export class Board {
     return await cursor.next();
   }
 
-  async getRecentArticles(page: number, amount: number) {
+  async getBests(page: number, minLikes = 3) {
+    if (page <= 0) {
+      throw new Error('page must be lt 0')
+    }
+    const cursor = await db.query(aql`
+      for article in articles
+        let likes = length(
+          for tag in tags
+            filter tag.name == "_like" && tag.target == article._key && tag.pub
+              return tag)
+        filter likes >= ${minLikes}
+        limit ${(page - 1) * 10}, ${page * 10}
+          return unset(article, "content", "pub")`)
+    return await cursor.all();
+  }
+
+  async getRecentArticles(page: number, amount: number, imageShow = false) {
+    if (page <= 0) {
+      throw new Error('page must be lt 0')
+    }
     /*
     const cursor = await db.query(aql`
       for article in articles
@@ -49,7 +68,8 @@ export class Board {
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
-          return merge(article, {comments: c, tags: tags})`)
+          let imgs = ${imageShow} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
+          return merge(unset(article, "content", "pub"), {comments: c, tags: tags, images: imgs})`)
 
     return await cursor.all();
   }

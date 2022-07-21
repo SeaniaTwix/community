@@ -42,8 +42,8 @@ export class User {
     return new Promise<IUser>((resolve, reject) => {
       this.loadUserData()
         .then((data) => {
-          const {_key, _id, _rev, rank, id, profile} = data;
-          resolve({_key, _id, _rev, rank, id, profile});
+          const {_key, _id, _rev, rank, id, profile, avatar} = data;
+          resolve({_key, _id, _rev, rank, id, profile, avatar});
         })
         .catch(reject);
     });

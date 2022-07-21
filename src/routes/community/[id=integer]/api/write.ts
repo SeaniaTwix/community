@@ -138,15 +138,14 @@ class WriteRequest {
     return this.body.content?.trim();
   }
 
-  get isImageExists(): boolean {
-    const content = this.content;
+  async getImage(content?: string): Promise<string> {
     if (!content) {
-      return false;
+      return '';
     }
 
     const $ = loadHtml(content);
     const images = $('img');
-    return images.length > 0;
+    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '')
   }
 
   private get isBoardExists(): Promise<boolean> {
@@ -182,13 +181,15 @@ class WriteRequest {
         tagNames: [...defaultSchema.tagNames ?? [], 'source']
       })
       .use(rehypeStringify)
-      .process(this.content ?? '')
+      .process(this.content ?? '');
+
+    const content = sanitizedContent.value.toString();
 
     const data: Partial<IArticle> = {
       source: this.source,
       views: 0,
       title: this.title,
-      content: sanitizedContent.value.toString(),
+      content,
       // lazy
       tags: {},
       author: userId,
@@ -196,7 +197,7 @@ class WriteRequest {
       board: this.boardId!,
       pub: true,
       locked: false,
-      images: this.isImageExists,
+      images: await this.getImage(content),
     };
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);
@@ -204,17 +205,6 @@ class WriteRequest {
 
     this.id = _key;
     this.article = new Article(_key);
-
-    // auto tag server side code
-
-    /*
-    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
-    const resultAutoTag = autoTag.exec(data.title!);
-    let tags = this.tags;
-    if (resultAutoTag) {
-      const autoTagText = resultAutoTag[1];
-      tags = [autoTagText, ...tags];
-    } // */
 
     await this.article.addTags(userId, this.tags);
   }

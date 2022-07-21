@@ -12,3 +12,6 @@ ecosystem.config.cjs
 .idea/
 
 .pnpm-debug.log
+
+data.ms
+data.ms/**

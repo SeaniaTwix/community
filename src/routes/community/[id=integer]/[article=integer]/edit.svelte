@@ -46,7 +46,6 @@
   import type {Editor as TinyMCE, Events} from 'tinymce';
   import Editor from '@tinymce/tinymce-svelte';
   import _, {isEmpty, uniq} from 'lodash-es';
-  import {assets} from '$app/paths';
   import {goto} from '$app/navigation';
   import {darkThemes, defaultEditorSettings} from '$lib/editor/settings';
   import {upload as imageUpload} from '$lib/file/uploader';

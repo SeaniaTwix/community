@@ -34,6 +34,20 @@
 
     return dayjs(d).format('YY년 M월 D일');
   }
+
+  function toImageSource(uid: string): IImage {
+    const avatar = users[uid].avatar;
+    if (!avatar) {
+      return undefined;
+    }
+    const type = avatar.split('.')[1];
+    return {src: avatar, type,};
+  }
+
+  interface IImage {
+    src: string
+    type: string
+  }
 </script>
 
 <div class="w-full">
@@ -56,7 +70,7 @@
                 <!-- i have no idea to make no duplicated elements... -->
                 <div class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
                   <div class="w-6 max-h-6">
-                    <CircleAvatar border="sm"/>
+                    <CircleAvatar fallback="{toImageSource(article.author)}" border="sm"/>
                   </div>
                   <a class="cursor-pointer hover:text-sky-400
                           underline decoration-dashed decoration-sky-400"
@@ -99,7 +113,7 @@
                 <div class="inline-block flex w-max">
                   <div class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
                   <div class="w-6 max-h-6 inline-block mt-[-1px]">
-                    <CircleAvatar border="sm"/>
+                    <CircleAvatar fallback="{toImageSource(article.author)}" border="sm"/>
                   </div>
                     <a class="cursor-pointer hover:text-sky-400 inline-block align-super
                               underline decoration-dashed decoration-sky-400"

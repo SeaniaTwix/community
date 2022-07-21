@@ -2,12 +2,34 @@
   import {tick} from 'svelte';
   import {isEmpty} from 'lodash-es';
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
+  import EditImage from '$lib/components/EditImage.svelte';
+  import ky from 'ky-universal';
+  import {session} from '$app/stores'
 
   let file: HTMLInputElement;
   let files: FileList;
   let fileDragging = false;
-  let imageUrl = '';
   let imageType = '';
+  let showingImageEditor = false;
+  let editAvatarSrc = '';
+  let editedAvatar: Blob;
+  let isEdited = false;
+
+  function openImageEditor() {
+    showingImageEditor = true;
+  }
+
+  function closeImageEditor() {
+    showingImageEditor = false;
+  }
+
+  async function imageEditedInComment(event: CustomEvent<Blob>) {
+    editAvatarSrc = URL.createObjectURL(event.detail);
+    editedAvatar = event.detail;
+    isEdited = true;
+    await tick();
+    closeImageEditor();
+  }
 
   function t() {
     console.log(file);
@@ -16,6 +38,7 @@
   }
 
   function fileDrag(event: DragEvent) {
+    // noinspection TypeScriptUnresolvedFunction
     if (event.dataTransfer.types.includes('Files')) {
       fileDragging = true;
     }
@@ -25,43 +48,95 @@
     fileDragging = false;
   }
 
+  function imageSelected() {
+    isEdited = false;
+  }
+
   async function fileDrop(event: DragEvent) {
+    imageSelected();
     await tick();
     fileDragging = false;
     const uploadPending = event.dataTransfer.files.item(0);
     if (uploadPending.type.startsWith('image')) {
-      imageUrl = URL.createObjectURL(uploadPending);
+      editAvatarSrc = URL.createObjectURL(uploadPending);
       imageType = uploadPending.type;
     }
   }
 
+  async function uploadAvatar() {
+    const {prefix, presigned} = await ky.get('/user/profile/api/avatar')
+      .json<IUploadRequestResult>();
+
+    const body = new FormData();
+
+    const key = prefix + (isEdited ? 'png' : files[0].type.split('/')[1]);
+    body.set('key', key);
+    body.set('acl', 'public-read');
+    body.set('Content-Type', isEdited ? 'image/png' : files[0].type);
+    // body.set('bucket', request.bucket);
+    for (const key of Object.keys(presigned.fields)) {
+      body.set(key, presigned.fields[key]);
+    }
+
+    const blob = await ky.get(editAvatarSrc).blob();
+
+    body.append('file', blob);
+    // console.log(file.type);
+    await ky.post('https://s3.ru.hn', {body});
+    await saveAvatar(`https://s3.ru.hn/${key}`);
+  }
+
+  async function saveAvatar(link: string) {
+    await ky.post('/user/profile/api/avatar', {
+      json: {link,}
+    });
+  }
+
+  interface IUploadRequestResult {
+    prefix: string;
+    presigned: {
+      url: string,
+      fields: Record<string, string>
+    };
+  }
 </script>
+
+{#if showingImageEditor}
+
+  <EditImage on:close={closeImageEditor} on:save={imageEditedInComment} bind:src="{editAvatarSrc}" />
+
+{/if}
+
 <div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto space-y-4">
-  <div><input type="file" bind:this={file} bind:files={files} /></div>
+  <div class="hidden"><input type="file" bind:this={file} bind:files={files} /></div>
   <button on:dragover|preventDefault={fileDrag}
           on:dragleave|preventDefault={fileDragLeaveCheck}
           on:drop|preventDefault={fileDrop}
           class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md"
-          on:click={t}>
+          on:click={() => {file.click(); imageSelected();}}>
     {#if fileDragging}
       놓아주세요!
     {:else}
-      여기 위로 끌어다놓거나 이곳을 눌러 아바타 업로드
+      여기 위로 끌어다놓거나 이곳을 눌러 아바타 선택
     {/if}
   </button>
-  {#if !isEmpty(imageUrl)}
+  {#if !isEmpty(editAvatarSrc)}
     <h2>미리보기</h2>
 
     <div class="w-16 inline-block">
-      <CircleAvatar fallback="{{src: imageUrl, type: imageType}}" />
+      <CircleAvatar fallback="{{src: editAvatarSrc, type: imageType}}" />
     </div>
 
     <div class="w-10 inline-block">
-      <CircleAvatar fallback="{{src: imageUrl, type: imageType}}" />
+      <CircleAvatar fallback="{{src: editAvatarSrc, type: imageType}}" />
     </div>
 
-    <button class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
+    <button on:click={openImageEditor} class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
       이미지 편집
+    </button>
+
+    <button on:click={uploadAvatar} class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
+      업로드
     </button>
   {/if}
 </div>

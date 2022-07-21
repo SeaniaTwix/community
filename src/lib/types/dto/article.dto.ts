@@ -28,8 +28,9 @@ export class ArticleDto<TagType = InternalTagType> {
   @SafeType({type: String})
   source = '';
 
-  @SafeType({type: Boolean})
-  images = false;
+  // old api: boolean
+  // new api: string (image src)
+  images: string | boolean = false;
 
   // @SafeType({type: Number})
   // comments = 0;
