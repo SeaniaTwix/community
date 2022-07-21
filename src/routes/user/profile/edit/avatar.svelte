@@ -86,6 +86,11 @@
     await saveAvatar(`https://s3.ru.hn/${key}`);
   }
 
+  function fileSelected() {
+    editedAvatar = files[0];
+    editAvatarSrc = URL.createObjectURL(editedAvatar);
+  }
+
   async function saveAvatar(link: string) {
     await ky.post('/user/profile/api/avatar', {
       json: {link,}
@@ -108,7 +113,7 @@
 {/if}
 
 <div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto space-y-4">
-  <div class="hidden"><input type="file" bind:this={file} bind:files={files} /></div>
+  <div class="hidden"><input type="file" bind:this={file} bind:files={files} on:change={fileSelected} /></div>
   <button on:dragover|preventDefault={fileDrag}
           on:dragleave|preventDefault={fileDragLeaveCheck}
           on:drop|preventDefault={fileDrop}
