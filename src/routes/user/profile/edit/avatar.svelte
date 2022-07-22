@@ -117,7 +117,7 @@
   <button on:dragover|preventDefault={fileDrag}
           on:dragleave|preventDefault={fileDragLeaveCheck}
           on:drop|preventDefault={fileDrop}
-          class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md"
+          class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md min-h-[8rem]"
           on:click={() => {file.click(); imageSelected();}}>
     {#if fileDragging}
       놓아주세요!

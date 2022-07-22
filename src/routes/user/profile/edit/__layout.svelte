@@ -3,8 +3,7 @@
   import {EUserRanks} from '$lib/types/user-ranks';
 
   export async function load({session, }: LoadEvent): Promise<LoadOutput> {
-    // console.log(session)
-    if (!session || (session && session.rank < EUserRanks.Manager)) {
+    if (!session) {
       return {
         status: 404,
         error: 'Page not found',
@@ -16,4 +15,4 @@
   }
 </script>
 
-<slot />
+<slot/>

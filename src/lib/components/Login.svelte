@@ -66,15 +66,19 @@
 </script>
 
 <form on:submit|preventDefault class="space-y-4 font-medium">
-  <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
-         bind:value={id} autocorrect="off" autocapitalize="none"
-         class="w-full shadow-md rounded-md px-4 py-2 focus:outline-0">
-  <input type="password" placeholder="PW" on:keydown={(e) => checkEnter(e, 1)}
-         bind:this={passwordInput} bind:value={password}
-         class="w-full shadow-md rounded-md px-4 py-2 focus:outline-0">
+  <div class="__auto-fill shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
+    <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
+           bind:value={id} autocorrect="off" autocapitalize="none"
+           class="w-full bg-transparent focus:outline-0 rounded-md">
+  </div>
+  <div class="shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
+    <input type="password" placeholder="PW" on:keydown={(e) => checkEnter(e, 1)}
+           bind:this={passwordInput} bind:value={password}
+           class="w-full bg-transparent focus:outline-0 rounded-md">
+  </div>
   <div class="flex space-x-2">
     <button on:click={login} id="btn-login" bind:this={loginButton}
-            class="bg-sky-400 hover:bg-sky-800 text-white items-center rounded-md px-4 py-2
+            class="bg-sky-400 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white items-center rounded-md px-4 py-2
                     flex-grow disabled:bg-sky-600 disabled:text-zinc-500 transition-colors">
       {#if !loading}
         로그인
@@ -83,7 +87,7 @@
       {/if}
     </button>
     <button on:click={() => goto('/join').then()}
-            class="bg-red-400 hover:bg-red-600 transition-colors text-white items-center rounded-md px-4 py-2">
+            class="bg-red-400 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-500 transition-colors text-white items-center rounded-md px-4 py-2">
       계정이 없어요
     </button>
   </div>
