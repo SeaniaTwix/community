@@ -7,7 +7,7 @@ import HttpStatus from 'http-status-codes';
 import {parseInt} from 'lodash-es';
 import {Board} from '$lib/community/board/server';
 
-export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!isStringInteger(params.id)) {
     return {
       status: HttpStatus.BAD_REQUEST,
@@ -19,7 +19,7 @@ export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOu
   const page = isStringInteger(pageParam) ? parseInt(pageParam) : 1;
   const amountParam = url.searchParams.get('amount') ?? '30';
   const amount = isStringInteger(amountParam) ? parseInt(amountParam) : 30;
-  const list = await board.getListRecents(page, amount) as any[];
+  const list = await board.getListRecents(page, amount, locals?.user?.uid) as any[];
 
   // todo: find diff way for mapping tags count (in aql if available)
 
@@ -50,10 +50,10 @@ class ListBoardRequest {
     return this.board.getMaxPage(amount);
   }
 
-  getListRecents(page = 1, amount = 25): Promise<ArticleDto[]> {
+  getListRecents(page = 1, amount = 25, reader?: string): Promise<ArticleDto[]> {
     if (amount > 50) {
       throw new Error('too many');
     }
-    return this.board.getRecentArticles(page, amount);
+    return this.board.getRecentArticles(page, amount, reader ?? null);
   }
 }

@@ -65,6 +65,7 @@
   let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
   let updating = false;
   let registeredAutoTag: string | undefined;
+  let fileUploading = false;
 
   export let editorKey: string;
   export let article: string;
@@ -114,6 +115,14 @@
 
   const settings = {
     ...defaultEditorSettings,
+    images_upload_handler: async (blobInfo) => {
+      fileUploading = true;
+      try {
+        await imageUpload(blobInfo.blob(), undefined, undefined)
+      } finally {
+        fileUploading = false;
+      }
+    },
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
@@ -180,6 +189,15 @@
     }
 
     updating = true;
+
+    await new Promise((resolve) => {
+      const i = setInterval(() => {
+        if (!fileUploading) {
+          clearInterval(i);
+          return resolve();
+        }
+      }, 100);
+    });
 
     addSizeAllImages();
 

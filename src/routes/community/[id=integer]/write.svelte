@@ -65,6 +65,14 @@
 
   const settings = {
     ...defaultEditorSettings,
+    images_upload_handler: async (blobInfo) => {
+      fileUploading = true;
+      try {
+        await imageUpload(blobInfo.blob(), undefined, undefined)
+      } finally {
+        fileUploading = false;
+      }
+    },
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
@@ -102,6 +110,7 @@
   let addMode = false;
 
   let uploading = false;
+  let fileUploading = false;
 
   function fileSelected() {
     f.set(fileUploader.files[0]);
@@ -126,6 +135,15 @@
     }
 
     uploading = true;
+
+    await new Promise((resolve) => {
+      const i = setInterval(() => {
+        if (!fileUploading) {
+          clearInterval(i);
+          return resolve();
+        }
+      }, 100);
+    });
 
     addSizeAllImages();
 
@@ -236,11 +254,16 @@
       if (!['image', 'video'].includes(file.type.split('/')[0])) {
         return;
       }
-      const url = await imageUpload(file);
-      if (file.type.startsWith('video')) {
-        insertVideo(url);
-      } else {
-        insertImage(url);
+      fileUploading = true;
+      try {
+        const url = await imageUpload(file);
+        if (file.type.startsWith('video')) {
+          insertVideo(url);
+        } else {
+          insertImage(url);
+        }
+      } finally {
+        fileUploading = false;
       }
     });
   });

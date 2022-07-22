@@ -69,12 +69,12 @@
   <div class="__auto-fill shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
     <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
            bind:value={id} autocorrect="off" autocapitalize="none"
-           class="w-full bg-transparent focus:outline-0 rounded-md">
+           class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
   </div>
   <div class="shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
     <input type="password" placeholder="PW" on:keydown={(e) => checkEnter(e, 1)}
            bind:this={passwordInput} bind:value={password}
-           class="w-full bg-transparent focus:outline-0 rounded-md">
+           class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
   </div>
   <div class="flex space-x-2">
     <button on:click={login} id="btn-login" bind:this={loginButton}

@@ -5,12 +5,19 @@
   import {uniq, isEmpty} from 'lodash-es';
   import * as cheerio from 'cheerio';
   import {ArticleDto} from '$lib/types/dto/article.dto';
+  import HttpStatus from 'http-status-codes';
 
   export async function load({params, fetch, session}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
     const {article} = await res.json() as ArticleDto;
+    if (!article) {
+      return {
+        status: HttpStatus.NOT_FOUND,
+        error: '게시글을 찾을 수 없습니다.'
+      }
+    }
     const $ = cheerio.load(`<div class="__top">${article.content}</div>`);
     // @ts-ignore
     const elems = $('.__top:first > *').toArray();

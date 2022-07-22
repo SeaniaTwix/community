@@ -97,7 +97,7 @@ export class User {
       return null;
     }
     const cursor = await db.query(
-      aql`for user in users filter user._key == ${uid} return user.id`
+      aql`for user in users filter user._key == ${uid} return user.id`,
     );
     if (!cursor.hasNext) {
       return null;
@@ -128,7 +128,7 @@ export class User {
     }
 
     if (this.id.length < 3) {
-      throw new Error('id invalid ( is that shorten than 3')
+      throw new Error('id invalid ( is that shorten than 3');
     }
 
     if (!password || password.length < 6) {
@@ -162,5 +162,59 @@ export class User {
       scope: type,
       ...payload,
     }, key);
+  }
+
+  async blockUser(key: string, reason: string) {
+    await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          let blockedUsers = unique(append(is_array(user.blockedUsers) ? user.blockedUsers : [], ${{key, reason}}))
+          update user with {blockedUsers: blockedUsers} in users`);
+  }
+
+  async removeBlockedUsers(userIds: string[]) {
+    await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          let newBlockedUsers = (
+            for blockedUser in user.blockedUsers
+              filter blockedUser.key not in ${userIds}
+                return blockedUser)
+          update user with {blockedUsers: newBlockedUsers} in users`);
+  }
+
+  async getBlockedUsers(): Promise<string[]> {
+    const cursor = await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          return is_array(user.blockedUsers) ? user.blockedUsers : []`);
+    return await cursor.next();
+  }
+
+  async blockTags(tagNames: string[]) {
+    await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          let blockedTags = unique(append(is_array(user.blockedTags) ? user.blockedTags : [], ${tagNames}))
+          update user with {blockedTags: blockedTags} in users`);
+  }
+
+  async removeBlockedTags(tagNames: string[]) {
+    await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          let newBlockedTags = (
+            for blockedTag in user.blockedTags
+              filter blockedTag not in ${tagNames}
+                return blockedTag)
+          update user with {blockedTags: newBlockedTags} in users`);
+  }
+
+  async getBlockedTags(): Promise<string[]> {
+    const cursor = await db.query(aql`
+      for user in users
+        filter user.id == ${this.id}
+          return is_array(user.blockedTags) ? user.blockedTags : []`);
+    return await cursor.next();
   }
 }

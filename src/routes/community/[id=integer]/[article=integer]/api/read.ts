@@ -36,7 +36,7 @@ class ReadArticleRequest {
   async get(reader?: string) {
     const cursor = await db.query(aql`
       for article in articles
-        filter article._key == ${this.article} and article.board == ${this.board}
+        filter article._key == ${this.article} and article.board == ${this.board} && (is_bool(article.pub) ? article.pub : true)
           let savedTags = (
             for tag in tags
               filter tag.target == article._key && tag.pub
@@ -54,6 +54,10 @@ class ReadArticleRequest {
           return merge(article, {tags: ts, myTags: mt})`);
 
     const article: ArticleDto<ClientToServerTagType> = await cursor.next();
+
+    if (!article) {
+      return null;
+    }
 
     // it won't be affect to real data
     article.views += 1;
