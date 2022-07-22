@@ -112,7 +112,8 @@
     try {
       await ky.delete('/user/profile/edit/blocks/api/users', {
         json: {
-          tagNames: [uid.trim()],
+          target: uid.trim(),
+          reason,
         },
       });
       // const result = await ky.get('/user/profile/edit/blocks/api/users').json();
