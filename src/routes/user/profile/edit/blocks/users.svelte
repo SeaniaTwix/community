@@ -69,8 +69,12 @@
       });
       userId = '';
 
+      if (!users[target.trim()]) {
+        const {user} = await ky.get(`/user/profile/api/detail?id=${target.trim()}`).json<{user: IUser}>();
+        users[user._key] = user;
+      }
       // const result = await ky.get('/user/profile/edit/blocks/api/users').json();
-      blocked = [{key: target.trim(), reason}, ...blocked];
+      blocked = [...blocked, {key: target.trim(), reason}];
     } finally {
       uploading = false;
       foundUser = undefined;
@@ -157,7 +161,8 @@
     {#if foundUser.rank >= EUserRanks.Manager}
       관리자 계정은 차단할 수 없습니다.
     {:else}
-      <button class="rounded-md shadow-md w-full py-2 bg-red-400 dark:bg-red-700 hover:bg-red-600 dark:hover:bg-red-600 transition-colors" on:click={() => add(foundUser._key)}>
+      <button class="rounded-md shadow-md w-full py-2 bg-red-400 dark:bg-red-700 hover:bg-red-600 dark:hover:bg-red-600 transition-colors"
+              on:click={() => add(foundUser._key)}>
         이 유저 차단하기
       </button>
     {/if}
