@@ -34,7 +34,7 @@ export class Board {
     return await cursor.all();
   }
 
-  async getRecentArticles(page: number, amount: number, imageShow = false) {
+  async getRecentArticles(page: number, amount: number, reader: string | null, imageShow = false) {
     if (page <= 0) {
       throw new Error('page must be lt 0')
     }
@@ -56,7 +56,6 @@ export class Board {
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
-        limit ${(page - 1) * amount}, ${amount}
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub
           let c = length(
@@ -69,7 +68,21 @@ export class Board {
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
           let imgs = ${imageShow} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
-          return merge(unset(article, "content", "pub"), {comments: c, tags: tags, images: imgs})`)
+          let reader = ${reader}
+          let blockedTags = is_string(reader) ? flatten(
+            for user in users
+              filter user._key == reader
+                return is_array(user.blockedTags) ? user.blockedTags : []
+          ) : []
+          let blockedUsers = is_string(reader) ? flatten(
+            for user in users
+              filter user._key == reader && has(user, "blockedUsers")
+                return (for blockedUser in user.blockedUsers return blockedUser.key)
+          ) : []
+          filter blockedTags none in tags
+          filter article.author not in blockedUsers
+            limit ${(page - 1) * amount}, ${amount}
+            return merge(unset(article, "content", "pub"), {comments: c, tags: tags, images: imgs})`)
 
     return await cursor.all();
   }
