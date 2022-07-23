@@ -142,7 +142,7 @@
             {#if $session && article.author.rank >= EUserRanks.Manager}
               <span>관리자이므로 차단할 수 없습니다.</span>
             {/if}
-            <a href="/user/profile/{article.author}" class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600 text-white px-2 py-1 rounded-md text-center transition-colors">
+            <a href="/user/profile/{article.author._key}" class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600 text-white px-2 py-1 rounded-md text-center transition-colors">
               프로필 보기
             </a>
             {#if $session && $session.uid !== article.author && article.author.rank <= EUserRanks.User}
