@@ -1,6 +1,5 @@
 import {Subject} from 'rxjs';
 import type {Observable} from 'rxjs';
-import type {CommentDto} from '$lib/types/dto/comment.dto';
 import {isEmpty} from 'lodash-es';
 import type {PushAbout} from './shared';
 
@@ -12,7 +11,7 @@ try {
 } catch {
   Object.hasOwn = (obj: object, item: string) => {
     return Object.keys(obj).includes(item);
-  }
+  };
 }
 
 export class Pusher {
@@ -25,23 +24,24 @@ export class Pusher {
 
   close() {
     for (const ws of this.wsList) {
-      ws.close();
+      ws.send('command:close');
+      ws.close(1000);
     }
   }
 
-  observable(about: PushAbout): Observable<{ body: CommentDto, socket: WebSocket }> {
+  observable<T>(about: PushAbout): Observable<{ body: T, socket: WebSocket }> {
     const dev = window.location.host.startsWith('localhost') || window.location.host.startsWith('192');
-    const url = dev ? 'ws://localhost:50000' : 'wss://push.ru.hn'
+    const url = dev ? 'ws://localhost:50000' : 'wss://push.ru.hn';
     const ws = new WebSocket(`${url}/subscribe/${this.target}/${about}`);
 
     if (isEmpty(this.wsList)) {
       window.onbeforeunload = () => {
         this.close();
-      }
+      };
     }
 
     this.wsList.push(ws);
-    const subject = new Subject<{ body: CommentDto, socket: WebSocket }>();
+    const subject = new Subject<{ body: T, socket: WebSocket }>();
     ws.onmessage = (event) => {
       try {
 
@@ -62,7 +62,7 @@ export class Pusher {
       } catch (e) {
         console.error(e);
       }
-    }
+    };
     return subject.asObservable();
   }
 }
