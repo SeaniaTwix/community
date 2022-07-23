@@ -20,7 +20,7 @@
   {/each}
   <img class:border={border === 'sm'} class:border-2={border === 'md'}
        class="w-full h-full __circle-image object-cover border-white shadow-md"
-       src="{fallback.src}" alt="{isEmpty(images) ? 'fallback-image' : alt}"/>
+       src="{fallback?.src}" alt="{isEmpty(images) ? 'fallback-image' : alt}"/>
 </picture>
 
 <style>

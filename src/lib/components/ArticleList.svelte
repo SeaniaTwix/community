@@ -6,7 +6,6 @@
   import View from 'svelte-material-icons/Eye.svelte';
   import Comment from 'svelte-material-icons/Comment.svelte';
   import {ko} from '$lib/time-ko';
-  import type {IUser} from '$lib/types/user';
   import Tag from './Tag.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
   import Like from 'svelte-material-icons/ThumbUp.svelte';
@@ -15,11 +14,10 @@
   import {session} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {page} from '$app/stores';
-  import ky from 'ky-universal';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
-  export let users: Record<string, IUser>;
+  // export let users: Record<string, IUser>;
   $: showing = {};
 
   TimeAgo.addLocale(ko as any);
@@ -40,10 +38,14 @@
     return dayjs(d).format('YY년 M월 D일');
   }
 
-  function toImageSource(uid: string): IImage {
-    const avatar = users[uid].avatar;
+  function toImageSource(article: ArticleItemDto): IImage {
+    const avatar = article.author?.avatar;
     if (!avatar) {
-      return undefined;
+      // fallback
+      return {
+        src: 'https://s3.ru.hn/IMG_2775.GIF',
+        type: 'image/gif',
+      };
     }
     const type = avatar.split('.')[1];
     return {src: avatar, type,};
@@ -67,7 +69,7 @@
   <ul class="divide-y">
     {#each list as article, i}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
-        <a href="/community/{board}/{article._key}">
+        <a href="/community/{board}/{article._key}{$page.url.search}">
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
@@ -80,11 +82,11 @@
                 <!-- i have no idea to make no duplicated elements... -->
                 <div on:click|preventDefault={() => toggleUserMenu(i)} class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
                   <div class="w-6 max-h-6">
-                    <CircleAvatar fallback="{toImageSource(article.author)}" border="sm"/>
+                    <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                   </div>
                   <div class="cursor-pointer hover:text-sky-400
                           underline decoration-dashed decoration-sky-400 w-max max-w-[9rem] truncate">
-                    <span>{users[article.author]?.id}</span>
+                    <span>{article.author.id}</span>
                   </div>
                 </div>
               </div>
@@ -122,10 +124,10 @@
                 <div class="inline-block flex w-max">
                   <div on:click={() => toggleUserMenu(i)} class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
                     <div class="w-6 max-h-6 inline-block mt-[-1px]">
-                      <CircleAvatar fallback="{toImageSource(article.author)}" border="sm"/>
+                      <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                     </div>
                     <div on:click|preventDefault class="cursor-pointer hover:text-sky-400 inline-block align-super
-                              underline decoration-dashed decoration-sky-400">{users[article.author]?.id}</div>
+                              underline decoration-dashed decoration-sky-400">{article.author.id}</div>
                   </div>
                   <span class="text-right inline-block flex-shrink-0 min-w-[7rem]">
                     {formatDate(article.createdAt)}
@@ -137,13 +139,13 @@
         </a>
         {#if showing[i]}
           <div class="flex justify-end space-x-2 items-center overflow-x-scroll whitespace-nowrap">
-            {#if $session && users[article.author].rank >= EUserRanks.Manager}
+            {#if $session && article.author.rank >= EUserRanks.Manager}
               <span>관리자이므로 차단할 수 없습니다.</span>
             {/if}
             <a href="/user/profile/{article.author}" class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600 text-white px-2 py-1 rounded-md text-center transition-colors">
               프로필 보기
             </a>
-            {#if $session && $session.uid !== article.author && users[article.author].rank <= EUserRanks.User}
+            {#if $session && $session.uid !== article.author && article.author.rank <= EUserRanks.User}
               <a href="/user/profile/edit/blocks/users?id={article.author}" class="text-center bg-red-400 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-500 text-white px-2 py-1 rounded-md">
                 이 유저를 차단
               </a>

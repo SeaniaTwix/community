@@ -97,7 +97,6 @@
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
-  import {inRange, remove} from 'lodash-es';
   import Content from '$lib/components/Content.svelte';
   import {writable} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
@@ -612,7 +611,7 @@
                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                     clip-rule="evenodd"></path>
             </svg>
-            <a href="/community/{article.board}"
+            <a href="/community/{article.board}{$page.url.search}"
                class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 hover:drop-shadow w-max">
               {boardName}
             </a>
@@ -843,7 +842,7 @@
         <ul class="space-y-2">
           <li>
             <!-- todo: add page parameter -->
-            <button on:click={() => goto(`/community/${article.board}/`)}
+            <button on:click={() => goto(`/community/${article.board}${$page.url.search}`)}
                     class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
                   text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
               <span><Back size="1rem"/></span>

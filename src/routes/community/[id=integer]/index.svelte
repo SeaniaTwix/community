@@ -13,9 +13,17 @@
         error: '없는 게시판입니다.'
       }
     }
-    const res = await fetch(`${url.pathname}/api/list`);
-    const {list} = await res.json() as {list: ArticleItemDto[]};
+    const page = url.searchParams.get('page') ?? '1';
+    const res = await fetch(`${url.pathname}/api/list?page=${page}`);
+    const {list, maxPage} = await res.json() as {list: ArticleItemDto[], maxPage: number};
+    if (parseInt(page) > maxPage) {
+      return {
+        status: HttpStatus.NOT_FOUND,
+        error: 'Not found',
+      }
+    }
     const id = params.id;
+    /*
     const authors = list.map(a => a.author).join(',');
     const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
     const users = {};
@@ -24,7 +32,7 @@
       for (const user of authorInfos.users) {
         users[user._key] = user;
       }
-    }
+    }*/
 
     const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
 
@@ -39,28 +47,35 @@
           }
           return item;
         }),
-        id, params, name, users,},
+        id,
+        params,
+        name,
+        // users,
+        currentPage: parseInt(page),
+        maxPage,
+      },
     }
   }
 </script>
 <script lang="ts">
   import ArticleList from '$lib/components/ArticleList.svelte';
-  import {onMount} from 'svelte';
   import Pagination from '$lib/components/Pagination.svelte';
-  import Search from '$lib/components/Search.svelte';
 
   import {afterNavigate} from '$app/navigation';
+  import {onMount} from 'svelte';
 
   export let list: ArticleItemDto[];
   export let params;
   export let id: string = params.id;
   export let name: string;
-  export let users: Record<string, IUser>;
+  // export let users: Record<string, IUser>;
+  export let currentPage: number;
+  export let maxPage: number;
 
   afterNavigate(({from, to}) => {
     const page = to.searchParams.get('page');
-
   });
+
   // console.log(id, params);
 </script>
 
@@ -108,9 +123,9 @@
       새 글 쓰기
     </a>
   </div>
-  <ArticleList board={id} {list} {users} />
+  <ArticleList board={id} {list} />
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{params.id}" q="page" current="1" max="5" />
+    <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}" />
   </div>
 </div>
 
