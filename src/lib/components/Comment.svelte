@@ -179,11 +179,11 @@
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
         <div on:click={() => {showInfo = !showInfo; selected = !selected}}
-             class="flex space-x-2 hover:cursor-pointer group">
+             class="flex space-x-2 hover:cursor-pointer group items-center">
           <div class="w-10 min-h-[2.5rem]" on:click={() => console.log(comment)}>
             <CircleAvatar fallback="{toImageSource()}"/>
           </div>
-          <span class="mt-2.5 group-hover:text-sky-400">
+          <span class="group-hover:text-sky-400">
             {user?.id ?? '[이름을 불러지 못 했습니다]'}
             {#if selected}(이 메시지에 답장 중){/if}
           </span>

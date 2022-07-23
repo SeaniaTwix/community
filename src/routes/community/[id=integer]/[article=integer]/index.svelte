@@ -688,11 +688,11 @@
               </div>
             </div>
           </div>
-          <div class="flex space-x-3">
+          <div class="flex space-x-3 items-center">
             <div class="w-12 min-h-[3rem] inline-block">
               <CircleAvatar fallback="{toImageSource(article.author)}"/>
             </div>
-            <span class="mt-2.5 inline-block leading-none hover:text-sky-400">{author?.id}</span>
+            <span class="inline-block leading-none hover:text-sky-400">{author?.id}</span>
           </div>
         </div>
         {#if article.source}
