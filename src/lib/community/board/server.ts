@@ -14,7 +14,12 @@ export class Board {
   }
 
   async getMaxPage(amount = 30): Promise<number> {
-    const cursor = await db.query(aql`return ceil(length(articles) / ${amount})`);
+    const cursor = await db.query(aql`
+      let count = length(
+        for article in articles
+          filter article.board == ${this.id}
+            return article)
+      return max([1, ceil(count / ${amount})])`);
     return await cursor.next();
   }
 
@@ -38,21 +43,6 @@ export class Board {
     if (page <= 0) {
       throw new Error('page must be lt 0')
     }
-    /*
-    const cursor = await db.query(aql`
-      for article in articles
-        sort article.createdAt desc
-        limit ${(page - 1) * amount}, ${amount}
-        let isPub = article.pub == null || article.pub == true
-        filter article.board == ${this.id} && isPub
-          let c = length(for c in comments filter c.article == article._key return c)
-          let tags = (
-            for userId in attributes(is_object(article.tags) ? article.tags : {})
-              for tag in article.tags[userId]
-                return tag.name)
-          
-          
-          return merge(article, {comments: c, tags: tags})`);*/
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
@@ -82,7 +72,8 @@ export class Board {
           filter blockedTags none in tags
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}
-            return merge(unset(article, "content", "pub"), {comments: c, tags: tags, images: imgs})`)
+            let authorData = keep(first(for u in users filter u._key == article.author return u), "_key", "id", "avatar", "rank")
+            return merge(unset(article, "content", "pub"), {comments: c, tags: tags, images: imgs, author: authorData})`)
 
     return await cursor.all();
   }
