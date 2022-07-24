@@ -194,4 +194,28 @@ export class Article {
     return await cursor.next();
   }
 
+  /**
+   * 작성자의 `연재:` 태그로 시작하는 같은 작품의 모든 글을 작성 순서대로 반환합니다.
+   * @return 관련 회차 모든 게시글 ID (현재 글도 포함 되어있음)
+   */
+  async getSerialArticleIds(): Promise<string[]> {
+    try {
+      const cursor = await db.query(aql`
+      for article in articles
+        filter article._key == ${this.id}
+        let serialTag = first(
+          for tag in tags
+            filter tag.target == article._key && regex_test(tag.name, "^연재:.+")
+              return tag)
+        let serialsIds = (
+          for tag in tags
+            filter tag.name == serialTag.name && tag.user == article.author
+              return tag.target)
+        return serialsIds`);
+      return await cursor.next();
+    } catch {
+      return [];
+    }
+  }
+
 }

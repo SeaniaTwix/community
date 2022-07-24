@@ -37,7 +37,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
   const tagList = uniq(names.split(',').map(t => t.trim()));
-  const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@]+$/g;
+  const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@:]+$/g;
+  // 연재물 태그는 최소 한 글자 이상이어야 합니다.
+  const serialValidator = /^연재:.+$/g;
   const {id, article} = params;
 
   for (const name of tagList) {
@@ -101,6 +103,8 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
     if (!tagNameValidator.test(name)) {
       return unacceptableTagNameError(name);
     }
+
+    if (name.startsWith('연재:') && )
   }
 
   // transform to reserved tag name

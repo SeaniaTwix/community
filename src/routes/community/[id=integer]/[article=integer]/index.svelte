@@ -759,9 +759,25 @@
         </div>
       </div>
 
+      {#if Object.keys(article.tags).find(tag => tag.startsWith('연재:'))}
+        <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
+          <div class="w-full p-4 rounded-md shadow-md">
+            <h1 class="text-2xl">지금 보는 {author.id}님의 연재작의 다른 연재분</h1>
+            <ol class="divide-y divide-dotted divide-zinc-400">
+              {#each article.serials as serial}
+                <li class="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">
+                  <a class="underline decoration-sky-400 decoration-dashed" class:text-bold={article._key === serial._key} href="/community/{article.board}/{serial._key}">
+                    {serial.title}
+                    {#if article._key === serial._key}(지금 보는 중){/if}
+                  </a>
+                </li>
+              {/each}
+            </ol>
+          </div>
+        </div>
+      {/if}
+
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
-
-
         <ul class="space-y-3">
 
           {#each comments as comment}

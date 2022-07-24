@@ -24,7 +24,9 @@ export class Pusher {
 
   close() {
     for (const ws of this.wsList) {
-      ws.send('command:close');
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send('command:close');
+      }
       ws.close(1000);
     }
   }

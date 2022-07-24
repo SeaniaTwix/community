@@ -5,13 +5,21 @@ import {User} from '$lib/auth/user/server';
 import type {ArticleDto} from '$lib/types/dto/article.dto';
 import HttpStatus from 'http-status-codes';
 import type {ClientToServerTagType} from '$lib/types/dto/article.dto';
+import {isEmpty} from 'lodash-es';
+import {Article} from '$lib/community/article/server';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
 
   try {
     const uid = locals?.user?.uid;
-    const article: any = await read.get(uid);
+    const article = await read.get(uid);
+
+    if (article?.serials) {
+      const serialIds: string[] = article.serials;
+      article.serials = await read.getSerialTitles(serialIds);
+    }
+
     return {
       status: 200,
       body: {
@@ -83,11 +91,29 @@ class ReadArticleRequest {
       }
     }
 
-    return {
+    const result: Record<string, any> = {
       ...article,
       user: {name: user.id},
       tags,
+    };
+
+    const serials = Object.keys(tags)
+      .filter(tag => tag.startsWith('연재:'))
+      .map(tag => tag.replace(/^연재:/gm, ''));
+    if (!isEmpty(serials)) {
+      const a = new Article(this.article);
+      result.serials = await a.getSerialArticleIds();
     }
 
+    return result;
+  }
+
+  async getSerialTitles(articleIds: string[]) {
+    const cursor = await db.query(aql`
+      for article in articles
+        sort article.createdAt desc
+        filter article._key in ${articleIds} && article.board == ${this.board}
+          return keep(article, "title", "_key", "createdAt")`);
+    return await cursor.all();
   }
 }
