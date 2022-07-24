@@ -50,7 +50,12 @@ export class Board {
               filter user._key == reader && has(user, "blockedUsers")
                 return (for blockedUser in user.blockedUsers return blockedUser.key)
           ) : []
-          filter blockedTags none in tags
+          
+          let savedTags = (
+            for savedTag in tags
+              filter savedTag.target == article._key && savedTag.pub
+                return savedTag.name)
+          filter blockedTags none in savedTags
           filter article.author not in blockedUsers
             limit ${(page - 1) * max}, ${page * max}
             let tagNames = (
@@ -87,7 +92,7 @@ export class Board {
               let isCoPub = comment.pub == null || comment.pub
               filter comment.article == article._key && isCoPub
                 return comment)
-          let tags = (
+          let savedTags = (
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
@@ -103,11 +108,11 @@ export class Board {
               filter user._key == reader && has(user, "blockedUsers")
                 return (for blockedUser in user.blockedUsers return blockedUser.key)
           ) : []
-          filter blockedTags none in tags
+          filter blockedTags none in savedTags
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}
             let authorData = keep(first(for u in users filter u._key == article.author return u), "_key", "id", "avatar", "rank")
-            return merge(unset(article, "content", "pub", "source"), {comments: c, tags: tags, images: imgs, author: authorData})`)
+            return merge(unset(article, "content", "pub", "source"), {comments: c, tags: savedTags, images: imgs, author: authorData})`)
 
     return await cursor.all();
   }
