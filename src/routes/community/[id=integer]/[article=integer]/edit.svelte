@@ -117,11 +117,15 @@
     ...defaultEditorSettings,
     images_upload_handler: async (blobInfo) => {
       fileUploading = true;
+      let link: string;
       try {
-        await imageUpload(blobInfo.blob(), undefined, undefined);
-        editor.insertContent('<p></p>');
+        link = await imageUpload(blobInfo.blob(), undefined, undefined);
+        return link;
       } finally {
         fileUploading = false;
+        if (link) {
+          setTimeout(() => editor.insertContent('<p></p>'), 10);
+        }
       }
     },
     setup: (_editor) => {
