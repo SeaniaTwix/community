@@ -49,20 +49,18 @@ class ReadArticleRequest {
             for tag in tags
               filter tag.target == article._key && tag.pub
                 return tag)
-          let ts = (
+          let tagNames = (
             for t in savedTags
-              collect names = t.name
-              return names)
+              return t.name)
           let mt = (
             for t in savedTags
               filter t.user == ${reader ?? ''}
-                collect names = t.name
-                return names)
+                return t.name)
           
-          return merge(article, {tags: ts, myTags: mt})`);
+          return merge(article, {tags: tagNames, myTags: mt})`);
 
     const article: ArticleDto<ClientToServerTagType> = await cursor.next();
-
+    
     if (!article) {
       return null;
     }
