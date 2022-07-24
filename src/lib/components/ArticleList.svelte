@@ -66,7 +66,7 @@
   {#if isEmpty(list)}
     <p class="w-full text-center text-zinc-500">게시글이 없습니다.</p>
   {/if}
-  <ul class="divide-y">
+  <ul class="divide-y divide-zinc-200 dark:divide-zinc-400">
     {#each list as article, i}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
         <a href="/community/{board}/{article._key}{$page.url.search}">

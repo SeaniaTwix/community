@@ -23,6 +23,8 @@
       }
     }
     const id = params.id;
+    const bestR = await fetch(`${url.pathname}/api/best`);
+    const {bests} = await bestR.json() as {bests: ArticleItemDto[],};
     /*
     const authors = list.map(a => a.author).join(',');
     const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
@@ -53,6 +55,7 @@
         // users,
         currentPage: parseInt(page),
         maxPage,
+        bests,
       },
     }
   }
@@ -62,9 +65,12 @@
   import Pagination from '$lib/components/Pagination.svelte';
 
   import {afterNavigate} from '$app/navigation';
-  import {onMount} from 'svelte';
+  import {session} from '$app/stores';
+  import {isEmpty} from 'lodash-es';
+  import {EUserRanks} from '$lib/types/user-ranks';
 
   export let list: ArticleItemDto[];
+  export let bests: ArticleItemDto[];
   export let params;
   export let id: string = params.id;
   export let name: string;
@@ -116,14 +122,49 @@
       <span class="hidden sm:hidden md:hidden lg:inline">lg</span>
       -->
     </h2>
-    <a href="/community/{params.id}/write"
-       class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
+    {#if $session}
+      <div>
+        {#if $session.rank >= EUserRanks.Manager}
+          <a href="/community/{params.id}/manage"
+             class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
+         hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700
+         dark:ring-0 dark:hover:bg-red-600">
+            관리
+          </a>
+        {/if}
+
+        <a href="/community/{params.id}/write"
+           class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
-      새 글 쓰기
-    </a>
+          새 글 쓰기
+        </a>
+      </div>
+    {/if}
   </div>
+
+  {#if !isEmpty(bests)}
+    <div class="rounded-md shadow-md px-4 py-2 bg-zinc-50 dark:bg-gray-500/50">
+      <div class="flex justify-between text-sm mb-2">
+        <span class="text-zinc-600 dark:text-zinc-200">베스트 목록</span>
+        <a class="underline decoration-sky-400" href="/community/{params.id}/best">전체 보기</a>
+      </div>
+      <ol class="divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
+        {#each bests as best}
+          <li>
+            <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+              <div class="w-full px-4 py-2 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors">
+                <p>{best.title}</p>
+              </div>
+            </a>
+          </li>
+        {/each}
+      </ol>
+    </div>
+  {/if}
+
   <ArticleList board={id} {list} />
+
   <div class="pb-8 space-y-2">
     <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}" />
   </div>
