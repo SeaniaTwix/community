@@ -10,17 +10,26 @@ export async function GET({params, url, locals: {user}}: RequestEvent): Promise<
     return {
       status: HttpStatus.BAD_REQUEST,
       body: {
-        reason: 'only number allowed in page'
-      }
-    }
+        reason: 'only number allowed in page',
+      },
+    };
   }
-  const {id} = params;
-  const board = new Board(id);
-  const bests = await board.getBests(page, user?.uid ?? null, 5, 1);
-  return {
-    status: HttpStatus.OK,
-    body: {
-      bests,
-    }
+  try {
+    const {id} = params;
+    const board = new Board(id);
+    const bests = await board.getBests(page, user?.uid ?? null, 5, 1);
+    return {
+      status: HttpStatus.OK,
+      body: {
+        bests,
+      },
+    };
+  } catch (e: any) {
+    return {
+      status: HttpStatus.BAD_GATEWAY,
+      body: {
+        reason: e.toString(),
+      },
+    };
   }
 }
