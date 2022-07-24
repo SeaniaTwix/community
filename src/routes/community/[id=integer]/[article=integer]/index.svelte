@@ -735,6 +735,17 @@
                   {dislikeCount}
                 </Tag>
               </li>
+            {:else}
+              <li class="inline-block text-sky-400 mb-2 cursor-default">
+                <Tag disabled="{true}">
+                  <LikeEmpty size="1rem"/> {likeCount}
+                </Tag>
+              </li>
+              <li class="inline-block text-red-400 mb-2 cursor-default">
+                <Tag disabled="{true}">
+                  <DislikeEmpty size="1rem"/> {dislikeCount}
+                </Tag>
+              </li>
             {/if}
             {#each Object.keys(article.tags) as tagName}
               {#if !tagName.startsWith('_')}
