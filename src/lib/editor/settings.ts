@@ -19,7 +19,7 @@ export const defaultEditorSettings = {
 
 export const darkThemes = {
   skin: 'oxide-dark',
-  content_css: 'dark',
+  content_css: '/editor.dark.css',
 };
 
 interface IBlobInfo {

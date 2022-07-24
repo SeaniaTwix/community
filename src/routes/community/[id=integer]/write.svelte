@@ -68,7 +68,8 @@
     images_upload_handler: async (blobInfo) => {
       fileUploading = true;
       try {
-        await imageUpload(blobInfo.blob(), undefined, undefined)
+        await imageUpload(blobInfo.blob(), undefined, undefined);
+        editor.insertContent('<p></p>');
       } finally {
         fileUploading = false;
       }
@@ -117,7 +118,7 @@
   }
 
   function insertImage(imageUrl: string) {
-    editor.insertContent(`<img src="${imageUrl}" alt="uploaded-at-${new Date}" />`);
+    editor.insertContent(`<img src="${imageUrl}" alt="uploaded-at-${new Date}" /><p></p>`);
   }
 
   function insertVideo(videoUrl: string) {
@@ -125,7 +126,7 @@
       `<video controls width="560" height="360" preload="metadata" muted>
          <source src="${videoUrl}" type="video/webm" />
          사용 중이신 브라우저는 비디오 태그가 지원되지 않습니다.
-       </video>`
+       </video><p></p>`
     )
   }
 
