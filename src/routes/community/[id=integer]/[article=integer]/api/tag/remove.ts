@@ -39,7 +39,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
 
   const uniqTagList: string[] = uniq(tagList);
 
-  await Pusher.notify('tag', `${article}@${id}`, locals.user.uid, {
+  await Pusher.notify('tag', `${article}@${id}`, '0', {
     tag: uniqTagList,
     type: 'remove',
   });
