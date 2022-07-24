@@ -104,7 +104,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
       return unacceptableTagNameError(name);
     }
 
-    if (name.startsWith('연재:') && )
+    if (name.startsWith('연재:') && !serialValidator.test(name)) {
+      return unacceptableSerialNameError;
+    }
   }
 
   // transform to reserved tag name
@@ -193,3 +195,10 @@ const unacceptableTagNameError: (tag: string) => RequestHandlerOutput = (tag) =>
     reason: `'${tag}' is unacceptable`,
   },
 });
+
+const unacceptableSerialNameError: RequestHandlerOutput = {
+  status: HttpStatus.NOT_ACCEPTABLE,
+  body: {
+    reason: 'serial tag identifier cannot be empty',
+  },
+};
