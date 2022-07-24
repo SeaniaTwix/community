@@ -254,7 +254,7 @@
             {dislikeCount}
           </span>
         </span>
-          <span>
+        <span>
           <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
                 on:click={() => onReplyClicked(comment._key)}>
             <Messages size="1rem"/>
@@ -297,6 +297,15 @@
           </button>
         </div>
       {/if}
+    {:else}
+      <span class="space-x-2 pt-2">
+        <span class="text-sky-500 cursor-default p-2 sm:p-0">
+          <LikeEmpty size="1rem" /> {likeCount}
+        </span>
+        <span class="text-red-500 cursor-default p-2 sm:p-0">
+          <DislikeEmpty size="1rem" /> {dislikeCount}
+        </span>
+      </span>
     {/if}
   </div>
 </div>
