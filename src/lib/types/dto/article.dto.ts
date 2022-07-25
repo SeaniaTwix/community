@@ -4,6 +4,7 @@
 
 import {Entity, SafeType} from 'dto-mapping';
 import type {ITag} from '$lib/types/tag';
+import type {IUser} from '$lib/types/user';
 
 export type InternalTagType = ITag[];
 export type ClientToServerTagType = string[];
@@ -22,8 +23,8 @@ export class ArticleDto<TagType = InternalTagType> {
   @SafeType({type: String})
   content?: string;
 
-  @SafeType({type: String})
-  author?: string;
+  // @SafeType({type: String})
+  author?: IUser;
 
   @SafeType({type: String})
   source = '';

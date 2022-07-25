@@ -7,17 +7,13 @@
   import Cookies from 'js-cookie';
   import {dayjs} from 'dayjs';
   import {fly} from 'svelte/transition';
-  import {isEmpty} from 'lodash-es';
   import {session, page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {goto} from '$app/navigation';
   import {iosStatusBar, theme} from '$lib/stores/shared/theme';
-  import type {IUser} from '$lib/types/user';
   import {tick} from 'svelte';
 
-  export let uid = '';
   export let boards: string[] = [];
-  export let user: IUser;
   let searchInput: HTMLInputElement;
 
   let showSideMenu = false;

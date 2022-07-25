@@ -56,11 +56,14 @@ class ReadArticleRequest {
             for t in savedTags
               filter t.user == ${reader ?? ''}
                 return t.name)
-          
-          return merge(article, {tags: tagNames, myTags: mt})`);
+          let author = first(
+            for user in users
+              filter user._key == article.author
+                return user)
+          return merge(article, {tags: tagNames, myTags: mt, author: keep(author, "_key", "id", "avatar")})`);
 
     const article: ArticleDto<ClientToServerTagType> = await cursor.next();
-    
+
     if (!article) {
       return null;
     }
@@ -68,7 +71,7 @@ class ReadArticleRequest {
     // it won't be affect to real data
     article.views += 1;
 
-    const uid = article.author;
+    const uid = article?.author?._key;
     if (!uid) {
       return null;
     }

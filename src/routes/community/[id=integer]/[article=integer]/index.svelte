@@ -26,8 +26,8 @@
       // console.log(elem);
       contents.push(cheerio.load(elem).html());
     }
-    const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
-    const {user} = await ar.json();
+    // const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
+    // const {user} = await ar.json();
     const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
     const {comments} = await cr.json() as { comments: IComment[] };
     // console.log('ids:', comments[0]);
@@ -57,7 +57,7 @@
         article,
         contents,
         boardName: name,
-        author: user,
+        // author: user,
         comments,
         users: userInfo,
         mainImage,
@@ -118,7 +118,7 @@
   export let contents: string[] = [];
   export let boardName: string;
   // eslint-disable-next-line no-undef
-  export let author: IUser;
+  // export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
   export let mainImage: string | undefined;
@@ -244,7 +244,7 @@
         await removeTag('_dislike');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if ($session?.user?.uid !== article.author) {
+      if ($session?.user?.uid !== article.author._key) {
         liked = true;
         return await addTag('_like');
       }
@@ -257,7 +257,7 @@
         await removeTag('_like');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if ($session?.user?.uid !== article.author) {
+      if ($session?.user?.uid !== article.author._key) {
         disliked = true;
         return await addTag('_dislike');
       }
@@ -494,8 +494,7 @@
     // @ts-ignore
     let avatar = users[uid]?.avatar;
     if (!avatar) {
-      // @ts-ignore
-      avatar = author?.avatar;
+      avatar = article.author?.avatar;
     }
     if (!avatar) {
       return undefined;
@@ -671,19 +670,19 @@
               <h2 class="text-2xl flex-shrink">{article.title}</h2>
               <div class="inline-block flex space-x-2 pr-4">
                 {#if $session.user}
-                <div class="w-max py-2 md:py-0.5">
-                    {#if $session.user.uid !== article.author}
+                  <div class="w-max py-2 md:py-0.5">
+                    {#if $session.user.uid !== article.author._key}
                     <span class="mt-0.5 cursor-pointer hover:text-red-600">
                       <Report size="1rem"/>
                     </span>
                     {/if}
-                    {#if article.author === $session.user.uid}
+                    {#if article.author._key === $session.user.uid}
                       <a href="/community/{article.board}/{article._key}/edit"
                          class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
                         <Edit size="1rem"/>
                       </a>
                     {/if}
-                    {#if article.author === $session.user.uid || $session.user.rank >= EUserRanks.Manager}
+                    {#if article.author._key === $session.user.uid || $session.user.rank >= EUserRanks.Manager}
                     <span class="mt-0.5 cursor-pointer hover:text-red-400">
                       <Delete size="1rem"/>
                     </span>
@@ -715,9 +714,9 @@
           </div>
           <div class="flex space-x-3 items-center">
             <div class="w-12 min-h-[3rem] inline-block">
-              <CircleAvatar fallback="{toImageSource(article.author)}"/>
+              <CircleAvatar fallback="{toImageSource(article.author._key)}"/>
             </div>
-            <span class="inline-block leading-none hover:text-sky-400">{author?.id}</span>
+            <span class="inline-block leading-none hover:text-sky-400">{article.author?.id}</span>
           </div>
         </div>
         {#if article.source}
@@ -798,7 +797,7 @@
       {#if Object.keys(article.tags).find(tag => tag.startsWith('연재:'))}
         <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
           <div class="w-full p-4 rounded-md shadow-md">
-            <h1 class="text-2xl">지금 보는 {author.id}님의 연재작의 다른 연재분</h1>
+            <h1 class="text-2xl">지금 보는 {article.author.id}님의 연재작의 다른 연재분</h1>
             <ol class="divide-y divide-dotted divide-zinc-400">
               {#each article.serials as serial}
                 <li class="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">

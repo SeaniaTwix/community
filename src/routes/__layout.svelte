@@ -4,30 +4,29 @@
   import type {IUser} from '$lib/types/user';
   import HttpStatus from 'http-status-codes';
 
-  export async function load({session, url, fetch}: LoadEvent): Promise<LoadOutput> {
+  export async function load({url, fetch}: LoadEvent): Promise<LoadOutput> {
     try {
       const response = await fetch(`${url.origin}/community/api/all`);
       const {boards} = await response.json<{ boards: BoardItemDto[] }>();
 
+      /*
       let user: IUser;
 
       try {
-        if (session) {
-          const ur = await fetch(`/user/profile/api/detail?id=${session.uid}`);
+        if (uid) {
+          const ur = await fetch(`/user/profile/api/detail?id=${uid}`);
           const result = await ur.json<{ user: IUser }>();
           user = result.user;
 
         }
       } catch {
         // user not found;
-      }
+      } */
 
       return {
         status: 200,
         props: {
-          uid: session?.uid,
           boards,
-          user,
         },
       };
     } catch (e) {
@@ -66,9 +65,7 @@
   });
 
   $: theme = $iosStatusBar === 'light' ? '#FFFFFF' : '#394150';
-  export let uid;
   export let boards: string[] = [];
-  export let user: IUser;
   // console.log(uid)
 </script>
 <svelte:head>
@@ -76,7 +73,7 @@
 </svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 
-<Nav {boards} {uid} {user}/>
+<Nav {boards} />
 <Notifications/>
 <main>
   <slot/>
