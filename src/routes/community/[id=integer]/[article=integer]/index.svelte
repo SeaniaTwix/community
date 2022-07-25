@@ -932,7 +932,6 @@
               <!-- Fold Toggle -->
             </div>
           </div>
-          {commentFolding}
           <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'}">
             <div class="flex flex-grow">
               {#if !isEmpty(commentImageUploadSrc)}
