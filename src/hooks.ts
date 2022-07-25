@@ -136,7 +136,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
   return {
-    ...event.locals.user,
+    user: event.locals.user,
     commentFolding: event.locals.commentFolding,
   };
 }

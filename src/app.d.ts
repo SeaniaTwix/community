@@ -5,7 +5,7 @@
 // and what to do when importing types
 
 import type {EUserRanks} from './lib/types/user-ranks';
-import type {JwtUser} from '$lib/types/user';
+import type {IUser, JwtUser} from '$lib/types/user';
 
 declare global {
   namespace App {
@@ -16,8 +16,11 @@ declare global {
 
     // interface Platform {}
     interface Session {
-      uid: string;
-      rank: EUserRanks;
+      user: {
+        uid: string;
+        rank: EUserRanks;
+        sub: string;
+      };
       commentFolding: boolean;
     }
 

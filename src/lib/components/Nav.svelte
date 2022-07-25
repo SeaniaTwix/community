@@ -8,7 +8,7 @@
   import {dayjs} from 'dayjs';
   import {fly} from 'svelte/transition';
   import {isEmpty} from 'lodash-es';
-  import {getStores, page} from '$app/stores';
+  import {session, page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {goto} from '$app/navigation';
   import {iosStatusBar, theme} from '$lib/stores/shared/theme';
@@ -50,8 +50,6 @@
     }
 
   }
-
-  const {session} = getStores();
 
   $: showSearch = $page.routeId?.startsWith('community/') === true;
 
@@ -172,7 +170,7 @@
       </span>
       </li>
 
-      {#if $session && $session.rank > EUserRanks.User}
+      {#if $session.user && $session.user.rank > EUserRanks.User}
         <li>
           <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
@@ -182,12 +180,12 @@
         </li>
       {/if}
 
-      {#if !isEmpty(uid)}
+      {#if $session.user}
         <li>
           <a sveltekit:prefetch aria-label="내 프로필" href="/user"
              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
                   dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
-            {user?.id ?? '알 수 없음'}
+            {$session.user.sub.split('/')[1] ?? '알 수 없음'}
           </a>
         </li>
       {:else}

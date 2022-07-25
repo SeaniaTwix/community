@@ -2,13 +2,22 @@
   import Login from '$lib/components/Login.svelte';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
-  import {getStores} from '$app/stores';
+  import {session} from '$app/stores';
   import {decode} from 'js-base64';
 
-  const {session} = getStores();
   let whenFailed: () => {};
 
   type LoginDetail = {id: string, password: string, whenDone: () => void};
+
+  function decodeToken(token: string) {
+    try {
+      // console.log(JSON.parse(decode(token.split('.')[1])))
+      return JSON.parse(decode(token.split('.')[1]))
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
 
   async function login(event: CustomEvent<LoginDetail>) {
     const {id, password} = event.detail;
@@ -16,12 +25,15 @@
       json: {id, password},
     }).then(async (result) => {
       const {token} = await result.json<{token: string}>();
-      console.log(token);
+      // console.log(token);
 
-      session.update((store) => ({
-        ...store,
-        ...JSON.parse(decode(token.split('.')[1])),
-      }));
+      session.update((store) => {
+        // console.log('update');
+        return {
+          ...store,
+          user: decodeToken(token),
+        }
+      });
 
       goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
         sessionStorage.removeItem('ru.hn:back');

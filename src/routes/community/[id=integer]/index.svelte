@@ -122,9 +122,9 @@
       <span class="hidden sm:hidden md:hidden lg:inline">lg</span>
       -->
     </h2>
-    {#if $session}
+    {#if $session.user}
       <div>
-        {#if $session.rank >= EUserRanks.Manager}
+        {#if $session.user.rank >= EUserRanks.Manager}
           <a href="/community/{params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700

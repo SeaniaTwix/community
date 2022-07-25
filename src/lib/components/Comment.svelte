@@ -24,6 +24,7 @@
   import ky from 'ky-universal';
   import Image from './Image.svelte';
   import {striptags} from 'striptags';
+  import {session} from '$app/stores';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -74,7 +75,7 @@
   }
 
   async function like() {
-    if (!session || voting || session.uid === comment.author) {
+    if (!$session.user || voting || $session.user.uid === comment.author) {
       return;
     }
 
@@ -100,7 +101,7 @@
   }
 
   async function dislike() {
-    if (!session || voting || session.uid === comment.author) {
+    if (!$session.user || voting || $session.user.uid === comment.author) {
       return;
     }
 
@@ -150,8 +151,6 @@
   $: deleted = (<any>comment)?.deleted === true;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
-  export let session: App.Session;
-
 
   function toImageSource(): IImage {
     const avatar = user?.avatar;
@@ -231,61 +230,61 @@
 
       {/if}
     </div>
-    {#if session}
+    {#if $session.user}
       {#if !editMode}
         <div class="pt-2 flex justify-between select-none">
-        <span class="space-x-2">
-          <span on:click={like} class:cursor-progress={voting}
-                class="text-sky-500 {session.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
-            {#if liked}
-              <Like size="1rem" />
-            {:else}
-              <LikeEmpty size="1rem" />
-            {/if}
-            {likeCount}
-          </span>
-          <span on:click={dislike} class:cursor-progress={voting}
-                class="text-red-500 {session.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
-            {#if disliked}
-              <Dislike size="1rem" />
-            {:else}
-              <DislikeEmpty size="1rem" />
-            {/if}
-            {dislikeCount}
-          </span>
-        </span>
-        <span>
-          <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
-                on:click={() => onReplyClicked(comment._key)}>
-            <Messages size="1rem"/>
-          </span>
-
-            {#if session && session.uid !== comment.author}
-            <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
-                  on:click={() => onReportClicked(comment._key)}>
-              <Report size="1rem"/>
+          <span class="space-x-2">
+            <span on:click={like} class:cursor-progress={voting}
+                  class="text-sky-500 {$session.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
+              {#if liked}
+                <Like size="1rem" />
+              {:else}
+                <LikeEmpty size="1rem" />
+              {/if}
+              {likeCount}
             </span>
-          {/if}
-            {#if session?.uid === comment.author}
+            <span on:click={dislike} class:cursor-progress={voting}
+                  class="text-red-500 {$session.user.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+              {#if disliked}
+                <Dislike size="1rem" />
+              {:else}
+                <DislikeEmpty size="1rem" />
+              {/if}
+              {dislikeCount}
+            </span>
+          </span>
+          <span>
             <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
-                  on:click={() => onEditClicked(comment._key)}>
-              <Edit size="1rem"/>
+                  on:click={() => onReplyClicked(comment._key)}>
+              <Messages size="1rem"/>
             </span>
-          {/if}
-            {#if comment.author === session?.uid || session?.rank >= EUserRanks.Manager}
-            <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                  on:click={() => onDeleteClicked(comment._key)}>
-              <Delete size="1rem"/>
-            </span>
-          {/if}
 
-            {#if session?.rank >= EUserRanks.Manager}
-            <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                  on:click={() => onLockClicked(comment._key)}>
-              <Admin size="1rem"/>
-            </span>
-          {/if}
-        </span>
+              {#if $session?.user && $session.user.uid !== comment.author}
+              <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
+                    on:click={() => onReportClicked(comment._key)}>
+                <Report size="1rem"/>
+              </span>
+            {/if}
+              {#if $session?.user?.uid === comment.author}
+              <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                    on:click={() => onEditClicked(comment._key)}>
+                <Edit size="1rem"/>
+              </span>
+            {/if}
+              {#if comment.author === $session.user?.uid || $session?.user?.rank >= EUserRanks.Manager}
+              <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                    on:click={() => onDeleteClicked(comment._key)}>
+                <Delete size="1rem"/>
+              </span>
+            {/if}
+
+              {#if $session?.user?.rank >= EUserRanks.Manager}
+              <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                    on:click={() => onLockClicked(comment._key)}>
+                <Admin size="1rem"/>
+              </span>
+            {/if}
+          </span>
         </div>
       {:else}
         <div class="flex space-x-2 w-full">

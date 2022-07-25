@@ -7,7 +7,7 @@
   import {ArticleDto} from '$lib/types/dto/article.dto';
   import HttpStatus from 'http-status-codes';
 
-  export async function load({params, fetch, session}: LoadEvent): Promise<LoadOutput> {
+  export async function load({params, fetch}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
@@ -57,7 +57,6 @@
         article,
         contents,
         boardName: name,
-        session,
         author: user,
         comments,
         users: userInfo,
@@ -102,7 +101,7 @@
   import EditImage from '$lib/components/EditImage.svelte';
   import {upload} from '$lib/file/uploader';
   import {striptags} from 'striptags';
-  import {page} from '$app/stores';
+  import {page, session} from '$app/stores';
   import Cookies from 'js-cookie';
 
   /**
@@ -119,13 +118,12 @@
   export let contents: string[] = [];
   export let boardName: string;
   // eslint-disable-next-line no-undef
-  export let session: App.Session;
   export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
   export let mainImage: string | undefined;
   // noinspection TypeScriptUnresolvedVariable
-  let commentFolding = session?.commentFolding;
+  $: commentFolding = $session.commentFolding;
   // noinspection TypeScriptUnresolvedFunction
   let liked = article?.myTags?.includes('_like');
   // noinspection TypeScriptUnresolvedFunction
@@ -156,7 +154,7 @@
   let editedImage: Blob;
 
   async function addComment() {
-    if (!session && !commenting) {
+    if (!$session && !commenting) {
       return;
     }
 
@@ -246,7 +244,7 @@
         await removeTag('_dislike');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if (session.uid !== article.author) {
+      if ($session?.user?.uid !== article.author) {
         liked = true;
         return await addTag('_like');
       }
@@ -259,7 +257,7 @@
         await removeTag('_like');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if (session.uid !== article.author) {
+      if ($session?.user?.uid !== article.author) {
         disliked = true;
         return await addTag('_dislike');
       }
@@ -363,6 +361,10 @@
     const folding = Cookies.get('comment_folding') === 'true';
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
+    session.update((s) => {
+      s.commentFolding = !folding;
+      return s;
+    });
     if (!commentFolding) {
       await tick();
       commentTextInput.focus();
@@ -668,29 +670,31 @@
             <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
               <h2 class="text-2xl flex-shrink">{article.title}</h2>
               <div class="inline-block flex space-x-2 pr-4">
+                {#if $session.user}
                 <div class="w-max py-2 md:py-0.5">
-                  {#if session && session.uid !== article.author}
-                  <span class="mt-0.5 cursor-pointer hover:text-red-600">
-                    <Report size="1rem"/>
-                  </span>
-                  {/if}
-                  {#if article.author === session?.uid}
-                    <a href="/community/{article.board}/{article._key}/edit"
-                       class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
-                      <Edit size="1rem"/>
-                    </a>
-                  {/if}
-                  {#if article.author === session?.uid || session?.rank >= EUserRanks.Manager}
-                  <span class="mt-0.5 cursor-pointer hover:text-red-400">
-                    <Delete size="1rem"/>
-                  </span>
-                  {/if}
-                  {#if session?.rank >= EUserRanks.Manager}
-                  <span class="mt-0.5 cursor-pointer hover:text-red-400">
-                    <Admin size="1rem"/>
-                  </span>
-                  {/if}
-                </div>
+                    {#if $session.user.uid !== article.author}
+                    <span class="mt-0.5 cursor-pointer hover:text-red-600">
+                      <Report size="1rem"/>
+                    </span>
+                    {/if}
+                    {#if article.author === $session.user.uid}
+                      <a href="/community/{article.board}/{article._key}/edit"
+                         class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
+                        <Edit size="1rem"/>
+                      </a>
+                    {/if}
+                    {#if article.author === $session.user.uid || $session.user.rank >= EUserRanks.Manager}
+                    <span class="mt-0.5 cursor-pointer hover:text-red-400">
+                      <Delete size="1rem"/>
+                    </span>
+                    {/if}
+                    {#if $session.user.rank >= EUserRanks.Manager}
+                    <span class="mt-0.5 cursor-pointer hover:text-red-400">
+                      <Admin size="1rem"/>
+                    </span>
+                    {/if}
+                  </div>
+                {/if}
               </div>
             </div>
             <div class="flex flex-col md:flex-col">
@@ -729,10 +733,10 @@
         </article>
         <div class="pt-3">
           <ul class="space-x-2 flex flex-wrap">
-            {#if session}
+            {#if $session.user}
               <li on:click={() => vote('like')}
-                  class:cursor-not-allowed={session.uid === article.author}
-                  class:cursor-pointer={session.uid !== article.author}
+                  class:cursor-not-allowed={$session.user.uid === article.author}
+                  class:cursor-pointer={$session.user.uid !== article.author}
                   class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
                 <Tag>
                   {#if liked}
@@ -744,8 +748,8 @@
                 </Tag>
               </li>
               <li on:click={() => vote('dislike')}
-                  class:cursor-not-allowed={session.uid === article.author}
-                  class:cursor-pointer={session.uid !== article.author}
+                  class:cursor-not-allowed={$session.user.uid === article.author}
+                  class:cursor-pointer={$session.user.uid !== article.author}
                   class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
                 <Tag>
                   {#if disliked}
@@ -779,7 +783,7 @@
               {/if}
             {/each}
 
-            {#if session}
+            {#if $session.user}
               <li class="inline-block mb-2 cursor-pointer">
                 <Tag>
                   <Plus size="1rem"/>
@@ -819,7 +823,6 @@
                        user="{users[comment.author]}"
                        myVote="{comment.myVote}"
                        on:delete={() => deleteComment(comment)}
-                       {session}
                        {comment}/>
             </li>
           {/each}
@@ -886,7 +889,7 @@
   {/if}
   {#if !mobileInputMode}
     <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
-      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {session ? '9' : '2'}rem;">
+      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {$session.user ? '9' : '2'}rem;">
         <ul class="space-y-2">
           <li>
             <!-- todo: add page parameter -->
@@ -910,7 +913,7 @@
           </li>
         </ul>
       </div>
-      {#if session}
+      {#if $session.user}
         <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
           <div class="px-2 flex flex-row">
             {#if isEmpty(commentImageUploadSrc)}
@@ -929,7 +932,8 @@
               <!-- Fold Toggle -->
             </div>
           </div>
-          <div class="w-full flex flex-row grow shrink-0" class:h-0={commentFolding} class:h-24={!commentFolding}>
+          {commentFolding}
+          <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'}">
             <div class="flex flex-grow">
               {#if !isEmpty(commentImageUploadSrc)}
                 <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
