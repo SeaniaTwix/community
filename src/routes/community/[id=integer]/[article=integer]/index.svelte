@@ -103,6 +103,7 @@
   import {upload} from '$lib/file/uploader';
   import {striptags} from 'striptags';
   import {page} from '$app/stores';
+  import Cookies from 'js-cookie';
 
   /**
    * 게시글 보기
@@ -123,12 +124,14 @@
   export let users: Record<string, IUser>;
   export let comments: IComment[];
   export let mainImage: string | undefined;
+  // noinspection TypeScriptUnresolvedVariable
+  let commentFolding = session?.commentFolding;
   // noinspection TypeScriptUnresolvedFunction
-  let liked = article.myTags?.includes('_like');
+  let liked = article?.myTags?.includes('_like');
   // noinspection TypeScriptUnresolvedFunction
-  let disliked = article.myTags?.includes('_dislike');
-  $: likeCount = article.tags?._like ?? 0;
-  $: dislikeCount = article.tags?._dislike ?? 0;
+  let disliked = article?.myTags?.includes('_dislike');
+  $: likeCount = article?.tags?._like ?? 0;
+  $: dislikeCount = article?.tags?._dislike ?? 0;
 
   /**
    * 대댓글 등의 댓글 id가 들어올 수 있습니다.
@@ -355,6 +358,12 @@
     }
   }
 
+  async function toggleCommentFold() {
+    const folding = Cookies.get('comment_folding') === 'true';
+    commentFolding = !folding;
+    Cookies.set('comment_folding', commentFolding.toString());
+  }
+
   let fileUploader: HTMLInputElement;
   const fileChangeListener = writable<File>(null);
   let subscriptions: Subscription[] = [];
@@ -369,6 +378,8 @@
     // document.addEventListener('scroll', focusOutTextArea, true);
     // console.log(window.visualViewport.height);
 
+    window.addEventListener('unload', clearSubscribes);
+
     try {
       prevVisualViewport = window.visualViewport.height;
 
@@ -377,7 +388,7 @@
       ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
 
       const whenCommentChanged = async ({body}) => {
-        console.log('comment:', body);
+        // console.log('comment:', body);
         if (typeof body.author === 'string') {
           await userNameExistingCheck(body.author);
 
@@ -396,7 +407,7 @@
             if (target) {
               target.deleted = true;
             }
-            console.log(target);
+            // console.log(target);
             comments = [...comments];
           }
 
@@ -406,6 +417,7 @@
         }
       };
 
+      // article votes included
       const whenTagChanged = async ({body}) => {
         // await userNameExistingCheck(body.author);
         const tags = body.tag as string[];
@@ -433,6 +445,7 @@
         }
       };
 
+      // comment votes only
       const whenVoteChanged = async ({body}: {body: IMessageVote}) => {
         if (body.comment) {
           const comment = comments.find(comment => comment._key === body.comment);
@@ -451,7 +464,7 @@
 
       const observable = pusher.observable('comments');
       subscriptions.push(observable.subscribe(whenCommentChanged));
-      console.log(subscriptions);
+      // console.log(subscriptions);
       const tagChange = pusher.observable('tag');
       subscriptions.push(tagChange.subscribe(whenTagChanged));
       const commentVoteChange = pusher.observable('comments:vote');
@@ -489,11 +502,15 @@
     type: string
   }
 
-  onDestroy(() => {
+  function clearSubscribes() {
     for (const sub of subscriptions) {
       sub.unsubscribe();
     }
     pusher?.close();
+  }
+
+  onDestroy(() => {
+    clearSubscribes();
     try {
       document.body.classList.remove('overflow-hidden');
     } catch {
@@ -540,13 +557,13 @@
   <title>{boardName} - {article.title}</title>
 
   <!-- Primary Meta Tags -->
-  <meta name="title" content="{article.title}">
+  <meta name="title" content="루헨 - {article.title}">
   <meta name="description" content="{striptags(article.content)}">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
-  <meta property="og:title" content="{article.title}">
+  <meta property="og:title" content="루헨 - {article.title}">
   <meta property="og:description" content="{striptags(article.content)}">
   {#if mainImage && !article.tags['후방']}
     <meta property="og:image" content="{mainImage}">
@@ -555,7 +572,7 @@
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
-  <meta property="twitter:title" content="{article.title}">
+  <meta property="twitter:title" content="루헨 - {article.title}">
   <meta property="twitter:description" content="{striptags(article.content)}">
   {#if mainImage && !article.tags['후방']}
     <meta property="twitter:image" content="{mainImage}">
@@ -635,7 +652,6 @@
     </nav>
   </div>
 </div>
-
 <div in:fade class="flex flex-col justify-between" class:__fixed-view={!mobileInputMode}>
   {#if !mobileInputMode}
     <div bind:this={generalScrollView}
@@ -890,8 +906,8 @@
         </ul>
       </div>
       {#if session}
-        <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
-          <div class="px-2">
+        <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
+          <div class="px-2 flex flex-row">
             {#if isEmpty(commentImageUploadSrc)}
               <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
                 <Favorite size="1.25rem"/>
@@ -904,8 +920,11 @@
                 <span><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
               </button>
             {/if}
+            <div on:click={toggleCommentFold} class="h-8 flex-grow cursor-pointer">
+              <!-- Fold Toggle -->
+            </div>
           </div>
-          <div class="w-full flex flex-row grow shrink-0">
+          <div class="w-full flex flex-row grow shrink-0" class:h-0={commentFolding} class:h-24={!commentFolding}>
             <div class="flex flex-grow">
               {#if !isEmpty(commentImageUploadSrc)}
                 <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
@@ -915,9 +934,9 @@
                 </div>
               {/if}
               <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
-              <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
-                        on:keydown={detectSend} bind:value={commentContent}
-                        placeholder="댓글을 입력하세요..."></textarea>
+                <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
+                          on:keydown={detectSend} bind:value={commentContent}
+                          placeholder="댓글을 입력하세요..."></textarea>
                 <div id="__textarea-mobile"
                      on:click={enableMobileInput} on:dblclick|preventDefault
                      class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none">

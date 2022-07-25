@@ -30,6 +30,7 @@ export class Board {
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
+        filter article.board == ${this.id}
         let likes = length(
           for tag in tags
             filter tag.name == "_like" && tag.target == article._key && tag.pub

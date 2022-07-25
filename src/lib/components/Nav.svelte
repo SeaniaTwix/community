@@ -167,8 +167,8 @@
       <li>
       <span on:click={switchTheme} aria-label="라이트 - 다크 모드 스위치"
             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
-                   dark:hover:bg-gray-500">
-        <Switch size="1.25rem" />
+                   dark:hover:bg-gray-500 leading-zero">
+        <Switch size="20px" />
       </span>
       </li>
 
@@ -185,7 +185,7 @@
       {#if !isEmpty(uid)}
         <li>
           <a sveltekit:prefetch aria-label="내 프로필" href="/user"
-             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
+             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
                   dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
             {user?.id ?? '알 수 없음'}
           </a>

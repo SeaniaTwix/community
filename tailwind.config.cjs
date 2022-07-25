@@ -3,7 +3,11 @@ module.exports = {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      lineHeight: {
+        'zero': '0',
+      }
+    },
   },
   plugins: [],
 }
