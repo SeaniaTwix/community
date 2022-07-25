@@ -1,5 +1,8 @@
+<script lang="ts">
+</script>
+
 <svelte:head>
-  <title>홈</title>
+  <title>루헨 - 홈</title>
 </svelte:head>
 
 <div class="w-full text-center mt-4">

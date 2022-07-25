@@ -24,7 +24,7 @@
 </script>
 
 <svelte:head>
-  <title>내 프로필</title>
+  <title>루헨 - 내 프로필</title>
 </svelte:head>
 
 <div class="w-10/12 md:w-3/5 lg:w-1/3 mx-auto space-y-4">
