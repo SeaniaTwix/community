@@ -140,6 +140,7 @@
   let relative: string | undefined;
 
   let commentImageUrl = '';
+  let commentTextInput: HTMLTextAreaElement;
   let commentContent = '';
 
   let commenting = false;
@@ -362,6 +363,10 @@
     const folding = Cookies.get('comment_folding') === 'true';
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
+    if (!commentFolding) {
+      await tick();
+      commentTextInput.focus();
+    }
   }
 
   let fileUploader: HTMLInputElement;
@@ -935,7 +940,7 @@
               {/if}
               <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
                 <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
-                          on:keydown={detectSend} bind:value={commentContent}
+                          on:keydown={detectSend} bind:this={commentTextInput} bind:value={commentContent}
                           placeholder="댓글을 입력하세요..."></textarea>
                 <div id="__textarea-mobile"
                      on:click={enableMobileInput} on:dblclick|preventDefault
