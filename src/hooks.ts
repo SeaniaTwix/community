@@ -18,7 +18,7 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
   let result: GetUserReturn | undefined;
   let newRefresh: njwt.Jwt | undefined;
 
-  const cookie = event.request.headers.get('cookie');
+  const cookie = event.request.headers.get('cookie') ?? '';
   const {comment_folding} = (new CookieParser(cookie!)).get();
   event.locals.commentFolding = (comment_folding ?? 'false') === 'true';
 
