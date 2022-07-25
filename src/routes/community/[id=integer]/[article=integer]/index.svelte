@@ -497,7 +497,8 @@
       avatar = article.author?.avatar;
     }
     if (!avatar) {
-      return undefined;
+      // fallback
+      avatar = 'https://s3.ru.hn/IMG_2775.GIF';
     }
     const type = avatar.split('.')[1];
     return {src: avatar, type,};
