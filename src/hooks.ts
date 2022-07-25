@@ -7,7 +7,7 @@ import {key} from '$lib/auth/user/shared';
 import {atob, btoa} from 'js-base64';
 import {User} from './lib/auth/user/server';
 import {dayjs} from 'dayjs';
-import type { JwtUser } from '$lib/types/user';
+import type {JwtUser} from '$lib/types/user';
 
 global.atob = atob;
 global.btoa = btoa;
@@ -17,6 +17,10 @@ global.btoa = btoa;
 export async function handle({event, resolve}: HandleParameter): Promise<Response> {
   let result: GetUserReturn | undefined;
   let newRefresh: njwt.Jwt | undefined;
+
+  const cookie = event.request.headers.get('cookie');
+  const {comment_folding} = (new CookieParser(cookie!)).get();
+  event.locals.commentFolding = (comment_folding ?? 'false') === 'true';
 
   try {
     const cookie = event.request.headers.get('cookie');
@@ -131,7 +135,10 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
-  return event.locals.user;
+  return {
+    ...event.locals.user,
+    commentFolding: event.locals.commentFolding,
+  };
 }
 
 interface HandleParameter {

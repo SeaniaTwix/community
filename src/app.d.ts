@@ -11,12 +11,14 @@ declare global {
   namespace App {
     interface Locals {
       user: JwtUser;
+      commentFolding: boolean;
     }
 
     // interface Platform {}
     interface Session {
       uid: string;
       rank: EUserRanks;
+      commentFolding: boolean;
     }
 
     // interface Stuff {}
