@@ -5,7 +5,7 @@ import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {isArray, isEmpty, isString} from 'lodash-es';
 import {isStringInteger} from '$lib/util';
-import {EUserRanks} from '../../../../../../lib/types/user-ranks';
+import {EUserRanks} from '$lib/types/user-ranks';
 
 const invalidUserError: RequestHandlerOutput = {
   status: HttpStatus.UNAUTHORIZED,

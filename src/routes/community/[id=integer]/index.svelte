@@ -72,6 +72,7 @@
   import {onDestroy, onMount} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import type {Unsubscribable} from 'rxjs';
+  import type {IUser} from '$lib/types/user';
 
   export let list: ArticleItemDto[];
   export let bests: ArticleItemDto[];
@@ -86,36 +87,74 @@
     const page = to.searchParams.get('page');
   });
 
-  let buffer = [];
+  let buffer: INewPublishedArticle[] = [];
   const unsubs: Unsubscribable[] = [];
   let bestScrollPage = 1;
 
   let pusher: Pusher;
 
   onMount(() => {
-    /*
+    //*
     pusher = new Pusher(`@${params.id}`);
 
     window.addEventListener('unload', clearSubscribes);
 
     try {
-      const articleUpdated = pusher.observable('article');
+      const articleUpdated = pusher.observable<INewPublishedArticle>('article');
       unsubs.push(articleUpdated.subscribe(newArticlePublished));
     } catch {
       //
-    } */
+    } // */
   });
 
-  function newArticlePublished(body) {
-    if (body.key) {
-
+  function newArticlePublished({body}: {body: INewPublishedArticle}) {
+    if (body.key && typeof body.key === 'string') {
+      buffer = [body, ...buffer];
     }
+  }
+
+  function updateList() {
+    const autoTagRegex = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+    const newArticles: ArticleItemDto[] = buffer.map(item => {
+      const regx = autoTagRegex.exec(item.title.trim());
+      let autoTag: string | undefined;
+      // console.log(item.title, regx);
+      if (regx) {
+        autoTag = regx[1];
+      }
+
+      return {
+        autoTag,
+        _key: item.key,
+        title: item.title,
+        author: item.author,
+        tags: item.tags,
+        views: 1,
+        createdAt: new Date,
+      }
+    });
+
+    // todo: make list limit to max
+    list = [...newArticles, ...list]; // .slice(0, 30);
+    buffer = [];
+  }
+
+  interface INewPublishedArticle {
+    title: string;
+    key: string;
+    author: {
+      id: string;
+      _key: string;
+      avatar?: string;
+      rank: EUserRanks;
+    };
+    tags: Record<string, number>;
   }
 
   function checkPage(event: Event) {
     if (event.type === 'scroll') {
       const target = event.target as HTMLDivElement;
-      console.log(target.scrollWidth, target.offsetWidth, target.clientWidth, target.scrollLeft);
+      // console.log(target.scrollWidth, target.offsetWidth, target.clientWidth, target.scrollLeft);
       bestScrollPage = target.scrollLeft <= 100 ? 1 : 2;
     }
   }
@@ -246,9 +285,14 @@
   {/if}
 
   <div class="flex justify-center text-sm">
-    <span class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 cursor-pointer transition-colors">
-      <Refresh /> 새 게시물이 있습니다.
-    </span>
+
+    {#if isEmpty(buffer)}
+      <hr class="mt-4 h-3 border-zinc-200 dark:border-gray-400 border-dashed w-full block" />
+    {:else}
+      <button on:click={updateList} class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
+        <Refresh /> 새 게시물이 있습니다.
+      </button>
+    {/if}
   </div>
 
   <ArticleList board={id} {list} />

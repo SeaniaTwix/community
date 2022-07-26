@@ -18,7 +18,7 @@ export class Pusher {
           got.post(`${url}/notify`, {
             json: {
               context: `${context}/${about}`,
-              body: JSON.stringify({...body, author: userId}),
+              body: JSON.stringify({author: userId, ...body,}),
               key: process.env.PUSHER_KEY,
             },
           }).then().catch();

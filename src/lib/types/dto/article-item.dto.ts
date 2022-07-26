@@ -22,6 +22,6 @@ export class ArticleItemDto {
   view = 0;
 
   @SafeType({type: Date})
-  createAt = new Date(); //
+  createdAt = new Date(); //
 
 }

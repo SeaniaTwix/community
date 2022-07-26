@@ -17,6 +17,7 @@ import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import type {IUser} from '$lib/types/user';
+import {Pusher} from '$lib/pusher/server';
 
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -58,8 +59,9 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
     };
   }
 
+  let result;
   try {
-    await write.saveToDB(locals.user.uid);
+    result = await write.saveToDB(locals.user.uid);
   } catch (e: any) {
     return {
       status: HttpStatus.FORBIDDEN,
@@ -73,6 +75,24 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
     await write.saveToSearchEngine();
   } catch (e) {
     console.log(e);
+  }
+
+  try {
+    const user = await User.findByUniqueId(locals.user.uid);
+    const userData = await user!.safeData;
+    Pusher.notify('article', `@${params.id}`, locals.user.uid, {
+      key: write.id,
+      title: result!.title,
+      image: result!.images,
+      author: {
+        id: user!.id,
+        avatar: userData.avatar,
+        rank: userData.rank,
+      },
+      tags: result!.tags,
+    }).then();
+  } catch {
+    // it's ok
   }
 
   return {
@@ -160,6 +180,11 @@ class WriteRequest {
     return _.isEmpty(this.content);
   }
 
+  /**
+   *
+   * @param userId 글을 쓴 사람의 유니크 id입니다.
+   * @return notify 전용 값입니다.
+   */
   async saveToDB(userId: string) {
     if (!await this.isBoardExists) {
       this.error = 'board not exsists';
@@ -207,6 +232,8 @@ class WriteRequest {
     this.article = new Article(_key);
 
     await this.article.addTags(userId, this.tags);
+
+    return {...data, tags: await this.article.getAllTagsCounted()};
   }
 
   async saveToSearchEngine() {
