@@ -204,7 +204,7 @@
     </ol>
   </nav>
 
-  <div class="flex justify-between">
+  <div class="flex justify-between" class:pb-2={!isEmpty(bests)}>
     <h2 class="text-2xl">
       {name}
       <!--
@@ -242,14 +242,14 @@
         <a class="underline decoration-sky-400" href="/community/{params.id}/best">전체 보기</a>
       </div>
       <div id="__best-list" on:scroll={checkPage}
-           class="overflow-x-scroll snap-mandatory snap-x relative inline-block flex flex-row">
+           class="overflow-x-scroll snap-mandatory snap-x relative inline-block flex flex-row gap-4">
 
         <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink">
           <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
             {#each bests.slice(0, 5) as best}
               <li>
-                <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                  <div class="inline-block px-4 py-2 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                  <div class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                     <p class="truncate text-sm">{best.title}</p>
                   </div>
                 </a>
@@ -263,8 +263,8 @@
             <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
               {#each bests.slice(5) as best}
                 <li>
-                  <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                    <div class="inline-block px-4 py-2 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                  <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                    <div class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                       <p class="truncate text-sm">{best.title}</p>
                     </div>
                   </a>
@@ -275,7 +275,7 @@
         {/if}
 
       </div>
-      <div class="visible sm:invisible flex justify-center text-zinc-300 dark:text-zinc-400 space-x-1">
+      <div class="block sm:hidden flex justify-center text-zinc-300 dark:text-zinc-400 space-x-1">
         <span class="transition-colors" class:text-zinc-500={bestScrollPage <= 1} class:dark:text-zinc-100={bestScrollPage <= 1}>
           <Circle size="0.5rem" />
         </span>
