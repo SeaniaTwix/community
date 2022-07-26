@@ -138,7 +138,7 @@ export class User {
     const hashed = await argon2.hash(password);
 
     await db.query(aql`
-      insert ${{id: this.id, password: hashed, rank: EUserRanks.User}} into users`);
+      insert ${{id: this.id, password: hashed, rank: EUserRanks.User, createdAt: new Date}} into users`);
   }
 
   /**

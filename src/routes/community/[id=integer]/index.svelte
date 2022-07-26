@@ -204,7 +204,7 @@
     </ol>
   </nav>
 
-  <div class="flex justify-between" class:pb-2={!isEmpty(bests)}>
+  <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)} class:flex-row-reverse={$session.buttonAlign === 'left'}>
     <h2 class="text-2xl">
       {name}
       <!--
@@ -215,7 +215,7 @@
       -->
     </h2>
     {#if $session.user}
-      <div class="space-x-2">
+      <div class="space-x-2" class:flex-row-reverse={$session.buttonAlign === 'left'}>
         {#if $session.user.rank >= EUserRanks.Manager}
           <a href="/community/{params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
@@ -298,6 +298,15 @@
   </div>
 
   <ArticleList board={id} {list} />
+
+  <div class="flex flex-row justify-end" class:flex-row-reverse={$session.buttonAlign === 'left'}>
+    <a href="/community/{params.id}/write"
+       class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
+         hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
+         dark:ring-0 dark:hover:bg-sky-400">
+      새 글 쓰기
+    </a>
+  </div>
 
   <div class="pb-8 space-y-2">
     <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}" />

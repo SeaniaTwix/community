@@ -65,16 +65,21 @@
 </script>
 
 <form on:submit|preventDefault class="space-y-4 text-lg">
-  <input type="text" placeholder="계정 이름 겸 닉네임" on:keydown={(e) => checkEnter(e, 0)}
-         bind:value={id} autocorrect="off" autocapitalize="none" autocomplete="off"
-         class="w-full shadow-md rounded-md px-4 py-2 outline-none focus:outline-0">
-  <input type="password" placeholder="비밀번호" on:keydown={(e) => checkEnter(e, 1)}
-         bind:this={password} bind:value={pw} autocomplete="off"
-         class="w-full shadow-md rounded-md px-4 py-2 {pwrError ? 'outline' : 'focus:outline-0'} outline-red-400">
-  <input type="password" placeholder="비밀번호 재입력"
-         on:keyup={(e) => checkError(e, 2)} on:keydown={(e) => checkEnter(e, 2)}
-         bind:this={passwordRepeat} bind:value={pwr} autocomplete="off"
-         class="w-full shadow-md rounded-md px-4 py-2 {pwrError ? 'outline' : 'focus:outline-0'} outline-red-400">
+  <div class="__auto-fill shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
+    <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
+           bind:value={id} autocorrect="off" autocapitalize="none"
+           class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
+  </div>
+  <div class="shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500 {pwrError ? 'outline' : 'focus:outline-0'} outline-red-400">
+    <input type="password" placeholder="비밀번호" on:keydown={(e) => checkEnter(e, 1)}
+           bind:this={password} bind:value={pw}
+           class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
+  </div>
+  <div class="shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500 {pwrError ? 'outline' : 'focus:outline-0'} outline-red-400">
+    <input type="password" placeholder="비밀번호 재입력" on:keydown={(e) => checkEnter(e, 2)} on:keyup={(e) => checkError(e, 2)}
+           bind:this={passwordRepeat} bind:value={pwr}
+           class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
+  </div>
   <div>
     <button disabled="{pwrError || _.isEmpty(id) || _.isEmpty(pw) || _.isEmpty(pwr)}"
             class="bg-red-400 dark:bg-red-600 text-white items-center rounded-md px-4 py-2 disabled:bg-red-100 dark:disabled:bg-red-300" on:click={register}>

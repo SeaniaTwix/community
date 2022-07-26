@@ -6,8 +6,8 @@
   function register(event: CustomEvent<{ id: string, pw: string }>) {
     const user = new User(event.detail.id);
     user.register(event.detail.pw, '')
-      .then((token) => {
-        localStorage.setItem('ru.hn:token', token);
+      .then(() => {
+        // localStorage.setItem('ru.hn:token', token);
         goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
           sessionStorage.removeItem('ru.hn:back');
         });

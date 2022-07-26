@@ -33,6 +33,11 @@
      href="/user/profile/edit">
     내 프로필 수정
   </a>
+  <a sveltekit:prefetch
+     class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md"
+     href="/user/settings">
+    개인화 설정
+  </a>
   <button on:click={logout}
           class="w-full bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 shadow-md">
     로그아웃
