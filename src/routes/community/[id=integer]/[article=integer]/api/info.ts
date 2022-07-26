@@ -2,7 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 
-export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, }: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
   const info = new ArticleInfoRequest(article);
 

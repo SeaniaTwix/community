@@ -17,7 +17,7 @@ export async function GET({params, url, locals: {user}}: RequestEvent): Promise<
   try {
     const {id} = params;
     const board = new Board(id);
-    const bests = await board.getBests(page, user?.uid ?? null, 5, 1);
+    const bests = await board.getBests(page, user?.uid ?? null, 10, 1);
     return {
       status: HttpStatus.OK,
       body: {

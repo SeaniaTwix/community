@@ -114,7 +114,7 @@
     [tagName: string]: number;
   }
 
-  export let article: IArticle<TagType> = undefined;
+  export let article: IArticle<TagType, IUser> = undefined;
   export let contents: string[] = [];
   export let boardName: string;
   // eslint-disable-next-line no-undef
@@ -689,9 +689,9 @@
                     </span>
                     {/if}
                     {#if $session.user.rank >= EUserRanks.Manager}
-                    <span class="mt-0.5 cursor-pointer hover:text-red-400">
+                    <a href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
                       <Admin size="1rem"/>
-                    </span>
+                    </a>
                     {/if}
                   </div>
                 {/if}
@@ -915,7 +915,7 @@
       </div>
       {#if $session.user}
         <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
-          <div class="px-2 flex flex-row">
+          <div class="px-2 flex flex-row hover:bg-gray-200 dark:hover:bg-gray-300/80 transition-colors">
             {#if isEmpty(commentImageUploadSrc)}
               <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
                 <Favorite size="1.25rem"/>
@@ -932,7 +932,7 @@
               <!-- Fold Toggle -->
             </div>
           </div>
-          <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'}">
+          <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'} transition-all">
             <div class="flex flex-grow">
               {#if !isEmpty(commentImageUploadSrc)}
                 <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">

@@ -1,6 +1,5 @@
 <script lang="ts" context="module">
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import type {IUser} from '$lib/types/user';
   import HttpStatus from 'http-status-codes';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
@@ -63,11 +62,16 @@
 <script lang="ts">
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
+  import Refresh from 'svelte-material-icons/Refresh.svelte';
+  import Circle from 'svelte-material-icons/Circle.svelte';
 
   import {afterNavigate} from '$app/navigation';
   import {session} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
+  import {onDestroy, onMount} from 'svelte';
+  import {Pusher} from '$lib/pusher/client';
+  import type {Unsubscribable} from 'rxjs';
 
   export let list: ArticleItemDto[];
   export let bests: ArticleItemDto[];
@@ -82,17 +86,64 @@
     const page = to.searchParams.get('page');
   });
 
+  let buffer = [];
+  const unsubs: Unsubscribable[] = [];
+  let bestScrollPage = 1;
+
+  let pusher: Pusher;
+
+  onMount(() => {
+    /*
+    pusher = new Pusher(`@${params.id}`);
+
+    window.addEventListener('unload', clearSubscribes);
+
+    try {
+      const articleUpdated = pusher.observable('article');
+      unsubs.push(articleUpdated.subscribe(newArticlePublished));
+    } catch {
+      //
+    } */
+  });
+
+  function newArticlePublished(body) {
+    if (body.key) {
+
+    }
+  }
+
+  function checkPage(event: Event) {
+    if (event.type === 'scroll') {
+      const target = event.target as HTMLDivElement;
+      console.log(target.scrollWidth, target.offsetWidth, target.clientWidth, target.scrollLeft);
+      bestScrollPage = target.scrollLeft <= 100 ? 1 : 2;
+    }
+  }
+
+  function clearSubscribes() {
+    for (const u of unsubs) {
+      u.unsubscribe();
+    }
+    if (pusher) {
+      pusher.close();
+    }
+  }
+
+  onDestroy(() => {
+    clearSubscribes();
+  });
+
   // console.log(id, params);
 </script>
 
 <svelte:head>
-  <title>게시판 - {name}</title>
+  <title>루헨 - {name}</title>
 </svelte:head>
 
 <div class="justify-between flex-col flex-row"></div>
 
 <!-- todo: move to __layout -->
-<div class="w-11/12 md:w-4/5 lg:w-3/4 mx-auto space-y-4 transition-transform __mobile-bottom-fix">
+<div class="w-11/12 md:w-4/5 lg:w-3/4 mx-auto space-y-2 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
@@ -123,7 +174,7 @@
       -->
     </h2>
     {#if $session.user}
-      <div>
+      <div class="space-x-2">
         {#if $session.user.rank >= EUserRanks.Manager}
           <a href="/community/{params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
@@ -149,19 +200,56 @@
         <span class="text-zinc-600 dark:text-zinc-200">베스트 목록</span>
         <a class="underline decoration-sky-400" href="/community/{params.id}/best">전체 보기</a>
       </div>
-      <ol class="divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
-        {#each bests as best}
-          <li>
-            <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-              <div class="w-full px-4 py-2 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors">
-                <p>{best.title}</p>
-              </div>
-            </a>
-          </li>
-        {/each}
-      </ol>
+      <div id="__best-list" on:scroll={checkPage}
+           class="overflow-x-scroll snap-mandatory snap-x relative inline-block flex flex-row">
+
+        <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink">
+          <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
+            {#each bests.slice(0, 5) as best}
+              <li>
+                <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                  <div class="inline-block px-4 py-2 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                    <p class="truncate text-sm">{best.title}</p>
+                  </div>
+                </a>
+              </li>
+            {/each}
+          </ol>
+        </div>
+
+        {#if bests.length > 5}
+          <div class="snap-center w-full flex-gro flex-shrink-0 sm:flex-shrink">
+            <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
+              {#each bests.slice(5) as best}
+                <li>
+                  <a class="block mt-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                    <div class="inline-block px-4 py-2 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                      <p class="truncate text-sm">{best.title}</p>
+                    </div>
+                  </a>
+                </li>
+              {/each}
+            </ol>
+          </div>
+        {/if}
+
+      </div>
+      <div class="visible sm:invisible flex justify-center text-zinc-400 space-x-1">
+        <span class:text-zinc-100={bestScrollPage <= 1}>
+          <Circle size="0.5rem" />
+        </span>
+        <span class:text-zinc-100={bestScrollPage > 1}>
+          <Circle size="0.5rem" />
+        </span>
+      </div>
     </div>
   {/if}
+
+  <div class="flex justify-center text-sm">
+    <span class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 cursor-pointer transition-colors">
+      <Refresh /> 새 게시물이 있습니다.
+    </span>
+  </div>
 
   <ArticleList board={id} {list} />
 
@@ -178,5 +266,14 @@
     // noinspection CssInvalidFunction
     margin-bottom: constant(safe-area-inset-bottom);
     margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  #__best-list {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 </style>
