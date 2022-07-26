@@ -129,6 +129,7 @@
         title: item.title,
         author: item.author,
         tags: item.tags,
+        image: item.image,
         views: 1,
         createdAt: new Date,
       }
@@ -148,6 +149,7 @@
       avatar?: string;
       rank: EUserRanks;
     };
+    image?: string;
     tags: Record<string, number>;
   }
 
