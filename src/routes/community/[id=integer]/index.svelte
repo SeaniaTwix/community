@@ -275,11 +275,11 @@
         {/if}
 
       </div>
-      <div class="visible sm:invisible flex justify-center text-zinc-400 space-x-1">
-        <span class:text-zinc-100={bestScrollPage <= 1}>
+      <div class="visible sm:invisible flex justify-center text-zinc-300 dark:text-zinc-400 space-x-1">
+        <span class="transition-colors" class:text-zinc-500={bestScrollPage <= 1} class:dark:text-zinc-100={bestScrollPage <= 1}>
           <Circle size="0.5rem" />
         </span>
-        <span class:text-zinc-100={bestScrollPage > 1}>
+        <span class="transition-colors" class:text-zinc-500={bestScrollPage > 1} class:dark:text-zinc-100={bestScrollPage > 1}>
           <Circle size="0.5rem" />
         </span>
       </div>
