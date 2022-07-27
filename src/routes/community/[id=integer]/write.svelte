@@ -10,7 +10,7 @@
       };
     }
 
-    if (!session) {
+    if (!session.user) {
       try {
         sessionStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
       } catch {

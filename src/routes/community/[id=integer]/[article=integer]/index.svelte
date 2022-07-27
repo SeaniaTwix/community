@@ -83,6 +83,8 @@
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import RemoveTag from 'svelte-material-icons/Close.svelte';
+  const Close = RemoveTag;
+  import Goto from 'svelte-material-icons/ArrowRightBold.svelte';
   import {ko} from '$lib/time-ko';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
@@ -303,7 +305,9 @@
     event.preventDefault();
   }
 
+  // ios only...
   async function enableMobileInput() {
+    commentFolding = false;
     mobileInputMode = true;
     await tick();
     mobileTextInput.focus();
@@ -321,6 +325,7 @@
 
       mobileInputMode = false;
       mobileInputLastCursor = mobileTextInput.selectionEnd;
+      selectedComment = undefined;
       setTimeout(() => {
         generalScrollView.scrollTop = lastScrollTop;
       }, 5);
@@ -494,6 +499,7 @@
     // @ts-ignore
     let avatar = users[uid]?.avatar;
     if (!avatar) {
+      // @ts-ignore
       avatar = article.author?.avatar;
     }
     if (!avatar) {
@@ -558,6 +564,21 @@
       commentImageUploadFileInfo = uploadPending;
     }
   }
+
+  let selectedComment: IComment | undefined;
+  function commentReplyClicked(event: CustomEvent<{ id: string }>) {
+    selectedComment = comments.find((comment) => comment._key === event.detail.id);
+
+    const textGeneral = document.querySelector('#__textarea-general');
+    const textMobile = document.querySelector('#__textarea-mobile');
+    const isMobileTextEnabled = textMobile.clientHeight > textGeneral.clientHeight;
+    if (isMobileTextEnabled) {
+      enableMobileInput();
+    } else {
+      commentTextInput.focus();
+    }
+  }
+
 </script>
 
 <svelte:head>
@@ -817,12 +838,14 @@
         <ul class="space-y-3">
 
           {#each comments as comment}
-            <li in:fade class="relative">
+            <li id="c{comment._key}" in:fade class="relative">
               <Comment board="{article.board}"
                        article="{article._key}"
                        user="{users[comment.author]}"
                        myVote="{comment.myVote}"
                        on:delete={() => deleteComment(comment)}
+                       on:reply={commentReplyClicked}
+                       selected="{selectedComment?._key === comment._key}"
                        {comment}/>
             </li>
           {/each}
@@ -845,7 +868,15 @@
     <div class="mt-6 p-2">
       <h2 class="text-xl mb-2">댓글 작성 중...</h2>
 
-      <div class="overflow-hidden rounded-t-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
+      {#if selectedComment}
+        <Comment comment="{selectedComment}"
+                 article="{article._key}"
+                 myVote="{selectedComment.myVote}"
+                 hideToolbar="{true}"
+                 user="{users[selectedComment.author]}"  />
+      {/if}
+
+      <div class:mt-4={selectedComment} class="overflow-hidden rounded-t-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
         <div class="px-2">
           {#if isEmpty(commentImageUploadSrc)}
             <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
@@ -881,7 +912,12 @@
         </div>
       </div>
 
-      <button on:click={addComment} class="py-2 bg-sky-200 dark:bg-sky-800 w-full">작성</button>
+      <button on:click={addComment} class="py-2 bg-sky-200 dark:bg-sky-800 w-full">
+        {#if selectedComment}
+          답글
+        {/if}
+        작성
+      </button>
     </div>
 
 
@@ -915,22 +951,39 @@
       </div>
       {#if $session.user}
         <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
-          <div class="px-2 flex flex-row hover:bg-gray-200 dark:hover:bg-gray-300/80 transition-colors">
+          <div class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-colors leading-zero">
             {#if isEmpty(commentImageUploadSrc)}
-              <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+              <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
                 <Favorite size="1.25rem"/>
               </button>
-              <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
+              <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
                 <Upload size="1.25rem"/>
               </button>
             {:else}
-              <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer ">
-                <span><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
+              <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer">
+                <span class="text-lg"><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
               </button>
             {/if}
-            <div on:click={toggleCommentFold} class="h-8 flex-grow cursor-pointer">
-              <!-- Fold Toggle -->
-            </div>
+            {#if selectedComment}
+              <div class="h-8 flex-grow flex flex-row justify-end text-lg text-zinc-600 dark:text-gray-700 cursor-default select-none w-0">
+                <p class="inline-block flex flex-row min-w-0 pl-4">
+                  <span class="min-w-fit">{users[selectedComment.author].id}님의 "</span>
+                  <span class="truncate">{selectedComment.content}</span>
+                  <span class="min-w-fit">"에 답장 중...
+                    <a id="__goto-comment" class="hover:text-sky-400" href="{$page.url.pathname}#c{selectedComment._key}">
+                      <Goto />
+                    </a>
+                    <button on:click={() => (selectedComment = undefined)}>
+                      <Close />
+                    </button>
+                  </span>
+                </p>
+              </div>
+            {:else}
+              <button on:click={toggleCommentFold} class="h-8 flex-grow cursor-pointer items-center">
+                <!-- Fold Toggle -->
+              </button>
+            {/if}
           </div>
           <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'} transition-all">
             <div class="flex flex-grow">
@@ -941,7 +994,7 @@
                        src="{commentImageUploadSrc}" alt="upload preview" />
                 </div>
               {/if}
-              <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
+              <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full relative">
                 <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
                           on:keydown={detectSend} bind:this={commentTextInput} bind:value={commentContent}
                           placeholder="댓글을 입력하세요..."></textarea>
@@ -956,7 +1009,12 @@
                 </div>
               </div>
             </div>
-            <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">작성</button>
+            <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">
+              {#if selectedComment}
+                답글
+              {/if}
+              작성
+            </button>
           </div>
         </div>
       {/if}
@@ -996,6 +1054,12 @@
     }
   }
 
+  #__goto-comment {
+    @supports (-webkit-touch-callout: none) {
+      display: none;
+    }
+  }
+
   .__circle {
     border-radius: 50%;
   }
@@ -1014,6 +1078,13 @@
         vertical-align: text-top;
         margin-top: 2px;
       }
+    }
+
+    :target::before {
+      content: '';
+      display: block;
+      height:      10rem;
+      margin-top: -10rem;
     }
   }
 </style>

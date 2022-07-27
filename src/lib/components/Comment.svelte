@@ -13,7 +13,7 @@
   import Lock from 'svelte-material-icons/Lock.svelte';
   import Pub from 'svelte-material-icons/EyeCheck.svelte';
   import Private from 'svelte-material-icons/EyeOff.svelte';
-  import Messages from 'svelte-material-icons/Message.svelte';
+  import Reply from 'svelte-material-icons/CommentPlus.svelte';
   import Admin from 'svelte-material-icons/Settings.svelte';
 
   import {EUserRanks} from '$lib/types/user-ranks';
@@ -25,6 +25,7 @@
   import Image from './Image.svelte';
   import {striptags} from 'striptags';
   import {session} from '$app/stores';
+  import {last} from 'lodash-es';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -142,6 +143,7 @@
   export let user: IUser;
   export let comment: IComment;
   export let myVote: {like: boolean, dislike: boolean};
+  export let hideToolbar = false;
   let liked = myVote?.like === true;
   let disliked = myVote?.dislike === true;
   $: likeCount = comment.votes?.like ?? 0;
@@ -153,12 +155,12 @@
   // eslint-disable-next-line no-undef
 
   function toImageSource(): IImage {
-    const avatar = user?.avatar;
+    let avatar = user?.avatar;
     if (!avatar) {
-      return undefined;
+      avatar = 'https://s3.ru.hn/IMG_2775.GIF';
     }
-    const type = avatar.split('.')[1];
-    return {src: avatar, type,};
+    const type = last(avatar.split('.')).toLowerCase();
+    return {src: avatar, type: `image/${type}`};
   }
 
   interface IImage {
@@ -173,18 +175,16 @@
   </div>
 {/if}
 <div class:ring-2={selected} class:invisible={deleted}
-     class="p-2 rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600">
+     class="p-2　rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600 bg-zinc-50/40">
   <div class="space-y-4">
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
-        <div on:click={() => {showInfo = !showInfo; selected = !selected}}
-             class="flex space-x-2 hover:cursor-pointer group items-center">
-          <div class="w-10 min-h-[2.5rem]" on:click={() => console.log(comment)}>
+        <div class="flex space-x-2 hover:cursor-pointer group items-center">
+          <div class="w-10 min-h-[2.5rem]">
             <CircleAvatar fallback="{toImageSource()}"/>
           </div>
           <span class="group-hover:text-sky-400">
             {user?.id ?? '[이름을 불러지 못 했습니다]'}
-            {#if selected}(이 메시지에 답장 중){/if}
           </span>
         </div>
       </div>
@@ -253,38 +253,40 @@
               {dislikeCount}
             </span>
           </span>
-          <span>
-            <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
-                  on:click={() => onReplyClicked(comment._key)}>
-              <Messages size="1rem"/>
-            </span>
+          {#if !hideToolbar}
+            <span>
+              <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                    on:click={() => onReplyClicked(comment._key)}>
+                <Reply size="1rem"/>
+              </span>
 
               {#if $session?.user && $session.user.uid !== comment.author}
-              <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
-                    on:click={() => onReportClicked(comment._key)}>
-                <Report size="1rem"/>
-              </span>
-            {/if}
+                <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
+                      on:click={() => onReportClicked(comment._key)}>
+                  <Report size="1rem"/>
+                </span>
+              {/if}
               {#if $session?.user?.uid === comment.author}
-              <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
-                    on:click={() => onEditClicked(comment._key)}>
-                <Edit size="1rem"/>
-              </span>
-            {/if}
+                <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                      on:click={() => onEditClicked(comment._key)}>
+                  <Edit size="1rem"/>
+                </span>
+              {/if}
               {#if comment.author === $session.user?.uid || $session?.user?.rank >= EUserRanks.Manager}
-              <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                    on:click={() => onDeleteClicked(comment._key)}>
-                <Delete size="1rem"/>
-              </span>
-            {/if}
+                <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                      on:click={() => onDeleteClicked(comment._key)}>
+                  <Delete size="1rem"/>
+                </span>
+              {/if}
 
               {#if $session?.user?.rank >= EUserRanks.Manager}
-              <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
-                    on:click={() => onLockClicked(comment._key)}>
-                <Admin size="1rem"/>
-              </span>
-            {/if}
-          </span>
+                <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                      on:click={() => onLockClicked(comment._key)}>
+                  <Admin size="1rem"/>
+                </span>
+              {/if}
+            </span>
+          {/if}
         </div>
       {:else}
         <div class="flex space-x-2 w-full">

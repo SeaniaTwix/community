@@ -299,14 +299,16 @@
 
   <ArticleList board={id} {list} />
 
-  <div class="flex flex-row justify-end" class:flex-row-reverse={$session.buttonAlign === 'left'}>
-    <a href="/community/{params.id}/write"
-       class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
+  {#if $session.user}
+    <div class="flex flex-row justify-end" class:flex-row-reverse={$session.buttonAlign === 'left'}>
+      <a href="/community/{params.id}/write"
+         class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
-      새 글 쓰기
-    </a>
-  </div>
+        새 글 쓰기
+      </a>
+    </div>
+  {/if}
 
   <div class="pb-8 space-y-2">
     <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}" />
