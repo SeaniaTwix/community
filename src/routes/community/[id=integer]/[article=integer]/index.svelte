@@ -970,10 +970,10 @@
                   <span class="min-w-fit">{users[selectedComment.author].id}님의 "</span>
                   <span class="truncate">{selectedComment.content}</span>
                   <span class="min-w-fit">"에 답장 중...
-                    <a id="__goto-comment" class="hover:text-sky-400" href="{$page.url.pathname}#c{selectedComment._key}">
+                    <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">
                       <Goto />
                     </a>
-                    <button on:click={() => (selectedComment = undefined)}>
+                    <button class="hover:text-red-500 dark:hover::text-red-600" on:click={() => (selectedComment = undefined)}>
                       <Close />
                     </button>
                   </span>

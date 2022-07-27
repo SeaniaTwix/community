@@ -175,7 +175,7 @@
   </div>
 {/if}
 <div class:ring-2={selected} class:invisible={deleted}
-     class="p-2　rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600 bg-zinc-50/40">
+     class="p-2　rounded-md shadow-md min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 ring-sky-400 dark:ring-sky-500 dark:ring-offset-gray-600 bg-zinc-50/40 dark:bg-gray-700/30">
   <div class="space-y-4">
     <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row">
