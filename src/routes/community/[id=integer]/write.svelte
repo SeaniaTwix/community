@@ -290,12 +290,16 @@
 </div>
 
 <div class="__mobile-bottom-fix mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
-  <input bind:this={titleInput} on:keyup={detectAutoTag}
-         class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
-         type="text" placeholder="제목" bind:value={title}/>
-  <input
-    class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md dark:bg-gray-200 dark:text-gray-800"
-    type="text" placeholder="출처" bind:value={source}/>
+  <div class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
+    <input bind:this={titleInput} on:keyup={detectAutoTag}
+           class="bg-transparent w-full outline-none"
+           type="text" placeholder="제목" bind:value={title}/>
+  </div>
+  <div class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
+    <input
+      class="bg-transparent w-full outline-none"
+      type="text" placeholder="출처" bind:value={source}/>
+  </div>
   <div class="min-h-[25rem]">
     {#if !editorLoaded}
       에디터 초기화 중...
@@ -356,7 +360,7 @@
   </div>
   <div class="flex space-x-2">
     <button on:click={upload} class:cursor-not-allowed={uploading}
-            class="items-center flex-grow bg-sky-400 dark:bg-sky-800 rounded-md text-white py-2">
+            class="items-center flex-grow bg-sky-400 dark:bg-sky-800 rounded-md text-white py-2 shadow-md">
       {#if uploading}
         전송 중...
       {:else}
@@ -364,7 +368,7 @@
       {/if}
     </button>
     <a href="/community/{board}"
-       class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md">
+       class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md shadow-md">
       취소
     </a>
   </div>

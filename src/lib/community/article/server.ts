@@ -1,6 +1,5 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
-import type {ArticleDto} from '$lib/types/dto/article.dto';
 import type {CommentDto} from '$lib/types/dto/comment.dto';
 import type {ITag} from '$lib/types/tag';
 import type {IArticle} from '$lib/types/article';
@@ -117,7 +116,7 @@ export class Article {
           upsert { _key: sameTag[0]._key } 
             insert newTag 
             update { _key: sameTag[0]._key, pub: true }
-          in tags`)
+          in tags`);
 
     /*
     return await db.query(aql`
@@ -190,8 +189,14 @@ export class Article {
         createdAt: ${new Date()},
         "like": 0,
         dislike: 0
-      }) into comments return NEW`)
-    return await cursor.next();
+      }) into comments return NEW`);
+    const newData = await cursor.next() as IComment;
+    if (comment.relative) {
+      await db.query(aql`
+        let target = first(for c in comments filter c._key == ${comment.relative} return c)
+        insert {_from: ${newData._id} , _to: target._id} into reply`)
+    }
+    return newData;
   }
 
   /**

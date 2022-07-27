@@ -39,6 +39,6 @@ export class CommentDto<VoteType = InternalVoteType> {
   // public only
   myVote?: {like: boolean, dislike: boolean}; // = {like: false, dislike: false};
 
-  // 대댓글 등등 undefined 가능.
+  // 대댓글 등등 undefined 가능. _key 값임.
   relative?: string;
 }

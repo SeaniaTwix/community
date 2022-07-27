@@ -17,6 +17,7 @@ import rehypeStringify from 'rehype-stringify';
 import {Notifications} from '$lib/notifications/server';
 import {User} from '$lib/auth/user/server';
 import type {IComment} from '$lib/types/comment';
+import {Comment} from '$lib/community/comment/server';
 
 export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
@@ -168,7 +169,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       article: commentData.article,
       content,
       pub: true,
-      relative: commentData.relative,
+      // relative: commentData.relative,
     };
 
     if (commentData.image) {
@@ -184,6 +185,20 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       };
     }
 
+    if (commentData.relative) {
+      const replyTarget = new Comment(commentData.relative);
+      if (!await replyTarget.exists()) {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          body: {
+            reason: 'relative target not found',
+          }
+        }
+      }
+
+      cd.relative = commentData.relative;
+    }
+
     savedComment = await comment.add(locals.user.uid, cd);
 
   } catch (e: any) {
@@ -196,8 +211,8 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
   }
 
   try {
-    if (cd) {
-      await Pusher.notify('comments', `${article}@${id}`, locals.user.uid, cd);
+    if (savedComment) {
+      await Pusher.notify('comments', `${article}@${id}`, locals.user.uid, {...cd, _key: savedComment._key});
     }
   } catch (e) {
     console.error(e);

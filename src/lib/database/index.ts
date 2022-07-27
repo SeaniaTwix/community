@@ -1,4 +1,4 @@
-import {Database} from 'arangojs';
+import {CollectionType, Database} from 'arangojs';
 import assert from 'node:assert/strict';
 import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
@@ -15,6 +15,9 @@ export default class DefaultDatabase {
   private static readonly requireCollections = [
     'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications',
   ];
+  private static readonly requireEdgeCollections = [
+    'reply'
+  ]
   private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
     'articles': [
       {
@@ -79,6 +82,15 @@ export default class DefaultDatabase {
       if (!await collection.exists()) {
         console.log(`컬렉션 '${collectionName}'을 찾을 수 없었습니다. 생성합니다.`);
         await collection.create();
+        created++;
+      }
+    }
+
+    for (const collectionName of DefaultDatabase.requireEdgeCollections) {
+      const edge = this.db.collection(collectionName);
+      if (!await edge.exists()) {
+        console.log(`에지 '${collectionName}'을 찾을 수 없었습니다. 생성합니다.`);
+        await edge.create({type: CollectionType.EDGE_COLLECTION});
         created++;
       }
     }

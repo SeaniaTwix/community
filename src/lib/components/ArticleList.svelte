@@ -91,7 +91,7 @@
                 </div>
               </div>
               <div class="flex flex-grow flex-shrink-0 justify-between">
-                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4">
+                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300">
                   <span class="inline-block md:hidden lg:hidden text-zinc-400">
                     {article._key}
                   </span>

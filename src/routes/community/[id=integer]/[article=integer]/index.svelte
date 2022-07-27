@@ -100,11 +100,13 @@
   import {goto} from '$app/navigation';
   import Content from '$lib/components/Content.svelte';
   import {writable} from 'svelte/store';
+  import type {Unsubscriber} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
   import {upload} from '$lib/file/uploader';
   import {striptags} from 'striptags';
   import {page, session} from '$app/stores';
   import Cookies from 'js-cookie';
+  import {currentReply} from '$lib/community/comment/client';
 
   /**
    * 게시글 보기
@@ -123,6 +125,7 @@
   // export let author: IUser;
   export let users: Record<string, IUser>;
   export let comments: IComment[];
+  $: noRelativeComments = comments.filter(comment => !comment.relative);
   export let mainImage: string | undefined;
   // noinspection TypeScriptUnresolvedVariable
   $: commentFolding = $session.commentFolding;
@@ -132,12 +135,6 @@
   let disliked = article?.myTags?.includes('_dislike');
   $: likeCount = article?.tags?._like ?? 0;
   $: dislikeCount = article?.tags?._dislike ?? 0;
-
-  /**
-   * 대댓글 등의 댓글 id가 들어올 수 있습니다.
-   * 여기에 id가 들어오면 대댓글 모드가 됩니다.
-   */
-  let relative: string | undefined;
 
   let commentImageUrl = '';
   let commentTextInput: HTMLTextAreaElement;
@@ -166,13 +163,11 @@
       article: article._key,
       content: commentContent,
     };
-    if (relative) {
-      commentData.relative = relative;
+
+    if (selectedComment) {
+      commentData.relative = selectedComment._key;
     }
-    /*
-    if (commentImageUrl) {
-      commentData.image = commentImageUrl;
-    }*/
+
     if (!isEmpty(commentImageUploadSrc)) {
       const data = editedImage ? editedImage : commentImageUploadFileInfo;
       const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
@@ -195,11 +190,15 @@
       commenting = false;
       mobileTextInput?.blur();
       cancelImageUpload();
+      if (selectedComment) {
+        disableReplyMode().then();
+      }
     }
 
   }
 
-  function detectSend(event: KeyboardEvent) {
+  let escPressed = false;
+  async function detectSendOrEsc(event: KeyboardEvent) {
     /*
     if (event.isComposing || event.keyCode === 229) {
       return;
@@ -208,6 +207,33 @@
       // console.log(event.ctrlKey, event.metaKey);
       event.preventDefault();
       addComment().then();
+      return;
+    }
+
+    escPressed = event.key === 'Escape';
+  }
+
+  async function detectEscReleased(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      escPressed = false;
+    }
+  }
+
+  async function disableReplyMode() {
+    selectedComment = undefined;
+    // if you want to blur, just try hitting again escape key.
+    commentTextInput.focus();
+    setTimeout(() => {
+      generalScrollView.scrollTop = lastScrollTop;
+    }, 5);
+  }
+
+  async function onBlurGeneralCommentInput(event: FocusEvent) {
+    if (selectedComment && escPressed) {
+      event.preventDefault();
+      console.log(selectedComment, escPressed)
+      await disableReplyMode();
+      return;
     }
   }
 
@@ -307,6 +333,7 @@
 
   // ios only...
   async function enableMobileInput() {
+    saveLastScroll();
     commentFolding = false;
     mobileInputMode = true;
     await tick();
@@ -332,10 +359,9 @@
     }, 10);
   }
 
-  function saveLastScroll(event: Event) {
-    const target = event.target as HTMLDivElement;
-    if (target && !mobileInputMode) {
-      lastScrollTop = target.scrollTop;
+  function saveLastScroll() {
+    if (generalScrollView && (!mobileInputMode || !selectedComment)) {
+      lastScrollTop = generalScrollView.scrollTop;
       // console.log('lastScrollTop:', lastScrollTop);
     }
   }
@@ -379,8 +405,8 @@
   let fileUploader: HTMLInputElement;
   const fileChangeListener = writable<File>(null);
   let subscriptions: Subscription[] = [];
+  let unsubscribers: Unsubscriber[] = [];
   let pusher: Pusher;
-  let unsub: () => void;
   onMount(async () => {
     // console.log(article);
 
@@ -403,6 +429,15 @@
         // console.log('comment:', body);
         if (typeof body.author === 'string') {
           await userNameExistingCheck(body.author);
+
+          if (body.relative) {
+            const newComment: IComment = {
+              ...body,
+              createdAt: new Date
+            };
+            comments = [...comments, newComment];
+            return;
+          }
 
           if (body.content || body.image) {
             const newComment: IComment = {
@@ -474,7 +509,7 @@
         }
       }
 
-      const observable = pusher.observable('comments');
+      const observable = pusher.observable<Partial<IComment>>('comments');
       subscriptions.push(observable.subscribe(whenCommentChanged));
       // console.log(subscriptions);
       const tagChange = pusher.observable('tag');
@@ -484,12 +519,23 @@
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
 
-      unsub = fileChangeListener.subscribe(async (file) => {
+      const fileChangeUnsub = fileChangeListener.subscribe(async (file) => {
         if (!file) return;
         // const url = await imageUpload(file);
         commentImageUploadFileInfo = file;
         commentImageUploadSrc = URL.createObjectURL(file);
       });
+
+      const replyUnsub = currentReply.subscribe((currentReplyId) => {
+        // console.log(currentReplyId)
+        if (!currentReplyId) {
+          return;
+        }
+        commentReplyClicked(currentReplyId);
+      });
+
+      unsubscribers.push(fileChangeUnsub, replyUnsub);
+
     } catch (e) {
       console.error(e);
     }
@@ -516,6 +562,9 @@
   }
 
   function clearSubscribes() {
+    for (const unsub of unsubscribers) {
+      unsub();
+    }
     for (const sub of subscriptions) {
       sub.unsubscribe();
     }
@@ -566,9 +615,9 @@
   }
 
   let selectedComment: IComment | undefined;
-  function commentReplyClicked(event: CustomEvent<{ id: string }>) {
-    selectedComment = comments.find((comment) => comment._key === event.detail.id);
-
+  function commentReplyClicked(id) {
+    saveLastScroll();
+    selectedComment = comments.find((comment) => comment._key === id);
     const textGeneral = document.querySelector('#__textarea-general');
     const textMobile = document.querySelector('#__textarea-mobile');
     const isMobileTextEnabled = textMobile.clientHeight > textGeneral.clientHeight;
@@ -683,8 +732,7 @@
 <div in:fade class="flex flex-col justify-between" class:__fixed-view={!mobileInputMode}>
   {#if !mobileInputMode}
     <div bind:this={generalScrollView}
-         class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow"
-         on:scroll={saveLastScroll}>
+         class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow">
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
         <div class="space-y-2 mb-4">
           <div class="flex justify-between">
@@ -822,10 +870,12 @@
             <h1 class="text-2xl">지금 보는 {article.author.id}님의 연재작의 다른 연재분</h1>
             <ol class="divide-y divide-dotted divide-zinc-400">
               {#each article.serials as serial}
-                <li class="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">
+                <li class="hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">
                   <a class="underline decoration-sky-400 decoration-dashed" class:text-bold={article._key === serial._key} href="/community/{article.board}/{serial._key}">
-                    {serial.title}
-                    {#if article._key === serial._key}(지금 보는 중){/if}
+                    <p class="px-4 py-2">
+                      {serial.title}
+                      {#if article._key === serial._key}(지금 보는 중){/if}
+                    </p>
                   </a>
                 </li>
               {/each}
@@ -833,32 +883,48 @@
           </div>
         </div>
       {/if}
-
+      {JSON.stringify(selectedComment)}
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
-        <ul class="space-y-3">
+        {#if selectedComment}
+          <Comment comment="{selectedComment}"
+                   article="{article._key}"
+                   myVote="{selectedComment.myVote}"
+                   isReplyMode="{true}"
+                   {users} />
 
-          {#each comments as comment}
-            <li id="c{comment._key}" in:fade class="relative">
-              <Comment board="{article.board}"
-                       article="{article._key}"
-                       user="{users[comment.author]}"
-                       myVote="{comment.myVote}"
-                       on:delete={() => deleteComment(comment)}
-                       on:reply={commentReplyClicked}
-                       selected="{selectedComment?._key === comment._key}"
-                       {comment}/>
-            </li>
-          {/each}
+          <p class="hidden sm:block mt-8 text-zinc-500 text-lg text-center select-none cursor-default">
+            댓글 입력창에서 <i class="pr-0.5">Esc</i>를 눌러 답글 작성 모드 취소
+          </p>
+          <div class="block mt-8 text-zinc-500 text-lg select-none cursor-default flex justify-center">
+            <button on:click={disableReplyMode} class="text-red-600">닫기</button>
+          </div>
 
-        </ul>
+        {:else}
+          <ul class="space-y-3">
 
-        <p class="mt-8 text-zinc-500 text-lg text-center">
-          {#if isEmpty(comments)}
-            댓글이 없어요...
-          {:else}
-            끝
-          {/if}
-        </p>
+            {#each noRelativeComments as comment}
+              <li id="c{comment._key}" in:fade class="relative">
+                <Comment board="{article.board}"
+                         article="{article._key}"
+                         myVote="{comment.myVote}"
+                         on:delete={() => deleteComment(comment)}
+                         bind:allComments="{comments}"
+                         bind:users="{users}"
+                         selected="{selectedComment?._key === comment._key}"
+                         {comment} />
+              </li>
+            {/each}
+
+          </ul>
+
+          <p class="mt-4 text-zinc-500 text-lg text-center select-none cursor-default">
+            {#if isEmpty(comments)}
+              댓글이 없어요...
+            {:else}
+              끝
+            {/if}
+          </p>
+        {/if}
       </div>
     </div>
   {:else}
@@ -873,7 +939,9 @@
                  article="{article._key}"
                  myVote="{selectedComment.myVote}"
                  hideToolbar="{true}"
-                 user="{users[selectedComment.author]}"  />
+                 allComments="{comments}"
+                 board="{article.board}"
+                 {users} />
       {/if}
 
       <div class:mt-4={selectedComment} class="overflow-hidden rounded-t-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
@@ -902,7 +970,7 @@
           {/if}
           <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
               <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none"
-                        on:keydown={detectSend}
+                        on:keydown={detectSendOrEsc}
                         bind:value={commentContent}
                         bind:this={mobileTextInput}
                         on:blur={disableMobileInput}
@@ -996,7 +1064,11 @@
               {/if}
               <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full relative">
                 <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
-                          on:keydown={detectSend} bind:this={commentTextInput} bind:value={commentContent}
+                          on:keydown={detectSendOrEsc}
+                          on:keyup={detectEscReleased}
+                          bind:this={commentTextInput}
+                          bind:value={commentContent}
+                          on:blur={onBlurGeneralCommentInput}
                           placeholder="댓글을 입력하세요..."></textarea>
                 <div id="__textarea-mobile"
                      on:click={enableMobileInput} on:dblclick|preventDefault
