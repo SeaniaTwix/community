@@ -569,6 +569,7 @@
       sub.unsubscribe();
     }
     pusher?.close();
+    currentReply.set(undefined);
   }
 
   onDestroy(() => {
