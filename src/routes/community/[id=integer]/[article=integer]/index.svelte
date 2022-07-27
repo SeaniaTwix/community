@@ -883,7 +883,7 @@
           </div>
         </div>
       {/if}
-      {JSON.stringify(selectedComment)}
+      
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
         {#if selectedComment}
           <Comment comment="{selectedComment}"
