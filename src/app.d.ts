@@ -12,6 +12,7 @@ declare global {
     interface Locals {
       user: JwtUser;
       commentFolding: boolean;
+      buttonAlign: 'left' | 'right';
     }
 
     // interface Platform {}
@@ -22,6 +23,7 @@ declare global {
         sub: string;
       };
       commentFolding: boolean;
+      buttonAlign: 'left' | 'right';
     }
 
     // interface Stuff {}
