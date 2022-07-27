@@ -221,6 +221,7 @@
 
   async function disableReplyMode() {
     selectedComment = undefined;
+    currentReply.set(undefined);
     // if you want to blur, just try hitting again escape key.
     commentTextInput.focus();
     setTimeout(() => {
@@ -733,7 +734,7 @@
 <div in:fade class="flex flex-col justify-between" class:__fixed-view={!mobileInputMode}>
   {#if !mobileInputMode}
     <div bind:this={generalScrollView}
-         class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow">
+         class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow overflow-x-hidden">
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
         <div class="space-y-2 mb-4">
           <div class="flex justify-between">
@@ -884,7 +885,7 @@
           </div>
         </div>
       {/if}
-      
+
       <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
         {#if selectedComment}
           <Comment comment="{selectedComment}"
