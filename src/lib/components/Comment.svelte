@@ -192,6 +192,10 @@
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
 
+  function getRelative(id: string): IComment | null {
+    return allComments.find(c => c._key === id) ?? null;
+  }
+
   function fetchAllReplies() {
     replies = [...allReplies];
   }
@@ -267,16 +271,22 @@
         {/if}
         {#if !editMode}
           {#if comment.relative}
-            <a href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
-              <div>
-                <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                  <span class="w-max after:content-[':']">{users[allComments.find(c => c._key === comment.relative).author].id}</span>
-                  <p class="flex-grow w-0 truncate">
-                    {allComments.find(c => c._key === comment.relative).content}
-                  </p>
+            {#if getRelative(comment.relative)}
+              <a href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
+                <div>
+                  <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                    <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author].id}</span>
+                    <p class="flex-grow w-0 truncate">
+                      {getRelative(comment.relative).content}
+                    </p>
+                  </div>
                 </div>
+              </a>
+            {:else}
+              <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                해당 댓글이 삭제되었습니다.
               </div>
-            </a>
+            {/if}
           {/if}
           {#each comment.content.split('\n') as line}
             <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
