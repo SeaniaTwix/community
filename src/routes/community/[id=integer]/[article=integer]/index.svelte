@@ -618,6 +618,9 @@
 
   let selectedComment: IComment | undefined;
   function commentReplyClicked(id) {
+    if (!$session.user) {
+      return;
+    }
     saveLastScroll();
     selectedComment = comments.find((comment) => comment._key === id);
     const textGeneral = document.querySelector('#__textarea-general');
