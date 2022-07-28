@@ -353,7 +353,10 @@
 
       mobileInputMode = false;
       mobileInputLastCursor = mobileTextInput.selectionEnd;
-      selectedComment = undefined;
+      if (selectedComment) {
+        currentReply.set(undefined);
+        selectedComment = undefined;
+      }
       setTimeout(() => {
         generalScrollView.scrollTop = lastScrollTop;
       }, 5);
