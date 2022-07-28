@@ -944,6 +944,7 @@
                  article="{article._key}"
                  myVote="{selectedComment.myVote}"
                  hideToolbar="{true}"
+                 isReplyMode="{true}"
                  allComments="{comments}"
                  board="{article.board}"
                  {users} />

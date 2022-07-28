@@ -13,7 +13,7 @@
   import Lock from 'svelte-material-icons/Lock.svelte';
   import Pub from 'svelte-material-icons/EyeCheck.svelte';
   import Private from 'svelte-material-icons/EyeOff.svelte';
-  import Reply from 'svelte-material-icons/Reply.svelte';
+  import Reply from 'svelte-material-icons/CommentMultiple.svelte';
   import Admin from 'svelte-material-icons/Settings.svelte';
 
   import {EUserRanks} from '$lib/types/user-ranks';
@@ -65,6 +65,7 @@
   }
 
   function onReplyClicked(event: PointerEvent & {path: (HTMLElement | Window)[]}) {
+    console.log(event);
     if (!isOk(event.path) ) {
       return;
     }
@@ -174,9 +175,11 @@
   export let comment: IComment;
   export let allComments: IComment[] = [];
   // $: replies = allComments.filter(c => c.relative === comment._key);
-  $: replies = allComments.filter(c => {
+  let replies = allComments.filter(c => {
     return c.relative === comment._key
   });
+  $: allReplies = allComments.filter(c => c.relative === comment._key);
+  $: notFetchedReplyCounts = allReplies.length - replies.length;
   export let myVote: {like: boolean, dislike: boolean};
   export let isReplyMode = false;
   let liked = myVote?.like === true;
@@ -188,6 +191,10 @@
   $: deleted = (<any>comment)?.deleted === true;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
+
+  function fetchAllReplies() {
+    replies = [...allReplies];
+  }
 
   function toImageSource(): IImage {
     let avatar = users[comment.author]?.avatar;
@@ -271,7 +278,7 @@
       {#if $session.user}
         {#if !editMode}
           <div class="pt-2 flex justify-between select-none">
-          <span class="space-x-2">
+          <span class="space-x-2 flex-shrink-0">
             <span on:click|preventDefault={like} prevent-reply class:cursor-progress={voting}
                   class="text-sky-500 {$session.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
               {#if liked}
@@ -292,28 +299,37 @@
             </span>
           </span>
             {#if !isReplyMode}
-            <span>
+            <span class="inline-block flex-grow w-0 flex flex-row justify-end overflow-x-scroll space-x-2">
+              {#if notFetchedReplyCounts > 0}
+                <span class="cursor-pointer hover:text-sky-600 text-sm flex-grow-0 w-fit flex-shrink-0"
+                      on:click={fetchAllReplies} prevent-reply>
+                  새 댓글이 있습니다
+                  <span class="relative text-base">
+                    <Reply /> <span class="absolute text-xs bg-red-500 text-white rounded-md px-1 left-1/2 -top-0.5">{notFetchedReplyCounts}</span>
+                  </span>
+                </span>
+              {/if}
               {#if $session?.user && $session.user.uid !== comment.author}
-                <span class="cursor-pointer hover:text-red-600 p-2 sm:p-0"
+                <span class="cursor-pointer hover:text-red-600"
                       on:click={() => onReportClicked(comment._key)} prevent-reply>
                   <Report size="1rem"/>
                 </span>
               {/if}
               {#if $session?.user?.uid === comment.author}
-                <span class="cursor-pointer hover:text-sky-400 p-2 sm:p-0"
+                <span class="cursor-pointer hover:text-sky-400"
                       on:click={() => onEditClicked(comment._key)} prevent-reply>
                   <Edit size="1rem"/>
                 </span>
               {/if}
               {#if comment.author === $session.user?.uid || $session?.user?.rank >= EUserRanks.Manager}
-                <span class="cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onDeleteClicked(comment._key)} prevent-reply>
                   <Delete size="1rem"/>
                 </span>
               {/if}
 
               {#if $session?.user?.rank >= EUserRanks.Manager}
-                <span class="mt-0.5 cursor-pointer hover:text-red-400 p-2 sm:p-0"
+                <span class="mt-0.5 cursor-pointer hover:text-red-400"
                       on:click={() => onLockClicked(comment._key)} prevent-reply>
                   <Admin size="1rem"/>
                 </span>
@@ -344,9 +360,9 @@
     </div>
   </div>
 </div>
-
+{isEmpty(replies)}, {isReplyMode},
 {#if !isEmpty(replies) && !isReplyMode}
-  <div id="r{comment._key}" style="margin-left: min({level / 2 + 1}rem, 66%);">
+  <div id="r{comment._key}" class="ml-4 sm:ml-6">
     <ol class="space-y-2 mt-2">
       {#each replies as reply}
         <li id="c{reply._key}">
