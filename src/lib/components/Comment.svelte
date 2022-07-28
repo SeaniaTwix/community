@@ -24,7 +24,7 @@
   import ky from 'ky-universal';
   import Image from './Image.svelte';
   import {striptags} from 'striptags';
-  import {session} from '$app/stores';
+  import {session, page} from '$app/stores';
   import {isEmpty, last} from 'lodash-es';
   import {currentReply} from '$lib/community/comment/client';
 
@@ -267,14 +267,16 @@
         {/if}
         {#if !editMode}
           {#if comment.relative}
-            <div>
-              <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                <span class="w-max after:content-[':']">{users[allComments.find(c => c._key === comment.relative).author].id}</span>
-                <p class="flex-grow w-0 truncate">
-                  {allComments.find(c => c._key === comment.relative).content}
-                </p>
+            <a href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
+              <div>
+                <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                  <span class="w-max after:content-[':']">{users[allComments.find(c => c._key === comment.relative).author].id}</span>
+                  <p class="flex-grow w-0 truncate">
+                    {allComments.find(c => c._key === comment.relative).content}
+                  </p>
+                </div>
               </div>
-            </div>
+            </a>
           {/if}
           {#each comment.content.split('\n') as line}
             <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
@@ -339,7 +341,7 @@
               {/if}
 
               {#if $session?.user?.rank >= EUserRanks.Manager}
-                <span class="mt-0.5 cursor-pointer hover:text-red-400"
+                <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onLockClicked(comment._key)} prevent-reply>
                   <Admin size="1rem"/>
                 </span>
