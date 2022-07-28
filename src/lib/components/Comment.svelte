@@ -372,7 +372,7 @@
 </div>
 
 {#if !isEmpty(replies) && !isReplyMode}
-  <div id="r{comment._key}" class="{level === 1 ? 'ml-8 sm:ml-12' : ''}">
+  <div id="r{comment._key}" class="{level === 0 ? 'ml-8 sm:ml-12' : ''}">
     <ol class="space-y-2 mt-2">
       {#each replies as reply}
         <li id="c{reply._key}">
