@@ -39,7 +39,7 @@
       status: 200,
       props: {
         list: list.map((item) => {
-          const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
+          const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
           const regx = autoTag.exec(item.title.trim());
           // console.log(item.title, regx);
           if (regx) {
