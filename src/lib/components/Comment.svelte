@@ -266,6 +266,16 @@
           </div>
         {/if}
         {#if !editMode}
+          {#if comment.relative}
+            <div>
+              <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                <span class="w-max after:content-[':']">{users[allComments.find(c => c._key === comment.relative).author].id}</span>
+                <p class="flex-grow w-0 truncate">
+                  {allComments.find(c => c._key === comment.relative).content}
+                </p>
+              </div>
+            </div>
+          {/if}
           {#each comment.content.split('\n') as line}
             <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
           {/each}
@@ -362,7 +372,7 @@
 </div>
 
 {#if !isEmpty(replies) && !isReplyMode}
-  <div id="r{comment._key}" class="ml-4 sm:ml-6">
+  <div id="r{comment._key}" class="{level === 1 ? 'ml-8 sm:ml-12' : ''}">
     <ol class="space-y-2 mt-2">
       {#each replies as reply}
         <li id="c{reply._key}">
