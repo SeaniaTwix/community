@@ -63,6 +63,8 @@
 </script>
 <svelte:head>
   <meta name="theme-color" content="{$iosStatusBarColor}"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 

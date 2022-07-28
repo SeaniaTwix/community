@@ -1,4 +1,4 @@
-if (!('path' in Event.prototype)) {
+if (!Object.hasOwn(Event.prototype, 'path')) {
   Object.defineProperty(Event.prototype, 'path', {
     get: function () {
       const path = [];

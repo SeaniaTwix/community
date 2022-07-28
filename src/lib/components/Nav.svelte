@@ -10,7 +10,7 @@
   import {session, page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {goto} from '$app/navigation';
-  import {iosStatusBar, iosStatusBarColor, theme} from '$lib/stores/shared/theme';
+  import {darkColor, iosStatusBar, iosStatusBarColor, theme} from '$lib/stores/shared/theme';
   import {tick} from 'svelte';
 
   export let boards: string[] = [];
@@ -82,7 +82,12 @@
       theme.set({mode: 'dark'});
       iosStatusBar.set({mode: 'dark'});
     }
-    iosStatusBarColor.set(isDarkMode ? '#FFFFFF' : '#394150');
+    iosStatusBarColor.set(isDarkMode ? '#FFFFFF' : darkColor);
+  }
+
+  function checkBoardLink(event: MouseEvent, link: string) {
+    // console.log(link, $page.url.pathname);
+    // todo: prevent going scroll top on same page if you clicked nav menu
   }
 
 </script>
@@ -117,8 +122,8 @@
   </div>
 {/if}
 
-<nav class="block shadow-md text-xl flex justify-between leading-none h-[3.375rem]
-            dark:bg-gray-700 dark:text-zinc-200 select-none z-40">
+<nav class="sticky top-0 bg-white/75 backdrop-blur-sm block shadow-md text-xl flex justify-between leading-none h-[3.375rem]
+            dark:bg-gray-700/75 dark:text-zinc-200 select-none z-40">
   {#if !searchMode}
     <ul class="p-2 inline-block md:hidden lg:hidden">
       <li>
@@ -142,6 +147,7 @@
         <li>
           <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md
                   transition-colors dark:hover:bg-gray-500"
+             on:click={(e) => checkBoardLink(e, `/community/${board.id}`)}
              href="/community/{board.id}" sveltekit:prefetch>
             {board.name}
           </a>

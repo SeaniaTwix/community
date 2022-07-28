@@ -1028,7 +1028,7 @@
       </div>
       {#if $session.user}
         <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
-          <div class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-colors leading-zero">
+          <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-colors leading-zero">
             {#if isEmpty(commentImageUploadSrc)}
               <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
                 <Favorite size="1.25rem"/>
@@ -1111,6 +1111,16 @@
     @supports (-webkit-touch-callout: none) {
       height: calc(var(--vh, 1vh) * 100 - 62px );
       // padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+
+  .__ios-bottom-fix {
+    padding-bottom: 0;
+    //noinspection CssOverwrittenProperties
+    @supports (-webkit-touch-callout: none) {
+      // noinspection CssInvalidFunction
+      padding-bottom: constant(safe-area-inset-bottom);
+      padding-bottom: env(safe-area-inset-bottom);
     }
   }
 
