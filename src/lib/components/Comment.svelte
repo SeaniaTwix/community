@@ -345,7 +345,7 @@
   </div>
 </div>
 
-{#if !isEmpty(replies) || !selected}
+{#if !isEmpty(replies) && !isReplyMode}
   <div id="r{comment._key}" style="margin-left: min({level / 2 + 1}rem, 66%);">
     <ol class="space-y-2 mt-2">
       {#each replies as reply}
