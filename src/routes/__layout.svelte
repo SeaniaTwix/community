@@ -46,11 +46,8 @@
   import {classList} from 'svelte-body';
   import {onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
-  import {iosStatusBar} from '$lib/stores/shared/theme.js';
+  import {iosStatusBarColor} from '$lib/stores/shared/theme';
   import Notifications from '$lib/components/Notifications.svelte';
-
-  // eslint-disable-next-line no-redeclare
-  declare var theme: string;
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
@@ -58,18 +55,14 @@
     if (cookies?.theme === 'dark') {
       const html = document.querySelector('html');
       html.classList.add('dark');
-      theme = '#394150';
-    } else {
-      theme = '#FFF';
     }
   });
 
-  $: theme = $iosStatusBar === 'light' ? '#FFFFFF' : '#394150';
   export let boards: string[] = [];
   // console.log(uid)
 </script>
 <svelte:head>
-  <meta name="theme-color" content="{theme}"/>
+  <meta name="theme-color" content="{$iosStatusBarColor}"/>
 </svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 

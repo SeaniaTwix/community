@@ -30,3 +30,4 @@ function getTheme() {
 
 export const theme = createWritableStore('theme', { mode: getTheme() });
 export const iosStatusBar = createWritableStore('statusBar', { mode: getTheme() });
+export const iosStatusBarColor = writable(getTheme() === 'light' ? '#FFFFFF' : '#394150')

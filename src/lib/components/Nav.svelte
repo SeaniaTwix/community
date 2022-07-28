@@ -10,7 +10,7 @@
   import {session, page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {goto} from '$app/navigation';
-  import {iosStatusBar, theme} from '$lib/stores/shared/theme';
+  import {iosStatusBar, iosStatusBarColor, theme} from '$lib/stores/shared/theme';
   import {tick} from 'svelte';
 
   export let boards: string[] = [];
@@ -66,7 +66,8 @@
   function switchTheme() {
     // console.log('switch')
     const html = document.getElementsByTagName('html')[0] as HTMLHtmlElement;
-    if (html.classList.value.includes('dark')) {
+    const isDarkMode = html.classList.value.includes('dark');
+    if (isDarkMode) {
       html.classList.remove('dark');
       Cookies.set('theme', 'light', {
         expires: dayjs().add(999, 'year').toDate(),
@@ -81,6 +82,7 @@
       theme.set({mode: 'dark'});
       iosStatusBar.set({mode: 'dark'});
     }
+    iosStatusBarColor.set(isDarkMode ? '#FFFFFF' : '#394150');
   }
 
 </script>
