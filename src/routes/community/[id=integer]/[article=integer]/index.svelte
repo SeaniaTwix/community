@@ -1028,7 +1028,7 @@
       </div>
       {#if $session.user}
         <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
-          <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-colors leading-zero">
+          <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-all leading-zero">
             {#if isEmpty(commentImageUploadSrc)}
               <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
                 <Favorite size="1.25rem"/>

@@ -93,6 +93,17 @@
 
   let pusher: Pusher;
 
+  let userContextMenuIndex = -1;
+
+  function changeClickedUser(event: CustomEvent<{already: boolean, i: number}>) {
+    console.log(event.detail);
+    if (event.detail.already) {
+      userContextMenuIndex = -1;
+    } else {
+      userContextMenuIndex = event.detail.i;
+    }
+  }
+
   onMount(() => {
     //*
     pusher = new Pusher(`@${params.id}`);
@@ -108,6 +119,7 @@
   });
 
   function newArticlePublished({body}: {body: INewPublishedArticle}) {
+    userContextMenuIndex = -1;
     if (body.key && typeof body.key === 'string') {
       buffer = [body, ...buffer];
     }
@@ -297,7 +309,7 @@
     {/if}
   </div>
 
-  <ArticleList board={id} {list} />
+  <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}" />
 
   {#if $session.user}
     <div class="flex flex-row justify-end" class:flex-row-reverse={$session.buttonAlign === 'left'}>

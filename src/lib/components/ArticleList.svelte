@@ -14,11 +14,14 @@
   import {session} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {page} from '$app/stores';
+  import {createEventDispatcher} from 'svelte';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
+  export let showingUserContextMenuIndex = -1;
+  $: console.log('changed:', showingUserContextMenuIndex);
   // export let users: Record<string, IUser>;
-  $: showing = {};
+  const dispatch = createEventDispatcher();
 
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
@@ -52,8 +55,7 @@
   }
 
   function toggleUserMenu(i: number) {
-    showing[i] = !showing[i];
-    showing = {...showing};
+    dispatch('userclick', {already: showingUserContextMenuIndex === i, i});
   }
 
   interface IImage {
@@ -137,7 +139,7 @@
             </div>
           </div>
         </a>
-        {#if showing[i]}
+        {#if showingUserContextMenuIndex === i}
           <div class="flex justify-end space-x-2 items-center overflow-x-scroll whitespace-nowrap">
             {#if $session && article.author.rank >= EUserRanks.Manager}
               <span>관리자이므로 차단할 수 없습니다.</span>
