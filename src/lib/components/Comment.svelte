@@ -360,7 +360,7 @@
     </div>
   </div>
 </div>
-{isEmpty(replies)}, {isReplyMode},
+
 {#if !isEmpty(replies) && !isReplyMode}
   <div id="r{comment._key}" class="ml-4 sm:ml-6">
     <ol class="space-y-2 mt-2">
