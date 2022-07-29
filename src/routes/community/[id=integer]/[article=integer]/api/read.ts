@@ -2,18 +2,19 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {User} from '$lib/auth/user/server';
-import type {ArticleDto} from '$lib/types/dto/article.dto';
+import type {ArticleDto, ClientToServerTagType} from '$lib/types/dto/article.dto';
 import HttpStatus from 'http-status-codes';
-import type {ClientToServerTagType} from '$lib/types/dto/article.dto';
 import {isEmpty} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
+import {EUserRanks} from '$lib/types/user-ranks';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
 
   try {
     const uid = locals?.user?.uid;
-    const article = await read.get(uid);
+    const force = uid ? locals.user.rank > EUserRanks.User : false;
+    const article = await read.get(uid, force);
 
     if (article?.serials) {
       const serialIds: string[] = article.serials;
@@ -41,10 +42,11 @@ class ReadArticleRequest {
               private readonly article: string) {
   }
 
-  async get(reader?: string) {
+  async get(reader?: string, force = false) {
     const cursor = await db.query(aql`
       for article in articles
-        filter article._key == ${this.article} and article.board == ${this.board} && (is_bool(article.pub) ? article.pub : true)
+        let isPub = ${force} || (is_bool(article.pub) ? article.pub : true)
+        filter article._key == ${this.article} and article.board == ${this.board} && isPub
           let savedTags = (
             for tag in tags
               filter tag.target == article._key && tag.pub

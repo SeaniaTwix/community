@@ -5,7 +5,7 @@ import {aql} from 'arangojs';
 import type {IArticle} from '$lib/types/article';
 import {User} from '$lib/auth/user/server';
 import { uniq } from 'lodash-es';
-import {Article} from '../community/article/server';
+import {Article} from '$lib/community/article/server';
 
 export const client = new MeiliSearch({
   host: 'http://127.0.0.1:7700',

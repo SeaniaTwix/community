@@ -113,7 +113,7 @@ export class Board {
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}
             let authorData = keep(first(for u in users filter u._key == article.author return u), "_key", "id", "avatar", "rank")
-            return merge(unset(article, "content", "pub", "source"), {comments: c, tags: savedTags, images: imgs, author: authorData})`)
+            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, author: authorData})`)
 
     return await cursor.all();
   }
