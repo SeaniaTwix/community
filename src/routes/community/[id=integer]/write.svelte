@@ -374,7 +374,7 @@
         <h3 class="text-lg">내가 자주 사용하는 태그...</h3>
         <ol class="space-x-2 text-xs">
           {#each appendableTags as usedTag}
-            <li class="inline-block mb-2 text-zinc-400 dark:text-zinc-300">
+            <li class="inline-block mb-2 text-zinc-500 dark:text-zinc-300">
               <span on:click={() => addTag(usedTag)} class="cursor-pointer">
                 <Tag><Plus />{usedTag}</Tag>
               </span>

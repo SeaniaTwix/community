@@ -222,7 +222,8 @@ export class User {
   async getUsersTags(): Promise<string[]> {
     const cursor = await db.query(aql`
       for tag in tags
-      filter tag.user == ${await this.uid} && !regex_test(tag.name, "^_") && tag.pub
+        filter tag.user == ${await this.uid} && !regex_test(tag.name, "^_") && tag.pub
+          limit 20
           return tag.name`);
     const list = await cursor.all();
     const tags: Record<string, number> = {};
