@@ -20,7 +20,7 @@
   import TimeAgo from 'javascript-time-ago';
   import {ko} from '$lib/time-ko';
   import {dayjs} from 'dayjs';
-  import {createEventDispatcher, tick} from 'svelte';
+  import {afterUpdate, createEventDispatcher, tick} from 'svelte';
   import ky from 'ky-universal';
   import Image from './Image.svelte';
   import {striptags} from 'striptags';
@@ -191,6 +191,18 @@
   $: deleted = (<any>comment)?.deleted === true;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
+
+  afterUpdate(() => {
+    fetchAllRepliesMine();
+  })
+
+  // if you commented, fetch all replies
+  function fetchAllRepliesMine() {
+    const notFetched: IComment[] = allReplies?.filter(c => !replies.find(r => r._key === c._key)) ?? [];
+    if (notFetchedReplyCounts > 0 && notFetched.find(c => c.author === $session.user.uid)) {
+      fetchAllReplies();
+    }
+  }
 
   function getRelative(id: string): IComment | null {
     return allComments.find(c => c._key === id) ?? null;
