@@ -19,6 +19,39 @@ import {striptags} from 'striptags';
 import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
 
+export async function GET({params, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
+  if (!user) {
+    return {
+      status: HttpStatus.UNAUTHORIZED,
+    };
+  }
+
+  const {id} = params;
+
+  const board = new Board(id);
+
+  if (!await board.exists) {
+    return {
+      status: HttpStatus.NOT_FOUND,
+    };
+  }
+
+  const u = await User.findByUniqueId(user.uid);
+
+  if (!u) {
+    return {
+      status: HttpStatus.BAD_GATEWAY,
+    };
+  }
+
+  return {
+    status: HttpStatus.OK,
+    body: {
+      tags: await u.getUsersTags(),
+    },
+  };
+}
+
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   // console.log('new write')
@@ -30,15 +63,15 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
       status: HttpStatus.NOT_ACCEPTABLE,
       body: {
         reason: 'title is too short',
-      }
-    }
+      },
+    };
   } else if (write.title!.length > 48) {
     return {
       status: HttpStatus.NOT_ACCEPTABLE,
       body: {
         reason: 'title is too long',
-      }
-    }
+      },
+    };
   }
 
   if (params.id !== write.boardId) {
@@ -165,7 +198,7 @@ class WriteRequest {
 
     const $ = loadHtml(content);
     const images = $('img');
-    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '')
+    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '');
   }
 
   private get isBoardExists(): Promise<boolean> {
@@ -203,7 +236,7 @@ class WriteRequest {
       .use(rehypeParse, {fragment: true})
       .use(rehypeSanitize, {
         ...defaultSchema,
-        tagNames: [...defaultSchema.tagNames ?? [], 'source']
+        tagNames: [...defaultSchema.tagNames ?? [], 'source'],
       })
       .use(rehypeStringify)
       .process(this.content ?? '');
@@ -255,7 +288,7 @@ class WriteRequest {
           content: striptags(this.content ?? '').replace(/&nbsp;/, ''),
           tags: await article.getAllTagsCounted(),
           createdAt: (new Date(data.createdAt!)).getTime(),
-        }
+        },
       ]);
 
   }
@@ -264,3 +297,5 @@ class WriteRequest {
     return _.isEmpty(this.error) ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST;
   }
 }
+
+//

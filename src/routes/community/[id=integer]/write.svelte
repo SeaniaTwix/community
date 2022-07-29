@@ -26,12 +26,17 @@
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
 
+    const tagRes = await fetch(`/community/${params.id}/api/write`);
+    const {tags} = await tagRes.json();
+
+
     return {
       status: 200,
       props: {
         board: params.id,
         editorKey: key,
         name,
+        usedTags: tags,
       },
     };
   }
@@ -59,8 +64,10 @@
   export let editorKey: string;
   export let board: string;
   export let name: string;
+  export let usedTags: string[] = [];
 
   $: dark = $theme.mode === 'dark';
+  $: appendableTags = usedTags.filter(tag => !tags.find(t => t === tag));
 
 
   const settings = {
@@ -186,19 +193,27 @@
     return !_.isEmpty(o);
   }
 
+  function addTag(tag: string) {
+    tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]).slice(0, 20);
+  }
+
   function detectEnter(event: KeyboardEvent) {
 
     if (event.isComposing || event.keyCode === 229) {
       return;
     }
     if (event.key === 'Enter') {
-      tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]).slice(0, 20);
+      addTag(tag);
       tag = '';
     }
   }
 
   function deleteTag(target: string) {
     tags = tags.filter(v => v !== target);
+  }
+
+  function deleteAllTags() {
+    tags = [];
   }
 
   function defaultEditorResized(event: CustomEvent) {
@@ -327,7 +342,7 @@
         {#if registeredAutoTag}
           자동 태그가 활성화 되었습니다. 자동 태그를 포함해
         {/if}
-        태그는 최대 20개까지 등록할 수 있습니다.
+        태그는 최대 20개까지 등록할 수 있습니다. <button on:click={deleteAllTags} class="text-red-600">모든 태그 삭제</button>
       </p>
     {/if}
     <ul id="__tags" class="inline-block flex flex-wrap space-x-2">
@@ -354,9 +369,20 @@
         </Tag>
       </li>
     </ul>
-    <div>
-      <h3>내가 자주 사용하는 태그...</h3>
-    </div>
+    {#if !isEmpty(appendableTags)}
+      <div class="space-y-2 pt-4">
+        <h3 class="text-lg">내가 자주 사용하는 태그...</h3>
+        <ol class="space-x-2 text-xs">
+          {#each appendableTags as usedTag}
+            <li class="inline-block mb-2 text-zinc-400 dark:text-zinc-300">
+              <span on:click={() => addTag(usedTag)} class="cursor-pointer">
+                <Tag><Plus />{usedTag}</Tag>
+              </span>
+            </li>
+          {/each}
+        </ol>
+      </div>
+    {/if}
   </div>
   <div class="flex space-x-2">
     <button on:click={upload} class:cursor-not-allowed={uploading}

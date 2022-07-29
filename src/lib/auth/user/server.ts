@@ -1,13 +1,11 @@
 import argon2 from 'argon2';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
-import type {IArangoDocumentIdentifier} from '$lib/database';
 import njwt from 'njwt';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
 import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '$lib/util';
-import {parseInt} from 'lodash-es';
 
 type UnsafeUser = IUser & { password: string };
 
@@ -216,5 +214,27 @@ export class User {
         filter user.id == ${this.id}
           return is_array(user.blockedTags) ? user.blockedTags : []`);
     return await cursor.next();
+  }
+
+  /**
+   * 많이 쓴 순서대로 태그를 반환합니다.
+   */
+  async getUsersTags(): Promise<string[]> {
+    const cursor = await db.query(aql`
+      for tag in tags
+      filter tag.user == ${await this.uid} && !regex_test(tag.name, "^_") && tag.pub
+          return tag.name`);
+    const list = await cursor.all();
+    const tags: Record<string, number> = {};
+    for (const tag of list) {
+      if (tags[tag]) {
+        tags[tag] += 1;
+      } else {
+        tags[tag] = 1;
+      }
+    }
+    return Object.keys(tags).sort((a, b) => {
+      return tags[b] - tags[a];
+    });
   }
 }

@@ -44,5 +44,5 @@ export class ArticleDto<TagType = InternalTagType> {
   //
   tags: TagType | undefined;
 
-  serials: { title: string, _key: string }[] = [];
+  serials?: { title: string, _key: string }[] = [];
 }
