@@ -196,8 +196,8 @@
     <ul class="space-x-2 flex flex-wrap">
       {#if $session.user}
         <li on:click={() => vote('like')}
-            class:cursor-not-allowed={$session.user.uid === article.author}
-            class:cursor-pointer={$session.user.uid !== article.author}
+            class:cursor-not-allowed={$session.user.uid === article.author._key}
+            class:cursor-pointer={$session.user.uid !== article.author._key}
             class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
           <Tag>
             {#if liked}
@@ -209,8 +209,8 @@
           </Tag>
         </li>
         <li on:click={() => vote('dislike')}
-            class:cursor-not-allowed={$session.user.uid === article.author}
-            class:cursor-pointer={$session.user.uid !== article.author}
+            class:cursor-not-allowed={$session.user.uid === article.author._key}
+            class:cursor-pointer={$session.user.uid !== article.author._key}
             class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
           <Tag>
             {#if disliked}

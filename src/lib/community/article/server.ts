@@ -45,8 +45,8 @@ export class Article {
             filter c.relative == comment._key && c.pub
              return c) > 0
         filter comment.article == ${this.id} && (isPub || replyExists)
-         limit ${(page - 1) * amount}, ${amount}
-         return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
+          limit ${(page - 1) * amount}, ${amount}
+          return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
     return await cursor.all();
   }
 
@@ -187,13 +187,19 @@ export class Article {
   }
 
   async addComment(userId: string, comment: CommentDto): Promise<IComment> {
+    const add = {
+      article: comment.article,
+      content: comment.content,
+      author: userId,
+      pub: true,
+      image: comment.image,
+      imageSize: comment.imageSize,
+      votes: {},
+      relative: comment.relative,
+      createdAt: new Date,
+    }
     const cursor = await db.query(aql`
-      insert merge(${comment}, {
-        author: ${userId},
-        createdAt: ${new Date()},
-        "like": 0,
-        dislike: 0
-      }) into comments return NEW`);
+      insert ${add} into comments return NEW`);
     const newData = await cursor.next() as IComment;
     if (comment.relative) {
       await db.query(aql`

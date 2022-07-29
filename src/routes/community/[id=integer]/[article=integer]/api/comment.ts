@@ -174,6 +174,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
 
     if (commentData.image) {
       cd.image = commentData.image;
+      cd.imageSize = commentData.imageSize;
     }
 
     if (isEmpty(content) && !cd.image) {
@@ -222,10 +223,13 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     if (cd) {
       const {author} = await comment.article.get();
       const user = await User.findByUniqueId(author);
-      if (user) {
+      if (user && await user.uid !== locals.user.uid) {
         const noti = new Notifications(user);
-        noti.send('articles', 'comments', {
+        noti.send('articles', {
+          type: 'comment',
           value: savedComment._key,
+          // only comment. not reply on comment
+          root: id,
           target: article,
         }, locals.user.uid).then().catch();
       }

@@ -1,6 +1,6 @@
 import type {User} from '$lib/auth/user/server';
-import {Pusher} from '../pusher/server';
-import db from '../database/instance';
+import {Pusher} from '$lib/pusher/server';
+import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
 export class Notifications {
@@ -12,16 +12,16 @@ export class Notifications {
    * @param context 어떤 곳에 관하여 알림이 온 것인지 설명합니다.
    *                게시글에 댓글이 달린 경우는 'article',
    *                대댓글 같은 경우는 'comment'가 될 수 있습니다.
-   * @param type 어떤 행동으로 알림이 발생했는지 알립니다.
    * @param body 이 알림의 세부 데이터입니다.
    * @param instigator 이 알림을 발생시킨 인물입니다. undefined 일 수 있는데,
    *                   이때는 발생 시킨 인물이 중요하지 않을 때 입니다.
    */
-  async send(context: NotifyContext, type: NotifyEventType, body: INotify, instigator?: string) {
+  async send(context: NotifyContext, body: INotify, instigator?: string) {
+    console.log(body);
     if (!await this.isAlreadyNotified(body)) {
       await this.saveToDb(body, instigator);
 
-      Pusher.notify(type, `notification:${await this.user.uid}`, instigator ?? '0', body).then();
+      Pusher.notify('notify', `notifications:${await this.user.uid}`, instigator ?? '0', body).then();
     }
   }
 
@@ -32,8 +32,9 @@ export class Notifications {
     const cursor = await db.query(aql`
       for noti in notifications
         let nv = ${body.value}
-        filter (is_string(nv) && nv == ${body.value}) || (is_number(nv) && nv <= noti.value)
-        filter noti.receiver == ${await this.user.uid}
+        let isSameNotiString = is_string(nv) && nv == noti.value
+        let isSameNotiNumber = is_number(nv) && nv <= noti.value
+        filter (isSameNotiString || isSameNotiNumber) && noti.receiver == ${await this.user.uid}
         return noti`)
     return cursor.hasNext;
   }
@@ -49,6 +50,8 @@ export class Notifications {
 }
 
 export interface INotify {
+  type: NotifyEventType,
+  root: string,
   // 알림의 타겟 id입니다. 주로 알림이 발생한 게시글이나 댓글의 id입니다.
   target: string;
   /**
@@ -59,5 +62,7 @@ export interface INotify {
 }
 
 type NotifyContext = 'articles' | 'comments';
-// voting - 추천 수가 10 단위가 될 때마다 발생합니다. 100 이상 값부터는 50 단위로 발생합니다.
-type NotifyEventType = 'comments' | 'voting'
+// vote - 추천 수가 10 단위가 될 때마다 발생합니다. 100 이상 값부터는 50 단위로 발생합니다.
+// comment - 댓글
+// reply - 대댓글
+type NotifyEventType = 'comment' | 'reply' | 'vote';

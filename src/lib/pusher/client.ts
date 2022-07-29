@@ -17,18 +17,33 @@ try {
 export class Pusher {
   private readonly target: string;
   private wsList: WebSocket[] = [];
+  private subjects: Subject<any>[] = [];
+  private timers: number[] = [];
 
   constructor(context: string) {
     this.target = context;
   }
 
   close() {
+    for (const subject of this.subjects) {
+      try {
+        subject.complete();
+        subject.unsubscribe();
+      } catch (e) {
+        console.log('pusher:', e);
+      }
+    }
+
     for (const ws of this.wsList) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send('command:close');
       }
       ws.close(1000);
     }
+  }
+
+  private connect() {
+
   }
 
   observable<T>(about: PushAbout): Observable<{ body: T, socket: WebSocket }> {
@@ -44,6 +59,7 @@ export class Pusher {
 
     this.wsList.push(ws);
     const subject = new Subject<{ body: T, socket: WebSocket }>();
+    this.subjects.push(subject);
     ws.onmessage = (event) => {
       try {
 
@@ -65,6 +81,15 @@ export class Pusher {
         console.error(e);
       }
     };
+
+    ws.onclose = (close) => {
+      this.timers.push(
+        setInterval(() => {
+          //
+        }, 1000) as unknown as number,
+      )
+    }
+
     return subject.asObservable();
   }
 }

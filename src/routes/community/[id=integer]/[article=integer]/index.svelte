@@ -73,8 +73,6 @@
   import Down from 'svelte-material-icons/ArrowDown.svelte';
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
   import RemoveTag from 'svelte-material-icons/Close.svelte';
-  const Close = RemoveTag;
-  import Goto from 'svelte-material-icons/ArrowRightBold.svelte';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
   import {onMount, onDestroy, tick} from 'svelte';
@@ -94,6 +92,7 @@
   import {currentReply} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
   import {deletedComment} from '$lib/community/comment/client';
+  import CommentInput from '$lib/components/CommentInput.svelte';
 
   /**
    * 게시글 보기
@@ -126,9 +125,16 @@
   let mobileInputLastCursor = 0;
   let generalScrollView: HTMLDivElement;
 
+  let commentImage1: HTMLImageElement;
+  let commentImage2: HTMLImageElement;
   let commentImageUploadSrc = '';
   let commentImageUploadFileInfo: File;
   let editedImage: Blob;
+  let image100x100 = false;
+  let imageSize = {
+    x: -1,
+    y: -1,
+  }
 
   async function addComment() {
     if (!$session && !commenting) {
@@ -151,6 +157,10 @@
       const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
       const name = 'UZ-is-Kawaii.png';
       commentData.image = await upload(data, type, name);
+    }
+
+    if (image100x100) {
+      commentData.imageSize = {x: 100, y: 100};
     }
 
     try {
@@ -323,6 +333,13 @@
     }
   }
 
+  function goBack() {
+    if (selectedComment) {
+      return disableReplyMode();
+    }
+    goto(`/community/${article.board}${$page.url.search}`);
+  }
+
   let fileUploader: HTMLInputElement;
   const fileChangeListener = writable<File>(null);
   let subscriptions: Subscription[] = [];
@@ -337,7 +354,7 @@
     }
 
     pusher = new Pusher(`${article._key}@${article.board}`);
-    
+
     window.addEventListener('unload', clearSubscribes);
 
     try {
@@ -465,11 +482,6 @@
       console.error(e);
     }
   });
-
-  interface IImage {
-    src: string
-    type: string
-  }
 
   function clearSubscribes() {
     for (const unsub of unsubscribers) {
@@ -726,8 +738,6 @@
     </div>
   {:else}
 
-
-
     <div class="mt-6 p-2">
       <h2 class="text-xl mb-2">댓글 작성 중...</h2>
 
@@ -742,48 +752,18 @@
                  {users} />
       {/if}
 
-      <div class:mt-4={selectedComment} class="overflow-hidden rounded-t-md bg-gray-50/50 h-32 flex flex-col relative __comment-input">
-        <div class="px-2">
-          {#if isEmpty(commentImageUploadSrc)}
-            <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
-              <Favorite size="1.25rem"/>
-            </button>
-            <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer ">
-              <Upload size="1.25rem"/>
-            </button>
-          {:else}
-            <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer ">
-              <span><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
-            </button>
-          {/if}
-        </div>
-        <div class="flex flex-grow">
+      <CommentInput {commenting} {commentFolding} {selectedComment} {commentImageUploadSrc} {users}
+                    iosMode="{true}"
+                    on:submit={addComment}
+                    on:cancelimageupload={cancelImageUpload}
+                    on:togglefold={toggleCommentFold}
+                    on:openimageeditor={openImageEditor}
+                    on:blur={disableMobileInput}
+                    on:selectfile={() => fileUploader.click()}
+                    bind:smallImage="{image100x100}"
+                    bind:content={commentContent}
+                    bind:mobileTextInput={mobileTextInput} />
 
-          {#if !isEmpty(commentImageUploadSrc)}
-            <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
-              <img class="w-full h-full object-cover bg-white dark:bg-gray-600"
-                   on:load={imageLoadCompletedInComment}
-                   src="{commentImageUploadSrc}" alt="upload preview" />
-            </div>
-          {/if}
-          <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full">
-              <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none"
-                        on:keydown={detectSendOrEsc}
-                        bind:value={commentContent}
-                        bind:this={mobileTextInput}
-                        on:blur={disableMobileInput}
-                        placeholder="댓글을 입력하세요..."></textarea>
-          </div>
-
-        </div>
-      </div>
-
-      <button on:click={addComment} class="py-2 bg-sky-200 dark:bg-sky-800 w-full">
-        {#if selectedComment}
-          답글
-        {/if}
-        작성
-      </button>
     </div>
 
 
@@ -795,7 +775,7 @@
         <ul class="space-y-2">
           <li>
             <!-- todo: add page parameter -->
-            <button on:click={() => goto(`/community/${article.board}${$page.url.search}`)}
+            <button on:click={goBack}
                     class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600
                   text-white dark:text-zinc-200 shadow-md __circle w-10 h-10 transition-colors">
               <span><Back size="1rem"/></span>
@@ -817,145 +797,23 @@
       </div>
 
       {#if $session.user}
-
-        <div class="overflow-hidden rounded-t-md shadow-md bg-gray-50/50 flex flex-col relative __comment-input">
-          <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-all leading-zero">
-
-            {#if isEmpty(commentImageUploadSrc)}
-
-              <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
-                <Favorite size="1.25rem"/>
-              </button>
-              <button on:click={() => fileUploader.click()} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
-                <Upload size="1.25rem"/>
-              </button>
-
-            {:else}
-
-              <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer">
-                <span class="text-lg"><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요</span>
-              </button>
-
-            {/if}
-
-            {#if selectedComment}
-
-              <div class="h-8 flex-grow flex flex-row justify-end text-lg text-zinc-600 dark:text-gray-700 cursor-default select-none w-0">
-                <p class="inline-block flex flex-row min-w-0 pl-4">
-                  <span class="min-w-fit">{users[selectedComment.author].id}님의 "</span>
-                  <span class="truncate">{selectedComment.content}</span>
-                  <span class="min-w-fit">"에 답장 중...
-                    <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">
-                      <Goto />
-                    </a>
-                    <button class="hover:text-red-500 dark:hover::text-red-600" on:click={() => (selectedComment = undefined)}>
-                      <Close />
-                    </button>
-                  </span>
-                </p>
-              </div>
-
-            {:else}
-
-              <button on:click={toggleCommentFold} class="h-8 flex-grow cursor-pointer items-center">
-                <!-- Fold Toggle -->
-              </button>
-
-            {/if}
-          </div>
-          <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'} transition-all">
-            <div class="flex flex-grow">
-
-              {#if !isEmpty(commentImageUploadSrc)}
-
-                <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
-                  <img class="w-full h-full object-cover bg-white dark:bg-gray-600"
-                       on:load={imageLoadCompletedInComment}
-                       src="{commentImageUploadSrc}" alt="upload preview" />
-                </div>
-
-              {/if}
-
-              <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full relative">
-                <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
-                          on:keydown={detectSendOrEsc}
-                          on:keyup={detectEscReleased}
-                          bind:this={commentTextInput}
-                          bind:value={commentContent}
-                          on:blur={onBlurGeneralCommentInput}
-                          placeholder="댓글을 입력하세요..."></textarea>
-                <div id="__textarea-mobile"
-                     on:click={enableMobileInput} on:dblclick|preventDefault
-                     class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none">
-
-                  {#if isEmpty(commentContent)}
-
-                    <span class="text-[#9DA3AE]">댓글을 입력하세요...</span>
-
-                  {:else}
-
-                    {commentContent}
-
-                  {/if}
-
-                </div>
-              </div>
-            </div>
-            <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">
-
-              {#if selectedComment}
-
-                답글
-
-              {/if}
-
-              작성
-            </button>
-          </div>
-        </div>
+        <CommentInput {commenting} {commentFolding} {selectedComment} {commentImageUploadSrc} {users}
+                      on:submit={addComment}
+                      on:cancelimageupload={cancelImageUpload}
+                      on:togglefold={toggleCommentFold}
+                      on:openimageeditor={openImageEditor}
+                      on:blur={onBlurGeneralCommentInput}
+                      on:mobilemode={enableMobileInput}
+                      on:selectfile={() => fileUploader.click()}
+                      bind:smallImage="{image100x100}"
+                      bind:content={commentContent}
+                      bind:textInput={commentTextInput} />
       {/if}
     </div>
   {/if}
 </div>
 
 <style lang="scss">
-  .__ios-bottom-fix {
-    padding-bottom: 0;
-    //noinspection CssOverwrittenProperties
-    @supports (-webkit-touch-callout: none) {
-      // noinspection CssInvalidFunction
-      padding-bottom: constant(safe-area-inset-bottom);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-  }
-
-  // https://stackoverflow.com/questions/35361986/css-gradient-checkerboard-pattern
-  .__bg-checkerboard {
-    background-image: linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  }
-
-  #__textarea-general {
-    display: block;
-    @supports (-webkit-touch-callout: none) {
-      display: none;
-    }
-  }
-
-  #__textarea-mobile {
-    display: none;
-    @supports (-webkit-touch-callout: none) {
-      display: block;
-    }
-  }
-
-  #__goto-comment {
-    @supports (-webkit-touch-callout: none) {
-      display: none;
-    }
-  }
-
   .__circle {
     border-radius: 50%;
   }

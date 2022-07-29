@@ -26,7 +26,7 @@
   import {striptags} from 'striptags';
   import {session, page} from '$app/stores';
   import {isEmpty, last} from 'lodash-es';
-  import {currentReply, deletedComment} from '$lib/community/comment/client';
+  import {currentReply, deletedComment, highlighed} from '$lib/community/comment/client';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -65,6 +65,7 @@
   }
 
   function onReplyClicked(event: PointerEvent & {path: (HTMLElement | Window)[]}) {
+    $highlighed = undefined;
     console.log(event);
     if (!isOk(event.path) ) {
       return;
@@ -223,6 +224,10 @@
     return {src: avatar, type: `image/${type}`};
   }
 
+  function highlightComment(id: string) {
+    $highlighed = id;
+  }
+
   interface IImage {
     src: string
     type: string
@@ -231,7 +236,7 @@
 
 <div class="relative rounded-md shadow-md bg-zinc-50/40 dark:bg-gray-700/30">
   {#if deleted}
-    <div class="min-h-[8rem] w-full flex flex-col justify-center">
+    <div class="min-h-[8rem] w-full flex flex-col justify-center" prevent-reply>
       <p class="text-center">이 댓글은 삭제되었습니다.<span class="text-red-700 dark:text-red-500 cursor-pointer select-none ml-2 hover:underline">신고하기</span></p>
     </div>
   {:else}
@@ -242,8 +247,9 @@
     {/if}
     <div on:click={onReplyClicked}
          class:ring-2={selected}
+         class:outline={$highlighed === comment._key}
          class:invisible={comment.deleted}
-         class="rounded-md p-2 min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 {selected ? 'ring-sky-400 dark:ring-sky-600' : 'ring-sky-400/50 dark:ring-sky-600/80'} dark:ring-offset-gray-600">
+         class="rounded-md p-2 min-h-[8rem] divide-y divide-dotted hover:ring-2 outline-amber-400 ring-offset-2 {selected ? 'ring-sky-400 dark:ring-sky-600' : 'ring-sky-400/50 dark:ring-sky-600/80'} dark:ring-offset-gray-600">
       <div class="space-y-4">
         <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
           <div class="flex space-x-2 pt-1 flex-col md:flex-row lg:flex-row">
@@ -281,7 +287,7 @@
         <div class="flex-grow __comment-contents" prevent-reply="selection" class:pb-4={!editMode}>
           {#if comment.image}
             <div>
-              <Image src="{comment.image}">
+              <Image src="{comment.image}" size="{comment.imageSize}">
                 <p>
                   <img src="{comment.image}" alt="{comment.image}" />
                 </p>
@@ -291,7 +297,7 @@
           {#if !editMode}
             {#if comment.relative}
               {#if getRelative(comment.relative) && !getRelative(comment.relative).deleted}
-                <a href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
+                <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
                   <div>
                     <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
                       <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author]?.id}</span>
@@ -305,7 +311,7 @@
                 <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
                   {#if getRelative(comment.relative).author}
                     <span class="w-max after:content-[':'] mr-1">{users[getRelative(comment.relative).author]?.id}</span>
-                  {/if} [댓글이 삭제되었습니다.]
+                  {/if} <i>[댓글이 삭제되었습니다.]</i>
                 </div>
               {/if}
             {/if}

@@ -4,6 +4,7 @@
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
   import {load} from 'cheerio';
+  import {session} from '$app/stores';
   import {isEmpty, parseInt} from 'lodash-es';
 
   export let content = '';
@@ -12,14 +13,16 @@
   const imgObj = _('img')?.[0];
   console.log('img:', imgObj);
   let img: HTMLImageElement;
+  let wrapper: HTMLDivElement;
   export let src: string | undefined;
   export let nsfw = false;
+  export let size: {x: number, y: number} | undefined;
   let loading = true;
   let isFavorite = false;
   let forceShow = false;
   let folded = false;
-  let width = imgObj?.attribs?.width;
-  let height = imgObj?.attribs?.height;
+  let width = size?.x ?? imgObj?.attribs?.width;
+  let height = size?.y ?? imgObj?.attribs?.height;
   let isImageSizeDefined = false;
 
   async function addFavorite() {
@@ -32,6 +35,7 @@
       await ky.put('/user/favorite/image', {
         json: {
           url: u,
+          size: {x: width, y: height},
         },
       });
     }
@@ -50,37 +54,43 @@
   }
 
   function addImageSize(element: HTMLImageElement) {
+    console.log('size:', imgObj, width, height);
     console.log('addImageSize', element.width, element.height);
     isImageSizeDefined = true;
     // check preloaded
-    if (!imgObj) {
+    if (!imgObj && !size) {
       element.style.width = `${element.naturalWidth}px`;
     } else {
       if (!width) {
-        let w = element.getAttribute('width');
-        if (!w) {
-          w = element.style.width;
-          if (isEmpty(w)) {
-            w = element.naturalWidth.toString();
+        let x = element.getAttribute('width');
+        if (size?.x) {
+          x = size.x.toString();
+        } else if (!x) {
+          x = element.style.width;
+          if (isEmpty(x)) {
+            x = element.naturalWidth.toString();
           }
         }
 
-        if (parseInt(onlyNumber(w)) > 0) {
-          width = onlyNumber(w).toString();
+        if (parseInt(onlyNumber(x)) > 0) {
+          width = onlyNumber(x).toString();
         }
       }
 
       if (!height) {
-        let h = element.getAttribute('height');
-        if (!h) {
-          h = element.style.height;
-          if (isEmpty(h)) {
-            h = element.naturalHeight.toString();
+        let y = element.getAttribute('height');
+
+        if (size?.y) {
+          y = size.y.toString();
+        } else if (!y) {
+          y = element.style.height;
+          if (isEmpty(y)) {
+            y = element.naturalHeight.toString();
           }
         }
 
-        if (parseInt(onlyNumber(h)) > 0) {
-          height = onlyNumber(h).toString();
+        if (parseInt(onlyNumber(y)) > 0) {
+          height = onlyNumber(y).toString();
         }
       }
     }
@@ -108,10 +118,12 @@
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
-        <span on:click={addFavorite}
-              class="hover:text-yellow-400 cursor-pointer drop-shadow transition-all">
-          <Star size="2rem"/>
-        </span>
+        {#if $session.user}
+          <span on:click={addFavorite}
+                  class="hover:text-yellow-400 cursor-pointer drop-shadow transition-all">
+            <Star size="2rem"/>
+          </span>
+        {/if}
         {#if nsfw}
           <span on:click={hide} class="hover:text-red-500 cursor-pointer drop-shadow transition-all">
             <Blind size="2rem"/>
@@ -120,7 +132,9 @@
       </span>
     {/if}
   </div>
-  <div on:click={show} class="__article-image overflow-hidden rounded-md shadow-md">
+  <div bind:this={wrapper} on:click={show}
+       style="{size?.x ? `width: ${size.x}px;` : ''} {size?.y ? `height: ${size.y}px;` : ''}"
+       class="__article-image overflow-hidden rounded-md shadow-md object-cover">
     {#if nsfw && !forceShow}
       <p
         class="__center-text px-3 py-1 bg-gray-900/40 text-sm z-[1] rounded-md text-zinc-100 mx-auto w-max select-none">
@@ -133,8 +147,7 @@
       <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다"
            bind:this={img}
            on:load={() => autoNaturalSize(img)}
-           class:blur-2xl={nsfw && !forceShow}
-           {width} {height} />
+           class:blur-2xl={nsfw && !forceShow} />
     </span>
     {#if folded}
       <div on:click={() => (folded = false)}
