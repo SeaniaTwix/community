@@ -45,13 +45,8 @@ export class Article {
             filter c.relative == comment._key && c.pub
              return c) > 0
         filter comment.article == ${this.id} && (isPub || replyExists)
-<<<<<<< HEAD
           limit ${(page - 1) * amount}, ${amount}
           return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
-=======
-         limit ${(page - 1) * amount}, ${amount}
-         return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
->>>>>>> master
     return await cursor.all();
   }
 

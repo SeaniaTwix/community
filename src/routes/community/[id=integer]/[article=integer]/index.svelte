@@ -92,10 +92,7 @@
   import {currentReply} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
   import {deletedComment} from '$lib/community/comment/client';
-<<<<<<< HEAD
   import CommentInput from '$lib/components/CommentInput.svelte';
-=======
->>>>>>> master
 
   /**
    * 게시글 보기
@@ -357,11 +354,7 @@
     }
 
     pusher = new Pusher(`${article._key}@${article.board}`);
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> master
     window.addEventListener('unload', clearSubscribes);
 
     try {

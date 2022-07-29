@@ -26,11 +26,7 @@
   import {striptags} from 'striptags';
   import {session, page} from '$app/stores';
   import {isEmpty, last} from 'lodash-es';
-<<<<<<< HEAD
   import {currentReply, deletedComment, highlighed} from '$lib/community/comment/client';
-=======
-  import {currentReply, deletedComment} from '$lib/community/comment/client';
->>>>>>> master
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -240,11 +236,7 @@
 
 <div class="relative rounded-md shadow-md bg-zinc-50/40 dark:bg-gray-700/30">
   {#if deleted}
-<<<<<<< HEAD
     <div class="min-h-[8rem] w-full flex flex-col justify-center" prevent-reply>
-=======
-    <div class="min-h-[8rem] w-full flex flex-col justify-center">
->>>>>>> master
       <p class="text-center">이 댓글은 삭제되었습니다.<span class="text-red-700 dark:text-red-500 cursor-pointer select-none ml-2 hover:underline">신고하기</span></p>
     </div>
   {:else}
@@ -255,14 +247,9 @@
     {/if}
     <div on:click={onReplyClicked}
          class:ring-2={selected}
-<<<<<<< HEAD
          class:outline={$highlighed === comment._key}
          class:invisible={comment.deleted}
          class="rounded-md p-2 min-h-[8rem] divide-y divide-dotted hover:ring-2 outline-amber-400 ring-offset-2 {selected ? 'ring-sky-400 dark:ring-sky-600' : 'ring-sky-400/50 dark:ring-sky-600/80'} dark:ring-offset-gray-600">
-=======
-         class:invisible={comment.deleted}
-         class="rounded-md p-2 min-h-[8rem] divide-y divide-dotted hover:ring-2 ring-offset-2 {selected ? 'ring-sky-400 dark:ring-sky-600' : 'ring-sky-400/50 dark:ring-sky-600/80'} dark:ring-offset-gray-600">
->>>>>>> master
       <div class="space-y-4">
         <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
           <div class="flex space-x-2 pt-1 flex-col md:flex-row lg:flex-row">
@@ -300,11 +287,7 @@
         <div class="flex-grow __comment-contents" prevent-reply="selection" class:pb-4={!editMode}>
           {#if comment.image}
             <div>
-<<<<<<< HEAD
               <Image src="{comment.image}" size="{comment.imageSize}">
-=======
-              <Image src="{comment.image}">
->>>>>>> master
                 <p>
                   <img src="{comment.image}" alt="{comment.image}" />
                 </p>
@@ -314,11 +297,7 @@
           {#if !editMode}
             {#if comment.relative}
               {#if getRelative(comment.relative) && !getRelative(comment.relative).deleted}
-<<<<<<< HEAD
                 <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
-=======
-                <a href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
->>>>>>> master
                   <div>
                     <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
                       <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author]?.id}</span>
@@ -332,11 +311,7 @@
                 <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
                   {#if getRelative(comment.relative).author}
                     <span class="w-max after:content-[':'] mr-1">{users[getRelative(comment.relative).author]?.id}</span>
-<<<<<<< HEAD
                   {/if} <i>[댓글이 삭제되었습니다.]</i>
-=======
-                  {/if} [댓글이 삭제되었습니다.]
->>>>>>> master
                 </div>
               {/if}
             {/if}
