@@ -331,18 +331,13 @@
   onMount(async () => {
     try {
       document.querySelector('html').classList.add('__page-view');
-      document.querySelector('body').classList.add('__page-view');
+      document.querySelector('body').classList.add('__page-view', 'overflow-hidden');
     } catch {
       // no window. it's okay
     }
-    // console.log(article);
 
     pusher = new Pusher(`${article._key}@${article.board}`);
-
-    document.body.classList.add('overflow-hidden');
-    // document.addEventListener('scroll', focusOutTextArea, true);
-    // console.log(window.visualViewport.height);
-
+    
     window.addEventListener('unload', clearSubscribes);
 
     try {
@@ -491,7 +486,7 @@
     clearSubscribes();
     try {
       document.querySelector('html').classList.remove('__page-view');
-      document.querySelector('body').classList.remove('__page-view');
+      document.querySelector('body').classList.remove('__page-view', 'overflow-hidden');
     } catch {
       // no window. it's ok.
     }
