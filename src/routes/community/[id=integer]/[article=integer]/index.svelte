@@ -93,6 +93,7 @@
   import Cookies from 'js-cookie';
   import {currentReply} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
+  import {deletedComment} from '$lib/community/comment/client';
 
   /**
    * 게시글 보기
@@ -328,6 +329,12 @@
   let unsubscribers: Unsubscriber[] = [];
   let pusher: Pusher;
   onMount(async () => {
+    try {
+      document.querySelector('html').classList.add('__page-view');
+      document.querySelector('body').classList.add('__page-view');
+    } catch {
+      // no window. it's okay
+    }
     // console.log(article);
 
     pusher = new Pusher(`${article._key}@${article.board}`);
@@ -450,7 +457,14 @@
         commentReplyClicked(currentReplyId);
       });
 
-      unsubscribers.push(fileChangeUnsub, replyUnsub);
+      const commentDeleteUnsub = deletedComment.subscribe((deleteCommentId) => {
+        if (typeof deleteCommentId !== 'string') {
+          return;
+        }
+        deleteComment({_key: deleteCommentId}).then(() => $deletedComment = undefined);
+      });
+
+      unsubscribers.push(fileChangeUnsub, replyUnsub, commentDeleteUnsub);
 
     } catch (e) {
       console.error(e);
@@ -476,7 +490,8 @@
   onDestroy(() => {
     clearSubscribes();
     try {
-      document.body.classList.remove('overflow-hidden');
+      document.querySelector('html').classList.remove('__page-view');
+      document.querySelector('body').classList.remove('__page-view');
     } catch {
       // no window. it's ok.
     }
@@ -630,10 +645,22 @@
     </nav>
   </div>
 </div>
+
 <div in:fade class="flex flex-col justify-between fixed w-full" style="height: calc(100% - 62px);">
   {#if !mobileInputMode}
     <div bind:this={generalScrollView}
          class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow overflow-x-hidden">
+
+      {#if !article.pub}
+        <div>
+          <p class="text-sm text-red-600 text-center">
+            경고: 이 게시물은 삭제된 상태입니다.
+          </p>
+          <p class="text-sm text-red-600 text-center">
+            현재 관리자 계정으로 삭제된 게시물을 열람하고 있습니다.
+          </p>
+        </div>
+      {/if}
 
       <Article {article} {contents} {users} />
 
@@ -681,7 +708,6 @@
               <li id="c{comment._key}" in:fade class="relative">
                 <Comment board="{article.board}"
                          article="{article._key}"
-                         myVote="{comment.myVote}"
                          on:delete={() => deleteComment(comment)}
                          bind:allComments="{comments}"
                          bind:users="{users}"

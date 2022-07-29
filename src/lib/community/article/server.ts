@@ -40,9 +40,13 @@ export class Article {
       for comment in comments
         sort comment.createdAt asc
         let isPub = comment.pub == null || comment.pub
-        filter comment.article == ${this.id} && isPub
+        let replyExists = length(
+          for c in comments
+            filter c.relative == comment._key && c.pub
+             return c) > 0
+        filter comment.article == ${this.id} && (isPub || replyExists)
          limit ${(page - 1) * amount}, ${amount}
-         return comment`);
+         return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
     return await cursor.all();
   }
 
@@ -223,4 +227,12 @@ export class Article {
     }
   }
 
+  async delete(permanant: boolean) {
+    if (permanant) {
+      return await db.query(aql`
+        remove {_key: ${this.id}} in articles`)
+    }
+    return await db.query(aql`
+      update {_key: ${this.id}, pub: false} in articles`);
+  }
 }

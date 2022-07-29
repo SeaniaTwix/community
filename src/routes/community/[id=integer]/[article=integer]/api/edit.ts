@@ -4,7 +4,6 @@ import {Article} from '$lib/community/article/server';
 import {EditDto} from '$lib/types/dto/edit.dto';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
-import type {ITag} from '$lib/types/tag';
 import {load as loadHtml} from 'cheerio';
 import {unified} from 'unified';
 import rehypeParse from 'rehype-parse';

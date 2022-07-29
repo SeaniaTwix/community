@@ -41,4 +41,7 @@ export class CommentDto<VoteType = InternalVoteType> {
 
   // 대댓글 등등 undefined 가능. _key 값임.
   relative?: string;
+
+  // 삭제 된 경우에만 존재함. ssr
+  deleted?: boolean;
 }

@@ -1,14 +1,9 @@
 <script lang="ts">
-  import Upload from 'svelte-material-icons/Upload.svelte';
   import View from 'svelte-material-icons/Eye.svelte';
   import Plus from 'svelte-material-icons/Plus.svelte';
-  import Favorite from 'svelte-material-icons/Star.svelte';
   import Edit from 'svelte-material-icons/Pencil.svelte';
   import Delete from 'svelte-material-icons/TrashCan.svelte';
   import Report from 'svelte-material-icons/AlertBox.svelte';
-  import Up from 'svelte-material-icons/ArrowUp.svelte';
-  import Down from 'svelte-material-icons/ArrowDown.svelte';
-  import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
   import Admin from 'svelte-material-icons/Settings.svelte';
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import LikeEmpty from 'svelte-material-icons/ThumbUpOutline.svelte';
@@ -16,19 +11,22 @@
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import RemoveTag from 'svelte-material-icons/Close.svelte';
 
-  import type {IArticle} from '$lib/types/article';
   import {session} from '$app/stores';
-  import {EUserRanks} from '$lib/types/user-ranks';
+  import {goto} from '$app/navigation';
   import TimeAgo from 'javascript-time-ago';
-  import {ko} from '$lib/time-ko';
   import {dayjs} from 'dayjs';
   import CircleAvatar from './CircleAvatar.svelte';
   import Content from './Content.svelte';
-  import type {IUser} from '$lib/types/user';
-  import ky from 'ky-universal';
   import Tag from './Tag.svelte';
+  import type {IArticle} from '$lib/types/article';
+  import type {IUser} from '$lib/types/user';
+  import type {ITag} from '$lib/types/tag';
+  import {EUserRanks} from '$lib/types/user-ranks';
+  import {ko} from '$lib/time-ko';
+  import ky from 'ky-universal';
+  import HttpStatus from 'http-status-codes';
 
-  export let article: IArticle;
+  export let article: IArticle<Record<string, Record<string, ITag>>, IUser>;
   export let users: Record<string, IUser>;
   export let contents: string;
 
@@ -115,6 +113,12 @@
     }
   }
 
+  async function deleteArticle() {
+    const res = await ky.delete(`/community/${article.board}/${article._key}/api/delete`);
+    if (res.status === HttpStatus.ACCEPTED) {
+      goto(`/community/${article.board}${location.search}`).then();
+    }
+  }
 
   interface IImage {
     src: string
@@ -141,9 +145,9 @@
                 </a>
               {/if}
               {#if article.author._key === $session.user.uid || $session.user.rank >= EUserRanks.Manager}
-                    <span class="mt-0.5 cursor-pointer hover:text-red-400">
-                      <Delete size="1rem"/>
-                    </span>
+                <span on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
+                  <Delete size="1rem"/>
+                </span>
               {/if}
               {#if $session.user.rank >= EUserRanks.Manager}
                 <a href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
@@ -181,7 +185,7 @@
     <div class="rounded-sm overflow-hidden">
       <p class="px-4 py-2 border-l-2 border-sky-400 select-none dark:bg-zinc-600">
         출처 <a class="text-sky-300 hover:text-sky-400 transition-colors select-text"
-              href="{article.source}">{article.source}</a>
+               href="{article.source}">{article.source}</a>
       </p>
     </div>
   {/if}
