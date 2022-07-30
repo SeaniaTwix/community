@@ -4,7 +4,6 @@
   import Blind from 'svelte-material-icons/EyeOff.svelte';
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
-  import {load} from 'cheerio';
   import {session} from '$app/stores';
   import {isEmpty, parseInt} from 'lodash-es';
   import HttpStatus from 'http-status-codes';
@@ -77,10 +76,7 @@
   }
 
   function addImageSize(element: HTMLImageElement) {
-    // console.log('size:', imgObj, width, height);
-    // console.log('addImageSize', element.width, element.height);
     isImageSizeDefined = true;
-    // check preloaded
 
     if (!width) {
       let x = element.getAttribute('width');
@@ -149,7 +145,7 @@
   }
 
 </script>
-<div class="relative group inline-block" class:cursor-pointer={nsfw && !forceShow}>
+<div class="relative group inline-block max-w-full" class:cursor-pointer={nsfw && !forceShow}>
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
@@ -189,7 +185,9 @@
            class="min-w-full"
            bind:this={img}
            on:load={() => onImageLoaded(img)}
-           class:blur-2xl={nsfw && !forceShow} width="{size ? undefined : width}" height="{size ? undefined : height}"/>
+           class:blur-2xl={nsfw && !forceShow}
+           width="{size ? undefined : width}"
+           height="{size ? undefined : height}"/>
     </span>
     {#if folded}
       <div on:click={() => (folded = false)} prevent-reply

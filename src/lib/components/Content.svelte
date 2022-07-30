@@ -22,13 +22,6 @@
   const youtubeUrlFind =
     /<a href="https:\/\/(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?(.*?)"/;
 
-  function findImages(html: string) {
-    const $ = load(html);
-    const imgs = $('img');
-    console.log(imgs);
-    return imgs.toArray().length > 0;
-  }
-
 </script>
 
 {#each contents as content}
