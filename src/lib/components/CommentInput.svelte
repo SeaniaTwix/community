@@ -179,7 +179,7 @@
     {/if}
   </div>
   <div class="w-full flex flex-row grow shrink-0 {commentFolding ? 'h-0' : 'h-24'} transition-all">
-    <div class="flex flex-grow">
+    <div class="flex flex-grow" class:overflow-x-scroll={favoriteImageMode}>
 
       {#if !isEmpty(commentImageUploadSrc)}
 
@@ -232,7 +232,7 @@
 
         {:else}
 
-          <div class="flex flex-row h-full p-1 overflow-x-scroll space-x-2">
+          <div class="flex flex-row h-full p-1 space-x-2">
             {#each Object.values(favorites) as fav, i}
               <div on:click={() => favoriteImageSelected(fav)} class="h-full overflow-hidden aspect-square w-auto rounded-md cursor-pointer hover:ring-2 ring-sky-400">
                 <img class="w-full h-full object-cover object-top" src="{fav.src}" alt="{Object.keys(favorites)[i]}">
