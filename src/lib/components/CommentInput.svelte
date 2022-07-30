@@ -128,7 +128,7 @@
 {/if}
 
 <div class:mt-4={iosMode} class:shadow-md={!iosMode} class="overflow-hidden rounded-t-md bg-gray-50/50 flex flex-col relative __comment-input">
-  <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-all leading-zero">
+  <div class:__ios-bottom-fix={commentFolding} class="px-2 flex flex-row {!selectedComment ? 'hover:bg-gray-200 dark:hover:bg-gray-300/80' : ''} items-center transition-all leading-zero space-x-1">
 
     {#if isEmpty(commentImageUploadSrc)}
 
@@ -143,8 +143,8 @@
 
     {:else}
 
-      <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-1 cursor-pointer">
-        <span class="text-lg"><Delete size="1.25rem"/> 파일을 지우려면 여기 클릭하세요.</span>
+      <button on:click={cancelImageUpload} class="text-zinc-700 hover:text-red-600 p-0.5 cursor-pointer mr-1">
+        <span class="text-md items-center"><span class="align-middle"><Delete size="1.25rem"/></span>이미지 삭제</span>
       </button>
 
       <button on:click={() => smallImage = !smallImage} class="text-zinc-700 items-center">
@@ -160,13 +160,13 @@
           <span class="min-w-fit">{users[selectedComment.author].id}님의 "</span>
           <span class="truncate">{selectedComment.content}</span>
           <span class="min-w-fit">"에 답장 중...
-                  <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">
-                    <Goto />
-                  </a>
-                  <button class="hover:text-red-500 dark:hover::text-red-600" on:click={() => (selectedComment = undefined)}>
-                    <Close />
-                  </button>
-                </span>
+            <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">
+              <Goto />
+            </a>
+            <button class="hover:text-red-500 dark:hover::text-red-600" on:click={() => (selectedComment = undefined)}>
+              <Close />
+            </button>
+          </span>
         </p>
       </div>
 
@@ -184,7 +184,7 @@
       {#if !isEmpty(commentImageUploadSrc)}
 
         <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
-          <img class="w-full h-full object-cover object-top bg-white dark:bg-gray-600"
+          <img class="w-full h-full object-cover object-top bg-white dark:bg-gray-600" crossorigin="anonymous"
                on:load={imageLoadCompletedInComment}
                src="{commentImageUploadSrc}" alt="upload preview" />
         </div>

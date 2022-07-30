@@ -129,10 +129,12 @@
   async function onImageLoaded(element: HTMLImageElement) {
     autoNaturalSize(element);
     try {
-      const {name} = await ky
-        .get(`/user/favorite/image?url=${encodeURIComponent(element.src)}`)
-        .json<{ name: string | null }>();
-      isFavorite = !!name;
+      if ($session.user) {
+        const {name} = await ky
+          .get(`/user/favorite/image?url=${encodeURIComponent(element.src)}`)
+          .json<{ name: string | null }>();
+        isFavorite = !!name;
+      }
     } finally {
       loading = false;
     }
