@@ -65,12 +65,10 @@
   }
 
   function onReplyClicked(event: PointerEvent & {path: (HTMLElement | Window)[]}) {
-    $highlighed = undefined;
-    console.log(event);
     if (!isOk(event.path) ) {
       return;
     }
-
+    $highlighed = undefined;
     currentReply.set(comment._key);
   }
 

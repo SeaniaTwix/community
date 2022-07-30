@@ -175,6 +175,8 @@
 
     try {
 
+      commentTextInput.blur();
+
       // console.log(commentData);
       // return;
       await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
@@ -235,10 +237,6 @@
 
   function closeImageEditor() {
     showingImageEditor = false;
-  }
-
-  function imageLoadCompletedInComment(element: HTMLImageElement) {
-    URL.revokeObjectURL(element.src);
   }
 
   function fileSelected() {
