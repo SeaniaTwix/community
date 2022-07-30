@@ -92,38 +92,41 @@
 
 </script>
 
-{#if showSideMenu}
-  <div transition:fly={{x: -(document.body.scrollWidth + 50), duration: 350}}
-       class="absolute w-screen h-screen flex">
-    <div class="bg-white dark:bg-gray-700 dark:text-zinc-200 w-9/12 h-screen shadow-black
-                shadow-md z-50">
-      <div class="p-2 block w-full shadow-md text-xl ">
-        <span class="px-4 py-2">루헨</span>
-      </div>
+<div class="fixed bg-white/50 backdrop-blur-lg z-50">
+  {#if showSideMenu}
+    <div transition:fly={{x: -(document.body.scrollWidth + 50), duration: 350}}
+         class="absolute w-screen h-screen flex">
+      <div class="bg-white dark:bg-gray-700 dark:text-zinc-200 w-9/12 h-screen shadow-gray-400
+                shadow-lg z-50">
+        <div class="p-2 block w-full shadow-md text-xl ">
+          <span class="px-4 py-2">루헨</span>
+        </div>
 
-      <div class="p-2 mt-1 text-lg">
-        <ul class="space-y-3">
-          <li>
-            <a class="block px-4 py-2 w-full bg-zinc-100 dark:bg-gray-500 hover:bg-zinc-200 rounded-md
-                      transition-colors dark:hover:bg-gray-500"
-               href="/" on:click={closeSideMenu}>홈</a>
-          </li>
-          {#each boards as board}
+        <div class="p-2 mt-1 text-lg">
+          <ul class="space-y-3">
             <li>
               <a class="block px-4 py-2 w-full bg-zinc-100 dark:bg-gray-500 hover:bg-zinc-200 rounded-md
-                      transition-colors dark:hover:bg-gray-500" sveltekit:prefetch
-                 href="/community/{board.id}" on:click={closeSideMenu}>{board.name}</a>
+                      transition-colors dark:hover:bg-gray-500"
+                 href="/" on:click={closeSideMenu}>홈</a>
             </li>
-          {/each}
-        </ul>
+            {#each boards as board}
+              <li>
+                <a class="block px-4 py-2 w-full bg-zinc-100 dark:bg-gray-500 hover:bg-zinc-200 rounded-md
+                      transition-colors dark:hover:bg-gray-500" sveltekit:prefetch
+                   href="/community/{board.id}" on:click={closeSideMenu}>{board.name}</a>
+              </li>
+            {/each}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-{/if}
-
-{#if showSideMenu}
-  <div transition:fade class="absolute w-screen h-screen bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm" on:click={closeSideMenu}></div>
-{/if}
+  {/if}
+  {#if showSideMenu}
+    <div transition:fade
+         class="absolute w-screen h-screen bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm touch-none overscroll-none"
+         on:click={closeSideMenu}></div>
+  {/if}
+</div>
 
 <nav class="sticky top-0 bg-white/75 backdrop-blur-sm block shadow-md text-xl flex justify-between leading-none h-[3.375rem]
             dark:bg-gray-700/75 dark:text-zinc-200 select-none z-30">
@@ -138,7 +141,7 @@
       </li>
     </ul>
     <div class="overflow-hidden">
-      <a class="hidden md:inline-block bg-sky-400 hover:bg-sky-500 dark:bg-transparent dark:hover:bg-gray-500 w-[52px] h-full relative transition-colors text-gray-700 transition-colors" href="/">
+      <a class="hidden sm:inline-block bg-sky-400 hover:bg-sky-500 dark:bg-transparent dark:hover:bg-gray-500 w-[52px] h-full relative transition-colors text-gray-700 transition-colors" href="/">
         <svg class="absolute h-full top-0 right-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 106.74 117.45"><defs><style>.cls-1{fill:#fff;}.cls-2{fill:#d97a74;}</style></defs><g id="레이어_2" data-name="레이어 2"><g id="레이어_1-2" data-name="레이어 1"><path class="cls-1" d="M61.12,0C55.47.68,43,11.5,43,11.5h7.59c.44,3.2,3,6.2,6.2,6.62S62.69,16,63,15.73a7.09,7.09,0,0,0,1.94-4.23h.59S66.76-.63,61.12,0Z"/><path class="cls-1" d="M26.94,12S11.16,4.79,5.83,6.84,7.4,23.08,7.4,23.08l1-.56c.88,1.95,2,3.44,3.77,4,3.89,1.17,9.7-2.71,10.06-7.58a6.66,6.66,0,0,0-.89-3.77Z"/><path class="cls-1" d="M0,117.38H20.46l15-46.16h9.94v46.23h20l.1-2.94V71.22h21v46.23h20.17V9.82H86.57V56h-21V9.82H32.19q-14.41,0-21.82,7.66T3.06,39.61Q3.06,49.5,6.38,56A23.83,23.83,0,0,0,16.89,66.62ZM23.32,40.45q0-7.94,2.93-11.56c1.75-2.22,4.45-3.34,8.08-3.34H45.45V56h-11a9.61,9.61,0,0,1-8.19-3.76Q23.33,48.38,23.32,40.45Zm12.76-6H55.54v3.18H36.26C30,37.59,29.72,34.41,36.08,34.41Zm0,8.82H55.54v3.19H36.26C30,46.42,29.72,43.23,36.08,43.23Z"/><path class="cls-2" d="M10.37,17.48a22.47,22.47,0,0,1,7.27-5c-2.64-.93-5.87-1.8-7.44-1.19-1.86.71-1,4.13-.12,6.49Z"/><path class="cls-2" d="M60.46,9.82c0-1.92-.45-4.6-2.44-4.37s-5.3,2.62-7.55,4.37Z"/></g></g></svg>
       </a>
       <ul class="__flat-menu space-x-1 items-center hidden md:inline-block
