@@ -26,8 +26,8 @@
   export let users: Record<string, IUser>;
 
   export let content = '';
-  let textInput: HTMLTextAreaElement;
-  let mobileTextInput: HTMLTextAreaElement;
+  export let textInput: HTMLTextAreaElement;
+  export let mobileTextInput: HTMLTextAreaElement;
   export let iosMode = false;
 
   let favoriteImageMode = false;

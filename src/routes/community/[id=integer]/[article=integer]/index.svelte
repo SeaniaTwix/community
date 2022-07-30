@@ -71,11 +71,10 @@
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
-  import {onMount, onDestroy, tick} from 'svelte';
+  import {onMount, onDestroy, tick, afterUpdate} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import {fade} from 'svelte/transition';
   import Comment from '$lib/components/Comment.svelte';
-  import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
   import {writable} from 'svelte/store';
   import type {Unsubscriber} from 'svelte/store';
@@ -319,7 +318,7 @@
     }
   }
 
-  async function toggleCommentFold() {
+  async function toggleCommentFold(event: CustomEvent<HTMLTextAreaElement>) {
     const folding = Cookies.get('comment_folding') === 'true';
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
@@ -340,25 +339,17 @@
     goto(`/community/${article.board}${$page.url.search}`);
   }
 
-  let fileUploader: HTMLInputElement;
-  const fileChangeListener = writable<File>(null);
-  let subscriptions: Subscription[] = [];
-  let unsubscribers: Unsubscriber[] = [];
-  let pusher: Pusher;
-  onMount(async () => {
-    try {
-      document.querySelector('html').classList.add('__page-view');
-      document.querySelector('body').classList.add('__page-view', 'overflow-hidden');
-    } catch {
-      // no window. it's okay
-    }
+  let prevParams: {id: string, article: string};
+  afterUpdate(() => {
+    if (prevParams?.article !== $page.params.article) {
 
-    pusher = new Pusher(`${article._key}@${article.board}`);
+      if (pusher) {
+        pusher.close();
+      }
 
-    window.addEventListener('unload', clearSubscribes);
+      console.log(`new sub => ${article._key}@${article.board}`);
 
-    try {
-      ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
+      pusher = new Pusher(`${article._key}@${article.board}`);
 
       const whenCommentChanged = async ({body}) => {
         // console.log('comment:', body);
@@ -444,13 +435,33 @@
         }
       }
 
-      const observable = pusher.observable<Partial<IComment>>('comments');
-      subscriptions.push(observable.subscribe(whenCommentChanged));
-      // console.log(subscriptions);
-      const tagChange = pusher.observable('tag');
-      subscriptions.push(tagChange.subscribe(whenTagChanged));
-      const commentVoteChange = pusher.observable('comments:vote');
-      subscriptions.push(commentVoteChange.subscribe(whenVoteChanged as any));
+      pusher.subscribe<Partial<IComment>>('comments', whenCommentChanged);
+      pusher.subscribe('tag', whenTagChanged);
+      pusher.subscribe('comments:vote', whenVoteChanged);
+
+      prevParams = {...$page.params};
+    }
+  })
+
+  let fileUploader: HTMLInputElement;
+  const fileChangeListener = writable<File>(null);
+  let unsubscribers: Unsubscriber[] = [];
+  let pusher: Pusher;
+  onMount(async () => {
+    try {
+      document.querySelector('html').classList.add('__page-view');
+      document.querySelector('body').classList.add('__page-view', 'overflow-hidden');
+    } catch {
+      // no window. it's okay
+    }
+
+    pusher = new Pusher(`${article._key}@${article.board}`);
+
+    window.addEventListener('unload', clearSubscribes);
+
+    try {
+      ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
+
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
 
@@ -486,9 +497,6 @@
   function clearSubscribes() {
     for (const unsub of unsubscribers) {
       unsub();
-    }
-    for (const sub of subscriptions) {
-      sub.unsubscribe();
     }
     pusher?.close();
     currentReply.set(undefined);
