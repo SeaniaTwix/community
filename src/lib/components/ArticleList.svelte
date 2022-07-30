@@ -19,7 +19,7 @@
   export let board: string;
   export let list: ArticleItemDto[] = [];
   export let showingUserContextMenuIndex = -1;
-  $: console.log('changed:', showingUserContextMenuIndex);
+  // $: console.log('changed:', showingUserContextMenuIndex);
   // export let users: Record<string, IUser>;
   const dispatch = createEventDispatcher();
 

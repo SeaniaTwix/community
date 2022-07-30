@@ -190,7 +190,7 @@
     </div>
   {/if}
   <article class="pt-4 pb-2 min-h-[10rem]">
-    <Content contents="{contents}" nsfw="{!!article.tags['후방']}"/>
+    <Content {contents} nsfw="{!!article.tags['후방']}"/>
   </article>
   <div class="pt-3">
     <ul class="space-x-2 flex flex-wrap">

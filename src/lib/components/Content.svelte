@@ -1,11 +1,33 @@
 <script lang="ts">
   import Image from '$lib/components/Image.svelte';
+  import {load} from 'cheerio';
 
   export let contents: string[] = [];
+
+  function hasImages(content: string) {
+    const $ = load(content);
+    const imgs = $('p > img');
+    return imgs.length > 0;
+  }
+
+  function getImages(content: string) {
+    const $ = load(content);
+    const imgs = $('p > img');
+    console.log(imgs.length);
+    return imgs.toArray();
+  }
+
   export let nsfw = false;
 
   const youtubeUrlFind =
     /<a href="https:\/\/(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?(.*?)"/;
+
+  function findImages(html: string) {
+    const $ = load(html);
+    const imgs = $('img');
+    console.log(imgs);
+    return imgs.toArray().length > 0;
+  }
 
 </script>
 
@@ -17,8 +39,10 @@
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen></iframe>
-  {:else if content.startsWith('<p><img ')}
-    <Image {nsfw} {content} />
+  {:else if hasImages(content)}
+    {#each getImages(content) as image}
+      <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" />
+    {/each}
   {:else}
     {@html content}
   {/if}

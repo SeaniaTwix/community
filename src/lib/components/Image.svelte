@@ -11,11 +11,6 @@
   import {imageSrc} from '../community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
 
-  export let content = '';
-  let _ = load(content);
-  // noinspection TypeScriptValidateTypes
-  const imgObj = _('img')?.[0];
-  console.log('img:', imgObj);
   let img: HTMLImageElement;
   let wrapper: HTMLDivElement;
   export let src: string | undefined;
@@ -25,8 +20,8 @@
   let isFavorite = false;
   let forceShow = false;
   let folded = false;
-  let width = size?.x ?? imgObj?.attribs?.width;
-  let height = size?.y ?? imgObj?.attribs?.height;
+  let width = size?.x;
+  let height = size?.y;
   let isImageSizeDefined = false;
 
   async function deleteFavorite() {
@@ -41,7 +36,7 @@
     if (loading) {
       return;
     }
-    const url = src ?? imgObj?.attribs?.src;
+    const url = src;
     if (url) {
       const res = await ky.post('/user/favorite/image', {
         json: {
@@ -59,7 +54,7 @@
     if (loading) {
       return;
     }
-    const url = src ?? imgObj?.attribs?.src;
+    const url = src;
     if (typeof url === 'string') {
       const data: FavoriteImage = {
         size: size ?? {x: parseInt(width), y: parseInt(height)},
@@ -86,42 +81,40 @@
     // console.log('addImageSize', element.width, element.height);
     isImageSizeDefined = true;
     // check preloaded
-    if (!imgObj && !size) {
-      element.style.width = `${element.naturalWidth}px`;
-    } else {
-      if (!width) {
-        let x = element.getAttribute('width');
-        if (size?.x) {
-          x = size.x.toString();
-        } else if (!x) {
-          x = element.style.width;
-          if (isEmpty(x)) {
-            x = element.naturalWidth.toString();
-          }
-        }
 
-        if (parseInt(onlyNumber(x)) > 0) {
-          width = onlyNumber(x).toString();
+    if (!width) {
+      let x = element.getAttribute('width');
+      if (size?.x) {
+        x = size.x.toString();
+      } else if (!x) {
+        x = element.style.width;
+        if (isEmpty(x)) {
+          x = element.naturalWidth.toString();
         }
       }
 
-      if (!height) {
-        let y = element.getAttribute('height');
-
-        if (size?.y) {
-          y = size.y.toString();
-        } else if (!y) {
-          y = element.style.height;
-          if (isEmpty(y)) {
-            y = element.naturalHeight.toString();
-          }
-        }
-
-        if (parseInt(onlyNumber(y)) > 0) {
-          height = onlyNumber(y).toString();
-        }
+      if (parseInt(onlyNumber(x)) > 0) {
+        width = onlyNumber(x);
       }
     }
+
+    if (!height) {
+      let y = element.getAttribute('height');
+
+      if (size?.y) {
+        y = size.y.toString();
+      } else if (!y) {
+        y = element.style.height;
+        if (isEmpty(y)) {
+          y = element.naturalHeight.toString();
+        }
+      }
+
+      if (parseInt(onlyNumber(y)) > 0) {
+        height = onlyNumber(y);
+      }
+    }
+
 
     folded = element.height > 968; //968;
   }
@@ -156,7 +149,7 @@
   }
 
 </script>
-<div class="relative group inline-block w-full" class:cursor-pointer={nsfw && !forceShow}>
+<div class="relative group inline-block" class:cursor-pointer={nsfw && !forceShow}>
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
@@ -192,7 +185,7 @@
     <span class="relative transition-all __target {folded ? '__folded-image' : '__unfolded-image'}"
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
-      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
+      <img {src} alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
            class="min-w-full"
            bind:this={img}
            on:load={() => onImageLoaded(img)}
