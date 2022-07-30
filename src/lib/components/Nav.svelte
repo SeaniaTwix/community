@@ -147,7 +147,7 @@
       <ul class="__flat-menu space-x-1 items-center hidden md:inline-block
              lg:inline-block overflow-x-scroll overflow-y-hidden">
         {#each boards as board}
-          <li class="p-2">
+          <li class="py-2">
             <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md
                   transition-colors dark:hover:bg-gray-500"
                on:click={(e) => checkBoardLink(e, `/community/${board.id}`)}
