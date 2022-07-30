@@ -162,7 +162,7 @@
       commentData.imageSize = {x: 100, y: 100};
     } else if (imageSize.x > 0 && imageSize.y > 0) {
       commentData.imageSize = imageSize;
-    } else {
+    } else if (commentData.image) {
       const getNaturalSize = new Promise<{x: number, y: number}>((resolve) => {
         const img = new Image();
         img.addEventListener('load', () => {
