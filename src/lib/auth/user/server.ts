@@ -6,6 +6,7 @@ import {EUserRanks} from '$lib/types/user-ranks';
 import {key} from './shared';
 import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '$lib/util';
+import type {IArangoDocumentIdentifier} from '$lib/database';
 
 type UnsafeUser = IUser & { password: string };
 
@@ -238,4 +239,38 @@ export class User {
       return tags[b] - tags[a];
     });
   }
+
+  /**
+   *
+   * @param src 이미지 링크입니다.
+   * @param name 이미지 이름입니다. 최대 16자까지만 와야 합니다. `/`를 이용해서 분류 할 수 있습니다.
+   * @param size 이미지의 고정 크기입니다. 이 크기보다 크게 렌더링 되지 않도록 해줍니다.
+   */
+  async addFavoriteImage(src: string, name: string, size: {x: number, y: number}) {
+    const uid = await this.uid;
+    const result = await db.query(aql`
+      let same = (
+        for fav in favorites
+          filter fav.type == 'image' && fav.user == ${uid} && fav.src == ${src}
+            return fav)
+      filter length(same) <= 0
+        insert ${{type: 'image', src, name, user: uid, size}} into favorites return NEW`)
+    console.log(await result.next())
+  }
+
+  async getFavoriteImages(): Promise<Record<string, { src: string, size: Size }>> {
+    const cursor = await db.query(aql`
+      for fav in favorites
+        filter fav.user == ${await this.uid}
+          return unset(fav, "_rev", "_id")`)
+    const all = await cursor.all() as Favorite[];
+    const result: Record<string, { src: string, size: Size }> = {};
+    for (const {src, name, _key, size} of all) {
+      result[`${_key}:${name}`] = {src, size};
+    }
+    return result;
+  }
 }
+
+type Size = {x: number, y: number};
+type Favorite = IArangoDocumentIdentifier & {type: 'image', src: string, name: string, size: Size };

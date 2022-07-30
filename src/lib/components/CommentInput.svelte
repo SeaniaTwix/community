@@ -12,6 +12,7 @@
   import {createEventDispatcher} from 'svelte';
   import type {IUser} from '$lib/types/user';
   import Checkbox from './Checkbox.svelte';
+  import ky from 'ky-universal';
 
   const dispatch = createEventDispatcher();
 
@@ -26,6 +27,11 @@
   export let textInput: HTMLTextAreaElement;
   export let mobileTextInput: HTMLTextAreaElement;
   export let iosMode = false;
+
+  let favoriteImageMode = false;
+
+  type FavoriteImage = {src: string, size: {x: number, y: number}};
+  let favorites: Record<string, FavoriteImage> = {};
 
   function addComment() {
     dispatch('submit');
@@ -76,6 +82,25 @@
     dispatch('selectfile');
   }
 
+  async function toggleFavoriteImages() {
+    favoriteImageMode = !favoriteImageMode;
+    console.log(favoriteImageMode);
+
+    if (favoriteImageMode) {
+      const images = await ky.get('/user/favorite/image')
+        .json<{favorites: Record<string, FavoriteImage>}>();
+
+      favorites = images.favorites;
+
+    }
+  }
+
+  async function favoriteImageSelected(fav: FavoriteImage) {
+    dispatch('favoriteclick', {fav, disable: () => {favoriteImageMode = false;}});
+    // commentImageUploadSrc = fav.src;
+    // favoriteImageMode = false;
+  }
+
 </script>
 
 {#if commenting}
@@ -90,10 +115,12 @@
 
     {#if isEmpty(commentImageUploadSrc)}
 
-      <button class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
+      <button on:click={toggleFavoriteImages}
+              class="{favoriteImageMode ? 'text-yellow-400 hover:text-yellow-500' : 'text-zinc-700 hover:text-zinc-900'} p-1 cursor-pointer transition-colors">
         <Favorite size="1.25rem"/>
       </button>
-      <button on:click={loadFileDialog} class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer">
+      <button on:click={loadFileDialog}
+              class="text-zinc-700 hover:text-zinc-900 p-1 cursor-pointer transition-colors">
         <Upload size="1.25rem"/>
       </button>
 
@@ -140,7 +167,7 @@
       {#if !isEmpty(commentImageUploadSrc)}
 
         <div on:click={openImageEditor} class="flex-shrink-0 w-24 border-4 border-zinc-100 dark:border-gray-300/50 hover:border-sky-400 dark:hover:border-sky-500 cursor-pointer select-none">
-          <img class="w-full h-full object-cover bg-white dark:bg-gray-600"
+          <img class="w-full h-full object-cover object-top bg-white dark:bg-gray-600"
                on:load={imageLoadCompletedInComment}
                src="{commentImageUploadSrc}" alt="upload preview" />
         </div>
@@ -149,7 +176,8 @@
 
       <div class="bg-gray-100 dark:bg-gray-300 p-3 flex-grow shadow-md dark:text-gray-800 h-full relative">
 
-        {#if !iosMode}
+        {#if !favoriteImageMode}
+          {#if !iosMode}
 
           <textarea id="__textarea-general" class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none"
                     on:keydown={detectSendOrEsc}
@@ -158,23 +186,23 @@
                     bind:value={content}
                     on:blur={onBlur}
                     placeholder="댓글을 입력하세요..."></textarea>
-          <div id="__textarea-mobile"
-               on:click={enableMobileInput} on:dblclick|preventDefault
-               class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none">
+            <div id="__textarea-mobile"
+                 on:click={enableMobileInput} on:dblclick|preventDefault
+                 class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none touch-none">
 
-            {#if isEmpty(content)}
+              {#if isEmpty(content)}
 
-              <span class="text-[#9DA3AE]">댓글을 입력하세요...</span>
+                <span class="text-[#9DA3AE]">댓글을 입력하세요...</span>
 
-            {:else}
+              {:else}
 
-              {content}
+                {content}
 
-            {/if}
+              {/if}
 
-          </div>
+            </div>
 
-        {:else}
+          {:else}
 
           <textarea class="w-full h-full bg-transparent focus:outline-none overflow-y-scroll overscroll-contain resize-none"
                     on:keydown={detectSendOrEsc}
@@ -183,10 +211,23 @@
                     on:blur={onBlur}
                     placeholder="댓글을 입력하세요..."></textarea>
 
+          {/if}
+
+        {:else}
+
+          <div class="flex flex-row h-full p-1 overflow-x-scroll space-x-2">
+            {#each Object.values(favorites) as fav, i}
+              <div on:click={() => favoriteImageSelected(fav)} class="h-full overflow-hidden aspect-square w-auto rounded-md cursor-pointer hover:ring-2 ring-sky-400">
+                <img class="w-full h-full object-cover object-top" src="{fav.src}" alt="{Object.keys(favorites)[i]}">
+              </div>
+            {/each}
+          </div>
+
         {/if}
+
       </div>
     </div>
-    {#if !iosMode}
+    {#if !iosMode && !favoriteImageMode}
       <button on:click={addComment} class="px-4 bg-sky-200 dark:bg-sky-800">
 
         {#if selectedComment}

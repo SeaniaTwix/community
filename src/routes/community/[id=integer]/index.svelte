@@ -195,7 +195,7 @@
 <div class="justify-between flex-col flex-row"></div>
 
 <!-- todo: move to __layout -->
-<div class="w-11/12 md:w-4/5 lg:w-3/4 mx-auto space-y-2 transition-transform __mobile-bottom-fix">
+<div class="w-11/12 md:w-4/5 lg:w-3/4 xl:w-3/5 2xl:w-1/2 mx-auto space-y-2 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
@@ -218,12 +218,14 @@
   <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)} class:flex-row-reverse={$session.buttonAlign === 'left'}>
     <h2 class="text-2xl">
       {name}
-      <!--
-      <span class="inline sm:hidden">none</span>
+
+      <!--span class="inline sm:hidden">none</span>
       <span class="hidden sm:inline md:hidden">sm</span>
-      <span class="hidden sm:hidden md:inline lg:hidden">md</span>
-      <span class="hidden sm:hidden md:hidden lg:inline">lg</span>
-      -->
+      <span class="hidden md:inline lg:hidden">md</span>
+      <span class="hidden lg:inline xl:hidden">lg</span>
+      <span class="hidden xl:inline 2xl:hidden">xl</span>
+      <span class="hidden 2xl:inline">2xl</span-->
+
     </h2>
     {#if $session.user}
       <div class="space-x-2" class:flex-row-reverse={$session.buttonAlign === 'left'}>

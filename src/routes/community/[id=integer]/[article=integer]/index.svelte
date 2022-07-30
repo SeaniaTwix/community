@@ -66,19 +66,14 @@
   }
 </script>
 <script lang="ts">
-  import Upload from 'svelte-material-icons/Upload.svelte';
-  import Favorite from 'svelte-material-icons/Star.svelte';
-  import Delete from 'svelte-material-icons/TrashCan.svelte';
   import Up from 'svelte-material-icons/ArrowUp.svelte';
   import Down from 'svelte-material-icons/ArrowDown.svelte';
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
-  import RemoveTag from 'svelte-material-icons/Close.svelte';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
   import {onMount, onDestroy, tick} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import {fade} from 'svelte/transition';
-  import {dayjs} from 'dayjs';
   import Comment from '$lib/components/Comment.svelte';
   import type {Subscription} from 'rxjs';
   import {goto} from '$app/navigation';
@@ -153,14 +148,20 @@
     }
 
     if (!isEmpty(commentImageUploadSrc)) {
-      const data = editedImage ? editedImage : commentImageUploadFileInfo;
-      const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
-      const name = 'UZ-is-Kawaii.png';
-      commentData.image = await upload(data, type, name);
+      if (commentImageUploadSrc.startsWith('https://s3.ru.hn')) {
+        commentData.image = commentImageUploadSrc;
+      } else {
+        const data = editedImage ? editedImage : commentImageUploadFileInfo;
+        const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
+        const name = 'UZ-is-Kawaii.png';
+        commentData.image = await upload(data, type, name);
+      }
     }
 
     if (image100x100) {
       commentData.imageSize = {x: 100, y: 100};
+    } else if (imageSize) {
+      commentData.imageSize = imageSize;
     }
 
     try {
@@ -288,6 +289,18 @@
         generalScrollView.scrollTop = lastScrollTop;
       }, 5);
     }, 10);
+  }
+
+  type FavImageSelectedData = {
+    fav: {src: string, size: {x: number, y: number}},
+    disable: () => void,
+  }
+  async function commentFavoriteImageSelected(event: CustomEvent<FavImageSelectedData>) {
+    const {fav, disable} = event.detail;
+    commentImageUploadSrc = fav.src;
+    imageSize = fav.size;
+    console.log(fav);
+    disable();
   }
 
   function saveLastScroll() {
@@ -752,14 +765,16 @@
                  {users} />
       {/if}
 
-      <CommentInput {commenting} {commentFolding} {selectedComment} {commentImageUploadSrc} {users}
+      <CommentInput {commenting} {commentFolding} {selectedComment} {users}
                     iosMode="{true}"
                     on:submit={addComment}
                     on:cancelimageupload={cancelImageUpload}
                     on:togglefold={toggleCommentFold}
                     on:openimageeditor={openImageEditor}
                     on:blur={disableMobileInput}
+                    on:favoriteclick={commentFavoriteImageSelected}
                     on:selectfile={() => fileUploader.click()}
+                    bind:commentImageUploadSrc={commentImageUploadSrc}
                     bind:smallImage="{image100x100}"
                     bind:content={commentContent}
                     bind:mobileTextInput={mobileTextInput} />
@@ -797,14 +812,16 @@
       </div>
 
       {#if $session.user}
-        <CommentInput {commenting} {commentFolding} {selectedComment} {commentImageUploadSrc} {users}
+        <CommentInput {commenting} {commentFolding} {selectedComment} {users}
                       on:submit={addComment}
                       on:cancelimageupload={cancelImageUpload}
                       on:togglefold={toggleCommentFold}
                       on:openimageeditor={openImageEditor}
                       on:blur={onBlurGeneralCommentInput}
+                      on:favoriteclick={commentFavoriteImageSelected}
                       on:mobilemode={enableMobileInput}
                       on:selectfile={() => fileUploader.click()}
+                      bind:commentImageUploadSrc={commentImageUploadSrc}
                       bind:smallImage="{image100x100}"
                       bind:content={commentContent}
                       bind:textInput={commentTextInput} />

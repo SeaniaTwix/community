@@ -6,6 +6,7 @@
   import {load} from 'cheerio';
   import {session} from '$app/stores';
   import {isEmpty, parseInt} from 'lodash-es';
+  import HttpStatus from 'http-status-codes';
 
   export let content = '';
   let _ = load(content);
@@ -25,19 +26,29 @@
   let height = size?.y ?? imgObj?.attribs?.height;
   let isImageSizeDefined = false;
 
+  async function deleteFavorite() {
+    // todo
+  }
+
   async function addFavorite() {
+    // console.log('addFavorite:', loading)
+    if (isFavorite) {
+      return deleteFavorite();
+    }
     if (loading) {
       return;
     }
     const url = src ?? imgObj?.attribs?.src;
-    if (url && url[1].startsWith('http')) {
-      const u = url[1];
-      await ky.put('/user/favorite/image', {
+    if (url) {
+      const res = await ky.post('/user/favorite/image', {
         json: {
-          url: u,
+          url: url.trim(),
+          name: '',
           size: {x: width, y: height},
         },
       });
+
+      isFavorite = res.status === HttpStatus.ACCEPTED;
     }
   }
 
@@ -54,8 +65,8 @@
   }
 
   function addImageSize(element: HTMLImageElement) {
-    console.log('size:', imgObj, width, height);
-    console.log('addImageSize', element.width, element.height);
+    // console.log('size:', imgObj, width, height);
+    // console.log('addImageSize', element.width, element.height);
     isImageSizeDefined = true;
     // check preloaded
     if (!imgObj && !size) {
@@ -98,6 +109,18 @@
     folded = element.height > 968; //968;
   }
 
+  async function onImageLoaded(element: HTMLImageElement) {
+    autoNaturalSize(element);
+    try {
+      const {name} = await ky
+        .get(`/user/favorite/image?url=${encodeURIComponent(element.src)}`)
+        .json<{name: string | null}>();
+      isFavorite = !!name;
+    } finally {
+      loading = false;
+    }
+  }
+
   function autoNaturalSize(element: HTMLImageElement) {
     addImageSize(element)
   }
@@ -109,7 +132,7 @@
   }
 
   function hide() {
-    console.log('hide');
+    // console.log('hide');
     forceShow = false;
   }
 
@@ -119,13 +142,15 @@
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
         {#if $session.user}
-          <span on:click={addFavorite}
-                  class="hover:text-yellow-400 cursor-pointer drop-shadow transition-all">
+          <span on:click={addFavorite} prevent-reply
+                class:text-yellow-400={isFavorite}
+                class="{isFavorite ? 'hover:text-red-400' : 'hover:text-yellow-400'} cursor-pointer drop-shadow transition-all">
             <Star size="2rem"/>
           </span>
         {/if}
         {#if nsfw}
-          <span on:click={hide} class="hover:text-red-500 cursor-pointer drop-shadow transition-all">
+          <span on:click={hide} prevent-reply
+                class="hover:text-red-500 cursor-pointer drop-shadow transition-all">
             <Blind size="2rem"/>
           </span>
         {/if}
@@ -144,9 +169,9 @@
     <span class="relative transition-all __target {folded ? '__folded-image' : '__unfolded-image'}"
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
-      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다"
+      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다" loading="lazy"
            bind:this={img}
-           on:load={() => autoNaturalSize(img)}
+           on:load={() => onImageLoaded(img)}
            class:blur-2xl={nsfw && !forceShow} width="{size ? undefined : width}" height="{size ? undefined : height}" />
     </span>
     {#if folded}

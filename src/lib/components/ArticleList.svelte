@@ -73,7 +73,7 @@
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
         <a href="/community/{board}/{article._key}{$page.url.search}">
           <div class="flex justify-between">
-            <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4">{article._key}</span>
+            <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
               <div class="flex justify-between min-w-0">
                 <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden truncate">
@@ -94,7 +94,7 @@
               </div>
               <div class="flex flex-grow flex-shrink-0 justify-between">
                 <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300">
-                  <span class="inline-block md:hidden lg:hidden text-zinc-400">
+                  <span class="inline-block md:hidden lg:hidden text-zinc-400 select-none">
                     {article._key}
                   </span>
                   {#if article.images}

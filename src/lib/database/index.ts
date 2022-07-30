@@ -13,7 +13,7 @@ export default class DefaultDatabase {
   private static url = process.env.DB_ENDPOINT ?? 'http://localhost:8529';
   private static readonly dbName = 'community';
   private static readonly requireCollections = [
-    'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications',
+    'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications', 'favorites',
   ];
   private static readonly requireEdgeCollections = [
     'reply'
