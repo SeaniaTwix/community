@@ -26,9 +26,9 @@ export class Pusher {
     this.target = context;
     if (window) {
       window.addEventListener('unload', this.close);
-      navigator.connection.addEventListener('change', this.networkChanged, true);
       window.addEventListener('online', this.online, true);
       window.addEventListener('offline', this.offline, true);
+      navigator?.connection?.addEventListener('change', this.networkChanged, true);
     }
   }
 
@@ -39,9 +39,9 @@ export class Pusher {
 
   destory() {
     this.close();
-    navigator.connection.removeEventListener('change', this.networkChanged, true);
     window.removeEventListener('online', this.online, true);
     window.removeEventListener('offline', this.offline, true);
+    navigator?.connection?.removeEventListener('change', this.networkChanged, true);
   }
 
   private online() {
