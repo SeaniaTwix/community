@@ -5,7 +5,7 @@ import njwt from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import {atob, btoa} from 'js-base64';
-import {User} from './lib/auth/user/server';
+import {User} from '$lib/auth/user/server';
 import {dayjs} from 'dayjs';
 import type {JwtUser} from '$lib/types/user';
 

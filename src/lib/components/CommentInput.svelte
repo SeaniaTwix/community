@@ -9,10 +9,12 @@
   import {page, session} from '$app/stores';
   import type {IComment} from '$lib/types/comment';
   import {isEmpty} from 'lodash-es';
-  import {createEventDispatcher} from 'svelte';
+  import {createEventDispatcher, onMount, onDestroy} from 'svelte';
   import type {IUser} from '$lib/types/user';
   import Checkbox from './Checkbox.svelte';
   import ky from 'ky-universal';
+  import {imageSrc} from '$lib/community/comment/client';
+  import type {FavoriteImage} from '$lib/community/comment/client';
 
   const dispatch = createEventDispatcher();
 
@@ -30,8 +32,23 @@
 
   let favoriteImageMode = false;
 
-  type FavoriteImage = {src: string, size: {x: number, y: number}};
   let favorites: Record<string, FavoriteImage> = {};
+
+  let imgSrcUnsub: () => void;
+  onMount(() => {
+    imgSrcUnsub = imageSrc.subscribe((image) => {
+      if (image) {
+        commentImageUploadSrc = image.src;
+        imageSrc.set(undefined);
+      }
+    })
+  });
+
+  onDestroy(() => {
+    if (typeof imgSrcUnsub === 'function') {
+      imgSrcUnsub();
+    }
+  })
 
   function addComment() {
     dispatch('submit');

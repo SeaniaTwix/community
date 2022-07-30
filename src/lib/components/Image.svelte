@@ -1,5 +1,6 @@
 <script lang="ts">
   import Star from 'svelte-material-icons/Star.svelte';
+  import Recycling from 'svelte-material-icons/Attachment.svelte';
   import Blind from 'svelte-material-icons/EyeOff.svelte';
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
@@ -7,6 +8,8 @@
   import {session} from '$app/stores';
   import {isEmpty, parseInt} from 'lodash-es';
   import HttpStatus from 'http-status-codes';
+  import {imageSrc} from '../community/comment/client';
+  import type {FavoriteImage} from '$lib/community/comment/client';
 
   export let content = '';
   let _ = load(content);
@@ -17,7 +20,7 @@
   let wrapper: HTMLDivElement;
   export let src: string | undefined;
   export let nsfw = false;
-  export let size: {x: number, y: number} | undefined;
+  export let size: { x: number, y: number } | undefined;
   let loading = true;
   let isFavorite = false;
   let forceShow = false;
@@ -49,6 +52,20 @@
       });
 
       isFavorite = res.status === HttpStatus.ACCEPTED;
+    }
+  }
+
+  async function recycleImage() {
+    if (loading) {
+      return;
+    }
+    const url = src ?? imgObj?.attribs?.src;
+    if (typeof url === 'string') {
+      const data: FavoriteImage = {
+        size: size ?? {x: parseInt(width), y: parseInt(height)},
+        src: url
+      };
+      imageSrc.set(data);
     }
   }
 
@@ -114,7 +131,7 @@
     try {
       const {name} = await ky
         .get(`/user/favorite/image?url=${encodeURIComponent(element.src)}`)
-        .json<{name: string | null}>();
+        .json<{ name: string | null }>();
       isFavorite = !!name;
     } finally {
       loading = false;
@@ -122,7 +139,7 @@
   }
 
   function autoNaturalSize(element: HTMLImageElement) {
-    addImageSize(element)
+    addImageSize(element);
   }
 
   function show() {
@@ -137,7 +154,7 @@
   }
 
 </script>
-<div class="relative group inline-block" class:cursor-pointer={nsfw && !forceShow}>
+<div class="relative group inline-block w-full" class:cursor-pointer={nsfw && !forceShow}>
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
@@ -146,6 +163,10 @@
                 class:text-yellow-400={isFavorite}
                 class="{isFavorite ? 'hover:text-red-400' : 'hover:text-yellow-400'} cursor-pointer drop-shadow transition-all">
             <Star size="2rem"/>
+          </span>
+          <span on:click={recycleImage} prevent-reply
+                class="hover:text-lime-500 cursor-pointer drop-shadow transition-all">
+            <Recycling size="2rem"/>
           </span>
         {/if}
         {#if nsfw}
@@ -158,8 +179,8 @@
     {/if}
   </div>
   <div bind:this={wrapper} on:click={show}
-       style="{size?.x ? `width: ${size.x}px;` : ''} {size?.y ? `height: ${size.y}px;` : ''}"
-       class="__article-image overflow-hidden rounded-md shadow-md object-cover">
+       style="{size?.x ? `width: ${size.x}px;` : ''} {size?.y ? `max-height: ${size.y}px;` : ''}"
+       class="__article-image overflow-hidden rounded-md shadow-md object-cover max-w-full">
     {#if nsfw && !forceShow}
       <p
         class="__center-text px-3 py-1 bg-gray-900/40 text-sm z-[1] rounded-md text-zinc-100 mx-auto w-max select-none">
@@ -169,10 +190,11 @@
     <span class="relative transition-all __target {folded ? '__folded-image' : '__unfolded-image'}"
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
-      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다" loading="lazy"
+      <img src="{src ?? imgObj.attribs?.src}" alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
+           class="min-w-full"
            bind:this={img}
            on:load={() => onImageLoaded(img)}
-           class:blur-2xl={nsfw && !forceShow} width="{size ? undefined : width}" height="{size ? undefined : height}" />
+           class:blur-2xl={nsfw && !forceShow} width="{size ? undefined : width}" height="{size ? undefined : height}"/>
     </span>
     {#if folded}
       <div on:click={() => (folded = false)} prevent-reply

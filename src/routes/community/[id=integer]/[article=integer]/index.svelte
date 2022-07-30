@@ -2,7 +2,7 @@
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import type {IComment} from '$lib/types/comment';
   import type {IUser} from '$lib/types/user';
-  import {uniq, isEmpty} from 'lodash-es';
+  import {isEmpty, uniq} from 'lodash-es';
   import * as cheerio from 'cheerio';
   import {ArticleDto} from '$lib/types/dto/article.dto';
   import HttpStatus from 'http-status-codes';
@@ -160,8 +160,17 @@
 
     if (image100x100) {
       commentData.imageSize = {x: 100, y: 100};
-    } else if (imageSize) {
+    } else if (imageSize.x > 0 && imageSize.y > 0) {
       commentData.imageSize = imageSize;
+    } else {
+      const getNaturalSize = new Promise<{x: number, y: number}>((resolve) => {
+        const img = new Image();
+        img.addEventListener('load', () => {
+          resolve({x: img.naturalWidth, y: img.naturalHeight});
+        })
+        img.src = commentData.image;
+      });
+      commentData.imageSize = await getNaturalSize;
     }
 
     try {
@@ -187,26 +196,6 @@
   }
 
   let escPressed = false;
-  async function detectSendOrEsc(event: KeyboardEvent) {
-    /*
-    if (event.isComposing || event.keyCode === 229) {
-      return;
-    } // */
-    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-      // console.log(event.ctrlKey, event.metaKey);
-      event.preventDefault();
-      addComment().then();
-      return;
-    }
-
-    escPressed = event.key === 'Escape';
-  }
-
-  async function detectEscReleased(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      escPressed = false;
-    }
-  }
 
   async function disableReplyMode() {
     selectedComment = undefined;
