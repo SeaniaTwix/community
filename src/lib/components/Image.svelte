@@ -47,7 +47,7 @@
         json: {
           url: url.trim(),
           name: '',
-          size: {x: width, y: height},
+          size: {x: parseInt(width), y: parseInt(height)},
         },
       });
 

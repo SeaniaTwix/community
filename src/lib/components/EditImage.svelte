@@ -24,8 +24,8 @@
       element.addEventListener('load', () => {
         const canvas = document.createElement('canvas') as HTMLCanvasElement;
         const context = canvas.getContext('2d');
-        canvas.width = element.width;
-        canvas.height = element.height;
+        canvas.width = element.naturalWidth;
+        canvas.height = element.naturalHeight;
         context.drawImage(element, 0, 0);
         resolve(canvas.toDataURL('image/png'));
       });
@@ -47,6 +47,7 @@
     canvas.style.aspectRatio = `${width}/${height}`;
     canvas.style.maxWidth = '100%';
     canvas.style.margin = '0 auto';
+    canvas.style.maxHeight = '100%';
     const selection = cropper.getCropperSelection();
     selection.addEventListener('change', (event: CustomEvent<Rect>) => {
       outputWidth = event.detail.width;
@@ -90,12 +91,14 @@
 
 
 <div in:fly="{{ y: 200, duration: 200 }}" out:fade
-     class="absolute w-full h-screen bg-white/60 dark:bg-gray-800/60 z-50 overscroll-contain">
-  <div class="mt-4 w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto shadow-md rounded-md bg-white dark:bg-gray-600 p-4 min-h-full space-y-4">
-    <div class="p-4 border-2 dark:border-gray-400 rounded-md" on:click={() => (act = true)} on:touchend={() => (act = true)}>
-      <img use:loadCropper {src} alt="for edit" crossorigin="anonymous">
+     class="fixed w-full h-full bg-white/60 dark:bg-gray-800/60 z-50 overscroll-contain">
+  <div class=" mt-4 w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 xl:w-1/2 2xl:2/5 mx-auto shadow-md rounded-md bg-white dark:bg-gray-600 p-4 min-h-full space-y-4 flex flex-col h-0">
+    <div class="p-4 border-2 dark:border-gray-400 rounded-md max-h-[66%] flex flex-row justify-center" on:click={() => (act = true)} on:touchend={() => (act = true)}>
+      <div class="max-w-full">
+        <img class="h-full" use:loadCropper {src} alt="for edit" crossorigin="anonymous">
+      </div>
     </div>
-    <div class="w-2/3 mx-auto flex flex-col space-y-2">
+    <div class="w-2/3 mx-auto shrink-0 flex flex-col space-y-2">
       <div class="outline outline-sky-800 rounded-md px-4 flex justify-between">
         <label class="flex-grow inline-block">
           가로

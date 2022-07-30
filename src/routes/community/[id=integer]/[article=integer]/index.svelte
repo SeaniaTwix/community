@@ -132,7 +132,7 @@
   }
 
   async function addComment() {
-    if (!$session && !commenting) {
+    if (!$session.user && !commenting) {
       return;
     }
 
