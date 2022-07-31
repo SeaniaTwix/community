@@ -174,7 +174,7 @@
 
     try {
 
-      commentTextInput.blur();
+      commentTextInput?.blur();
 
       // console.log(commentData);
       // return;

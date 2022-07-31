@@ -51,6 +51,10 @@
   })
 
   function addComment() {
+    if (isEmpty(content) && isEmpty($imageSrc)) {
+      return;
+    }
+
     dispatch('submit');
   }
 
