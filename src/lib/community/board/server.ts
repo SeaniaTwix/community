@@ -89,11 +89,6 @@ export class Board {
         sort article.createdAt desc
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub
-          let c = length(
-            for comment in comments
-              let isCoPub = comment.pub == null || comment.pub
-              filter comment.article == article._key && isCoPub
-                return comment)
           let savedTags = (
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub
@@ -110,6 +105,11 @@ export class Board {
               filter user._key == reader && has(user, "blockedUsers")
                 return (for blockedUser in user.blockedUsers return blockedUser.key)
           ) : []
+          let c = length(
+            for comment in comments
+              let isCoPub = comment.pub == null || comment.pub
+              filter comment.article == article._key && isCoPub && comment.author not in blockedUsers
+                return comment)
           filter blockedTags none in savedTags
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}

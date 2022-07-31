@@ -35,7 +35,7 @@ export class Article {
     });
   }
 
-  async getComments(page: number, amount: number) {
+  async getComments(page: number, amount: number, reader: string | null) {
     const cursor = await db.query(aql`
       for comment in comments
         sort comment.createdAt asc
@@ -44,7 +44,14 @@ export class Article {
           for c in comments
             filter c.relative == comment._key && c.pub
              return c) > 0
+        let reader = ${reader}
+        let blockedUsers = is_string(reader) ? flatten(
+          for user in users
+            filter user._key == reader && has(user, "blockedUsers")
+              return (for blockedUser in user.blockedUsers return blockedUser.key)
+        ) : []
         filter comment.article == ${this.id} && (isPub || replyExists)
+        filter comment.author not in blockedUsers
           limit ${(page - 1) * amount}, ${amount}
           return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
     return await cursor.all();

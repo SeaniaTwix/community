@@ -35,7 +35,8 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
   const paramAmount = url.searchParams.get('amount') ?? '50';
   const amount = Math.max(
     isStringInteger(paramAmount) ? toInteger(paramAmount) : 50, 50);
-  const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.list(amount, page) ?? [];
+  const reader = locals.user ? locals.user.uid : null;
+  const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.list(amount, page, reader) ?? [];
 
   return {
     status: HttpStatus.OK,
@@ -255,9 +256,9 @@ class CommentRequest {
     this.article = new Article(articleId);
   }
 
-  list(amount: number, page = 1) {
+  list(amount: number, page = 1, reader: string | null) {
     // console.log('list:', this.article.id)
-    return this.article.getComments(page, amount);
+    return this.article.getComments(page, amount, reader);
   }
 
   add(userId: string, comment: CommentDto) {
