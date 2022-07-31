@@ -269,6 +269,37 @@ export class User {
     }
     return result;
   }
+
+
+  async isSameAssignExists(solution: 'bbaton', text: string) {
+    const cursor = await db.query(aql`
+      for user in users
+        filter is_object(user.adult) && user.adult[${solution}] == ${text}
+          return user`);
+    return cursor.hasNext;
+  }
+
+  /**
+   * 해당 계정을 성인으로 지정합니다.
+   * @param solution 인증한 수단
+   * @param approved true면 성인인증이 되었음을 의미합니다.
+   * @param text 인증한 수단의 증명 키워드 (id 등등)
+   */
+  async assignAdult(solution: 'bbaton', approved: boolean, text: string) {
+    await db.query(aql`
+      update {_key: ${await this.uid}} with {
+        adult: {
+          assignedAt: DATE_NOW(),
+          approved: ${approved},
+          ${solution}: ${text}
+        }
+      } in users`);
+  }
+
+  async isAdult(): Promise<boolean> {
+    const user = await this.data;
+    return user.adult?.approved === true;
+  }
 }
 
 type Size = {x: number, y: number};

@@ -44,8 +44,9 @@
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
   import {classList} from 'svelte-body';
-  import {beforeUpdate, onMount} from 'svelte';
+  import {onMount} from 'svelte'
   import {CookieParser} from '$lib/cookie-parser';
+  import {page} from '$app/stores';
   import {iosStatusBarColor} from '$lib/stores/shared/theme';
   import Notifications from '$lib/components/Notifications.svelte';
   import {session} from '$app/stores';
@@ -60,7 +61,7 @@
     }
   });
 
-  beforeUpdate(() => {
+  page.subscribe(() => {
     if ($session.user) {
       const now = Date.now();
       const expiredAt = $session.user.exp * 1000;
@@ -74,7 +75,7 @@
           })
       }
     }
-  });
+  })
 
   export let boards: string[] = [];
   // console.log(uid)

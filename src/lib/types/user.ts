@@ -6,7 +6,14 @@ export interface IUser extends IArangoDocumentIdentifier {
   rank: EUserRanks;
   profile?: IUserProfile;
   avatar?: string;
+  adult?: IAdult;
   // remainTags: number;
+}
+
+interface IAdult {
+  approved: boolean;
+  assignedAt: Date;
+  bbaton: string;
 }
 
 interface IUserProfile {
