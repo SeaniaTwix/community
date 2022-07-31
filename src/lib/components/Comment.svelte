@@ -38,7 +38,7 @@
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
   }
 
-  function isOk(path: (HTMLElement | Window)[]) {
+  function isOk(path: EventTarget[]) {
     if (isReplyMode || isEmpty(path)) {
       return false;
     }
@@ -64,8 +64,8 @@
     return !noEventFireExists;
   }
 
-  function onReplyClicked(event: PointerEvent & {path: (HTMLElement | Window)[]}) {
-    if (!isOk(event.path) ) {
+  function onReplyClicked(event: PointerEvent) {
+    if (!$session.user || !isOk(event.composedPath())) {
       return;
     }
     $highlighed = undefined;

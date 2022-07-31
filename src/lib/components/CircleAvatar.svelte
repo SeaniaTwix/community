@@ -18,7 +18,7 @@
   }
 
   function imageLoaded(event: Event & {path: HTMLElement[]}) {
-    dispatch('load', event.path[0]);
+    dispatch('load', event.composedPath()[0]);
   }
 </script>
 <picture>
