@@ -238,7 +238,7 @@
 
           <div class="flex flex-row h-full p-1 space-x-2">
             {#each Object.values(favorites) as fav, i}
-              <div on:click={() => favoriteImageSelected(fav)} class="h-full overflow-hidden aspect-square w-auto rounded-md cursor-pointer hover:ring-2 ring-sky-400">
+              <div on:click={() => favoriteImageSelected(fav)} class="h-full flex-shrink-0 overflow-hidden aspect-square w-auto rounded-md cursor-pointer hover:ring-2 ring-sky-400">
                 <img class="w-full h-full object-cover object-top" src="{fav.src}" alt="{Object.keys(favorites)[i]}">
               </div>
             {/each}
