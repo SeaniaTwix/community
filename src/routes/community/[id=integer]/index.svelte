@@ -9,21 +9,21 @@
     if (!name) {
       return {
         status: HttpStatus.NOT_FOUND,
-        error: '없는 게시판입니다.'
-      }
+        error: '없는 게시판입니다.',
+      };
     }
     const page = url.searchParams.get('page') ?? '1';
     const res = await fetch(`${url.pathname}/api/list?page=${page}`);
-    const {list, maxPage} = await res.json() as {list: ArticleItemDto[], maxPage: number};
+    const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
     if (parseInt(page) > maxPage) {
       return {
         status: HttpStatus.NOT_FOUND,
         error: 'Not found',
-      }
+      };
     }
     const id = params.id;
     const bestR = await fetch(`${url.pathname}/api/best`);
-    const {bests} = await bestR.json() as {bests: ArticleItemDto[],};
+    const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
     /*
     const authors = list.map(a => a.author).join(',');
     const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
@@ -55,7 +55,7 @@
         maxPage,
         bests,
       },
-    }
+    };
   }
 </script>
 <script lang="ts">
@@ -68,34 +68,42 @@
   import {session} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
-  import {onDestroy, onMount} from 'svelte';
+  import {onDestroy, afterUpdate} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import type {Unsubscribable} from 'rxjs';
-  import type {IUser} from '$lib/types/user';
 
   export let list: ArticleItemDto[];
   export let bests: ArticleItemDto[];
   export let params;
   export let id: string = params.id;
   export let name: string;
-  // export let users: Record<string, IUser>;
   export let currentPage: number;
   export let maxPage: number;
 
   afterNavigate(({from, to}) => {
     const page = to.searchParams.get('page');
+    // console.log('afterNavigate');
+  });
+
+  afterUpdate(() => {
+    if (pusher) {
+      pusher.destory();
+    }
+
+    pusher = new Pusher(`@${params.id}`);
+    pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
+
   });
 
   let buffer: INewPublishedArticle[] = [];
-  const unsubs: Unsubscribable[] = [];
   let bestScrollPage = 1;
 
   let pusher: Pusher;
 
   let userContextMenuIndex = -1;
 
-  function changeClickedUser(event: CustomEvent<{already: boolean, i: number}>) {
-    console.log(event.detail);
+  function changeClickedUser(event: CustomEvent<{ already: boolean, i: number }>) {
+    // console.log(event.detail);
     if (event.detail.already) {
       userContextMenuIndex = -1;
     } else {
@@ -103,21 +111,7 @@
     }
   }
 
-  onMount(() => {
-    //*
-    pusher = new Pusher(`@${params.id}`);
-
-    window.addEventListener('unload', clearSubscribes);
-
-    try {
-      const articleUpdated = pusher.observable<INewPublishedArticle>('article');
-      unsubs.push(articleUpdated.subscribe(newArticlePublished));
-    } catch {
-      //
-    } // */
-  });
-
-  function newArticlePublished({body}: {body: INewPublishedArticle}) {
+  function newArticlePublished({body}: { body: INewPublishedArticle }) {
     userContextMenuIndex = -1;
     if (body.key && typeof body.key === 'string') {
       buffer = [body, ...buffer];
@@ -143,7 +137,7 @@
         image: item.image,
         views: 1,
         createdAt: new Date,
-      }
+      };
     });
 
     // todo: make list limit to max
@@ -172,17 +166,10 @@
     }
   }
 
-  function clearSubscribes() {
-    for (const u of unsubs) {
-      u.unsubscribe();
-    }
-    if (pusher) {
-      pusher.close();
-    }
-  }
-
   onDestroy(() => {
-    clearSubscribes();
+    if (pusher) {
+      pusher.destory();
+    }
   });
 
   // console.log(id, params);
@@ -199,14 +186,22 @@
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
-        <a href="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white">
-          <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+        <a href="/"
+           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-sky-400 dark:text-gray-400 dark:hover:text-white">
+          <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+          </svg>
           홈
         </a>
       </li>
       <li aria-current="page">
         <div class="flex items-center">
-          <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+          <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"></path>
+          </svg>
           <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
             {name}
           </span>
@@ -215,7 +210,8 @@
     </ol>
   </nav>
 
-  <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)} class:flex-row-reverse={$session.buttonAlign === 'left'}>
+  <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)}
+       class:flex-row-reverse={$session.buttonAlign === 'left'}>
     <h2 class="text-2xl">
       {name}
 
@@ -262,7 +258,8 @@
             {#each bests.slice(0, 5) as best}
               <li>
                 <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                  <div class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                  <div
+                    class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                     <p class="truncate text-sm">{best.title}</p>
                   </div>
                 </a>
@@ -277,7 +274,8 @@
               {#each bests.slice(5) as best}
                 <li>
                   <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                    <div class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                    <div
+                      class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                       <p class="truncate text-sm">{best.title}</p>
                     </div>
                   </a>
@@ -289,11 +287,13 @@
 
       </div>
       <div class="block sm:hidden flex justify-center text-zinc-300 dark:text-zinc-400 space-x-1">
-        <span class="transition-colors" class:text-zinc-500={bestScrollPage <= 1} class:dark:text-zinc-100={bestScrollPage <= 1}>
-          <Circle size="0.5rem" />
+        <span class="transition-colors" class:text-zinc-500={bestScrollPage <= 1}
+              class:dark:text-zinc-100={bestScrollPage <= 1}>
+          <Circle size="0.5rem"/>
         </span>
-        <span class="transition-colors" class:text-zinc-500={bestScrollPage > 1} class:dark:text-zinc-100={bestScrollPage > 1}>
-          <Circle size="0.5rem" />
+        <span class="transition-colors" class:text-zinc-500={bestScrollPage > 1}
+              class:dark:text-zinc-100={bestScrollPage > 1}>
+          <Circle size="0.5rem"/>
         </span>
       </div>
     </div>
@@ -302,15 +302,17 @@
   <div class="flex justify-center text-sm">
 
     {#if isEmpty(buffer)}
-      <hr class="mt-4 h-3 border-zinc-200 dark:border-gray-400 border-dashed w-full block" />
+      <hr class="mt-4 h-3 border-zinc-200 dark:border-gray-400 border-dashed w-full block"/>
     {:else}
-      <button on:click={updateList} class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
-        <Refresh /> 새 게시물이 있습니다.
+      <button on:click={updateList}
+              class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
+        <Refresh/>
+        새 게시물이 있습니다.
       </button>
     {/if}
   </div>
 
-  <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}" />
+  <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
 
   {#if $session.user}
     <div class="flex flex-row justify-end" class:flex-row-reverse={$session.buttonAlign === 'left'}>
@@ -324,7 +326,7 @@
   {/if}
 
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}" />
+    <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
   </div>
 </div>
 

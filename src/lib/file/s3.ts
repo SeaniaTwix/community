@@ -49,8 +49,8 @@ export class S3 {
       Expires: 120,
     };
 
-    if (type.startsWith('video')) {
-      s3Params.Conditions!.push(['starts-with', '$Content-Type', 'video/webm']);
+    if (type === 'video/webm' || type === 'video/mp4') {
+      s3Params.Conditions!.push(['starts-with', '$Content-Type', type]);
     } else {
       s3Params.Conditions!.push(['starts-with', '$Content-Type', 'image/']);
     }
@@ -83,3 +83,4 @@ export interface UploadedObjectInfo {
   etag: string;
   versionId: string | null;
 }
+//

@@ -25,6 +25,7 @@
   import {ko} from '$lib/time-ko';
   import ky from 'ky-universal';
   import HttpStatus from 'http-status-codes';
+  import Novel from './Novel.svelte';
 
   export let article: IArticle<Record<string, Record<string, ITag>>, IUser>;
   export let users: Record<string, IUser>;
@@ -190,7 +191,11 @@
     </div>
   {/if}
   <article class="pt-4 pb-2 min-h-[10rem]">
-    <Content {contents} nsfw="{!!article.tags['후방']}"/>
+    {#if Object.keys(article.tags).includes('소설')}
+      <Novel {contents} />
+    {:else}
+      <Content {contents} nsfw="{!!article.tags['후방']}"/>
+    {/if}
   </article>
   <div class="pt-3">
     <ul class="space-x-2 flex flex-wrap">
