@@ -559,7 +559,7 @@
   }
 
   function toLiteralContent(content: string) {
-    return striptags(content).replace(/&nbsp;/, '').trim().slice(0, 500);
+    return striptags(content).trim().slice(0, 500);
   }
 
 </script>
