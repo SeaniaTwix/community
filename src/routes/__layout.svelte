@@ -44,10 +44,11 @@
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
   import {classList} from 'svelte-body';
-  import {onMount} from 'svelte';
+  import {beforeUpdate, onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
   import {iosStatusBarColor} from '$lib/stores/shared/theme';
   import Notifications from '$lib/components/Notifications.svelte';
+  import {session} from '$app/stores';
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
@@ -58,17 +59,27 @@
     }
   });
 
+  beforeUpdate(() => {
+    if ($session.user) {
+      const now = Date.now();
+      const expiredAt = $session.user.exp * 1000;
+      if (now - expiredAt > 0) {
+        $session.user = undefined;
+      }
+    }
+  });
+
   export let boards: string[] = [];
   // console.log(uid)
 </script>
 <svelte:head>
   <meta name="theme-color" content="{$iosStatusBarColor}"/>
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 </svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 
-<Nav {boards} />
+<Nav {boards}/>
 <Notifications/>
 <main>
   <slot/>
