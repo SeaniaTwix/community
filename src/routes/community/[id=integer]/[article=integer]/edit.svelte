@@ -115,19 +115,22 @@
 
   const settings = {
     ...defaultEditorSettings,
-    images_upload_handler: async (blobInfo) => {
+    //*
+    images_upload_handler: async (blobInfo, success, failure) => {
       fileUploading = true;
       let link: string;
       try {
         link = await imageUpload(blobInfo.blob(), undefined, undefined);
+        // prevent blink when real url fetched
+        await ky.get(link);
+        success(link);
         return link;
+      } catch (e) {
+        failure(e);
       } finally {
         fileUploading = false;
-        if (link) {
-          setTimeout(() => editor.insertContent('<p></p>'), 10);
-        }
       }
-    },
+    }, // */
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
@@ -171,10 +174,10 @@
     }
   }
 
-  function insertVideo(videoUrl: string) {
+  function insertVideo(videoUrl: string, type: string) {
     editor.insertContent(
       `<video controls width="560" height="360" preload="metadata" muted>
-         <source src="${videoUrl}" type="video/webm" />
+         <source src="${videoUrl}" type="${type}" />
          사용 중이신 브라우저는 비디오 태그가 지원되지 않습니다.
        </video><p></p>`
     )
@@ -189,7 +192,7 @@
 
       const url = await imageUpload(file);
       if (file.type.startsWith('video')) {
-        insertVideo(url);
+        insertVideo(url, file.type);
       } else {
         insertImage(url);
       }

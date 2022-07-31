@@ -559,6 +559,10 @@
     }
   }
 
+  function toLiteralContent(content: string) {
+    return striptags(content).replace(/&nbsp;/, '').trim().slice(0, 500);
+  }
+
 </script>
 
 <svelte:head>
@@ -566,13 +570,13 @@
 
   <!-- Primary Meta Tags -->
   <meta name="title" content="루헨 - {article.title}">
-  <meta name="description" content="{striptags(article.content)}">
+  <meta name="description" content="{toLiteralContent(article.content)}">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
   <meta property="og:title" content="루헨 - {article.title}">
-  <meta property="og:description" content="{striptags(article.content)}">
+  <meta property="og:description" content="{toLiteralContent(article.content)}">
   {#if mainImage && !article.tags['후방']}
     <meta property="og:image" content="{mainImage}">
   {/if}
@@ -581,7 +585,7 @@
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
   <meta property="twitter:title" content="루헨 - {article.title}">
-  <meta property="twitter:description" content="{striptags(article.content)}">
+  <meta property="twitter:description" content="{toLiteralContent(article.content)}">
   {#if mainImage && !article.tags['후방']}
     <meta property="twitter:image" content="{mainImage}">
   {/if}

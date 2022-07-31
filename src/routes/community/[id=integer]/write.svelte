@@ -72,19 +72,22 @@
 
   const settings = {
     ...defaultEditorSettings,
-    images_upload_handler: async (blobInfo) => {
+    //*
+    images_upload_handler: async (blobInfo, success, failure) => {
       fileUploading = true;
       let link: string;
       try {
         link = await imageUpload(blobInfo.blob(), undefined, undefined);
+        // prevent blink when real url fetched
+        await ky.get(link);
+        success(link);
         return link;
+      } catch (e) {
+        failure(e);
       } finally {
         fileUploading = false;
-        if (link) {
-          setTimeout(() => editor.insertContent('<p></p>'), 10);
-        }
       }
-    },
+    }, // */
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
