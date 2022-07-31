@@ -11,8 +11,8 @@ export async function GET({request, locals}: RequestEvent): Promise<RequestHandl
       status: HttpStatus.UNAUTHORIZED,
       body: {
         reason: 'no session',
-      }
-    }
+      },
+    };
   }
 
   const user = new User(locals.user.uid);
@@ -24,9 +24,12 @@ export async function GET({request, locals}: RequestEvent): Promise<RequestHandl
     return {
       status: HttpStatus.OK,
       body: {
-        user: njwt.verify(cookies.token, key)?.body.toJSON(),
-      }
-    }
+        user: {
+          ...njwt.verify(cookies.token, key)?.body.toJSON(),
+          adult: await user.isAdult(),
+        },
+      },
+    };
 
   }
 
@@ -34,6 +37,6 @@ export async function GET({request, locals}: RequestEvent): Promise<RequestHandl
     status: 200,
     body: {
       id: user.id,
-    }
-  }
+    },
+  };
 }

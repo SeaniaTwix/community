@@ -59,6 +59,8 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
     const user = new User(result.user.sub.split('/')[1]);
     if (user) {
       event.locals.adult = await user.isAdult();
+    } else {
+      event.locals.adult = false;
     }
   }
 
@@ -145,7 +147,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
   return {
-    user: event.locals.user ? {...event.locals.user, adult: event.locals.adult} : undefined,
+    user: event.locals.user ? {...event.locals.user, adult: event.locals.adult ?? false} : undefined,
     commentFolding: event.locals.commentFolding,
     buttonAlign: event.locals.buttonAlign,
   };
