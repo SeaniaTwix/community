@@ -21,6 +21,7 @@ declare global {
         uid: string;
         rank: EUserRanks;
         sub: string;
+        exp: number;
       };
       commentFolding: boolean;
       buttonAlign: 'left' | 'right';
