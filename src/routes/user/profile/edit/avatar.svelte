@@ -1,6 +1,6 @@
 <script lang="ts">
-  import {tick} from 'svelte';
-  import {isEmpty} from 'lodash-es';
+  import {onDestroy, tick} from 'svelte';
+  import {isEmpty, last} from 'lodash-es';
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
   import EditImage from '$lib/components/EditImage.svelte';
   import ky from 'ky-universal';
@@ -14,6 +14,11 @@
   let editAvatarSrc = '';
   let editedAvatar: Blob;
   let isEdited = false;
+  let history: string[] = [];
+  let preview = {
+    src: null,
+    type: null,
+  }
 
   function openImageEditor() {
     showingImageEditor = true;
@@ -25,6 +30,7 @@
 
   async function imageEditedInComment(event: CustomEvent<Blob>) {
     editAvatarSrc = URL.createObjectURL(event.detail);
+    history = [...history, editAvatarSrc];
     editedAvatar = event.detail;
     isEdited = true;
     await tick();
@@ -60,6 +66,7 @@
     if (uploadPending.type.startsWith('image')) {
       editAvatarSrc = URL.createObjectURL(uploadPending);
       imageType = uploadPending.type;
+      history = [...history, editAvatarSrc];
     }
   }
 
@@ -96,6 +103,24 @@
       json: {link,}
     });
   }
+
+  function undo() {
+    const newHistory = [...history];
+    const removed = newHistory.pop();
+    if (removed.startsWith('blob:')) {
+      URL.revokeObjectURL(removed);
+    }
+    editAvatarSrc = last(newHistory);
+    history = newHistory;
+  }
+
+  onDestroy(() => {
+    for (const src of history) {
+      if (src.startsWith('blob:')) {
+        URL.revokeObjectURL(src);
+      }
+    }
+  })
 
   interface IUploadRequestResult {
     prefix: string;
@@ -139,6 +164,12 @@
     <button on:click={openImageEditor} class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
       이미지 편집
     </button>
+
+    {#if history.length > 1}
+      <button on:click={undo} class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
+        되돌리기
+      </button>
+    {/if}
 
     <button on:click={uploadAvatar} class="w-full bg-zinc-100 hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 rounded-md shadow-md">
       업로드
