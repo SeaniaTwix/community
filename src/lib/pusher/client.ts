@@ -120,11 +120,7 @@ export class Pusher {
     };
 
     ws.onclose = () => {
-      this.timers.push(
-        setInterval(() => {
-          //
-        }, 1000) as unknown as number,
-      )
+
     }
 
     return subject;
