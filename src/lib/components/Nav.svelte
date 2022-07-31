@@ -91,7 +91,6 @@
   }
 
 </script>
-
 <div class="fixed bg-white/50 backdrop-blur-lg z-50">
   {#if showSideMenu}
     <div transition:fly={{x: -(document.body.scrollWidth + 50), duration: 350}}
@@ -193,7 +192,7 @@
           <a sveltekit:prefetch aria-label="내 프로필" href="/user"
              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
                   dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
-            {$session.user.sub.split('/')[1] ?? '알 수 없음'}
+            {$session.user.sub?.split('/')?.[1] ?? '알 수 없음'}
           </a>
         </li>
       {:else}

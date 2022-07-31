@@ -65,6 +65,9 @@
     if ($session.user) {
       const now = Date.now();
       const expiredAt = $session.user.exp * 1000;
+      if (isNaN(now - expiredAt)) {
+        return;
+      }
       if (now - expiredAt > 0) {
         ky.get('/user/profile/api/my').json()
           .then(({user}) => {

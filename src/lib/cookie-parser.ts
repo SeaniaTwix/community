@@ -1,6 +1,6 @@
 export class CookieParser {
   constructor(private readonly cookie: string) {
-    cookie
+    (cookie ?? '')
       .split(';')
       .map(v => v.trim())
       .map(v => v.split('='))
