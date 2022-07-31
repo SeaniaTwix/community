@@ -1,5 +1,5 @@
 <svelte:head>
-  <title>어드민 콘솔</title>
+  <title>어드민 콘솔 - 커뮤니티</title>
 </svelte:head>
 <div class="p-4">
   <h2 class="text-3xl">어드민 콘솔</h2>
@@ -18,5 +18,8 @@
   </div>
   <div>
     <a href="/community/admin/pub">게시판 명시성 변경</a>
+  </div>
+  <div>
+    <a href="/user/admin">사용자 관리로</a>
   </div>
 </div>

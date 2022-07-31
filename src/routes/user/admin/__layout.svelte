@@ -3,7 +3,7 @@
   import {EUserRanks} from '$lib/types/user-ranks';
 
   export async function load({session, }: LoadEvent): Promise<LoadOutput> {
-    if (!session.user) {
+    if (!session.user || session.user.rank <= EUserRanks.User) {
       return {
         status: 404,
         error: 'Page not found',

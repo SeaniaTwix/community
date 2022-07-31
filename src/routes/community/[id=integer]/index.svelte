@@ -103,7 +103,6 @@
   let userContextMenuIndex = -1;
 
   function changeClickedUser(event: CustomEvent<{ already: boolean, i: number }>) {
-    // console.log(event.detail);
     if (event.detail.already) {
       userContextMenuIndex = -1;
     } else {
@@ -112,8 +111,8 @@
   }
 
   function newArticlePublished({body}: { body: INewPublishedArticle }) {
-    userContextMenuIndex = -1;
     if (body.key && typeof body.key === 'string') {
+      userContextMenuIndex = -1;
       buffer = [body, ...buffer];
     }
   }

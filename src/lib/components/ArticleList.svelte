@@ -63,7 +63,6 @@
     type: string
   }
 </script>
-
 <div class="w-full">
   {#if isEmpty(list)}
     <p class="w-full text-center text-zinc-500">게시글이 없습니다.</p>
@@ -148,7 +147,7 @@
               프로필 보기
             </a>
             {#if $session && $session.uid !== article.author && article.author.rank <= EUserRanks.User}
-              <a href="/user/profile/edit/blocks/users?id={article.author}" class="text-center bg-red-400 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-500 text-white px-2 py-1 rounded-md">
+              <a href="/user/profile/edit/blocks/users?id={article.author._key}" class="text-center bg-red-400 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-500 text-white px-2 py-1 rounded-md">
                 이 유저를 차단
               </a>
             {/if}
