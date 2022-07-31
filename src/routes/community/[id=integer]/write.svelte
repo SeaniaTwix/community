@@ -57,8 +57,6 @@
   import {upload as imageUpload} from '$lib/file/uploader';
   import {defaultEditorSettings, darkThemes} from '$lib/editor/settings';
 
-  type CommandEvent = Events.CommandEvent;
-
   const f = writable<File>(null);
 
   export let editorKey: string;
@@ -74,7 +72,8 @@
     ...defaultEditorSettings,
     //*
     images_upload_handler: async (blobInfo, success, failure) => {
-      fileUploading = true;
+      // fileUploading = true;
+      fileUploadingCount++;
       let link: string;
       try {
         link = await imageUpload(blobInfo.blob(), undefined, undefined);
@@ -85,7 +84,8 @@
       } catch (e) {
         failure(e);
       } finally {
-        fileUploading = false;
+        // fileUploading = false;
+        fileUploadingCount--;
       }
     }, // */
     setup: (_editor) => {
@@ -125,7 +125,8 @@
   let addMode = false;
 
   let uploading = false;
-  let fileUploading = false;
+  // let fileUploading = false;
+  let fileUploadingCount = 0;
 
   function fileSelected() {
     f.set(fileUploader.files[0]);
@@ -153,11 +154,16 @@
 
     await new Promise((resolve) => {
       const i = setInterval(() => {
-        if (!fileUploading) {
+        if (fileUploadingCount === 0) {
           clearInterval(i);
           return resolve();
         }
       }, 100);
+    });
+
+    // todo: check image src is all changed
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
     });
 
     addSizeAllImages();
@@ -277,7 +283,7 @@
       if (!['image', 'video'].includes(file.type.split('/')[0])) {
         return;
       }
-      fileUploading = true;
+      fileUploadingCount++;
       try {
         const url = await imageUpload(file);
         if (file.type.startsWith('video')) {
@@ -286,7 +292,7 @@
           insertImage(url);
         }
       } finally {
-        fileUploading = false;
+        fileUploadingCount--;
       }
     });
   });

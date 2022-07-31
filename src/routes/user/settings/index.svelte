@@ -10,7 +10,7 @@
       };
     }
 
-    console.log(buttonAlign)
+    // console.log(buttonAlign)
 
     return {
       status: HttpStatus.OK,

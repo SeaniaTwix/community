@@ -74,7 +74,7 @@
       const {title} = await ky.get(
         `/community/${notify.root}/${notify.target}/api/info`).json<{title: string}>();
 
-      console.log($page);
+      // console.log($page);
 
 
       const newNoti: ISimpleNoti = {

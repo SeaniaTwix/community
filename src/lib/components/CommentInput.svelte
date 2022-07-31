@@ -51,7 +51,7 @@
   })
 
   function addComment() {
-    if (isEmpty(content) && isEmpty($imageSrc)) {
+    if (isEmpty(content) && isEmpty(commentImageUploadSrc)) {
       return;
     }
 
@@ -105,7 +105,7 @@
 
   async function toggleFavoriteImages() {
     favoriteImageMode = !favoriteImageMode;
-    console.log(favoriteImageMode);
+    // console.log(favoriteImageMode);
 
     if (favoriteImageMode) {
       const images = await ky.get('/user/favorite/image')

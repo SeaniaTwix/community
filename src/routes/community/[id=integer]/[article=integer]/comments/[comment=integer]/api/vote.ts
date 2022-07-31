@@ -202,7 +202,7 @@ class CommentVoteRequest {
     const newVote = {
       [userId]: {type, createdAt: new Date},
     };
-    console.log(newVote);
+    // console.log(newVote);
 
     await db.query(aql`
       for comment in comments

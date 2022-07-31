@@ -13,7 +13,7 @@
   function getImages(content: string) {
     const $ = load(content);
     const imgs = $('p > img');
-    console.log(imgs.length);
+    // console.log(imgs.length);
     return imgs.toArray();
   }
 

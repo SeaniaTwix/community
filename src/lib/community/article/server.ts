@@ -160,7 +160,7 @@ export class Article {
       throw new Error('whitespace not allowed in tag');
     }
 
-    console.log(tags, this.id, userId);
+    // console.log(tags, this.id, userId);
 
     return db.query(aql`
       for savedTag in tags

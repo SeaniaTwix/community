@@ -17,7 +17,7 @@ export class Notifications {
    *                   이때는 발생 시킨 인물이 중요하지 않을 때 입니다.
    */
   async send(context: NotifyContext, body: INotify, instigator?: string) {
-    console.log(body);
+    // console.log(body);
     if (!await this.isAlreadyNotified(body)) {
       await this.saveToDb(body, instigator);
 

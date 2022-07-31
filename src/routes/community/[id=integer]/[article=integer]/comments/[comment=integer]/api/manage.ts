@@ -17,7 +17,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   }
 
   const {id, article, comment} = params;
-  console.log(params)
+  // console.log(params)
   const p = url.searchParams.get('permanant') ?? 'no';
   const permanantly = p === 'yes';
 
@@ -87,7 +87,7 @@ class ManageCommentRequest {
   }
 
   unpub(): Promise<any> {
-    console.log(this.comment);
+    // console.log(this.comment);
     return this.comment.unpub();
   }
 

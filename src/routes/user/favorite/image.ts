@@ -32,7 +32,7 @@ export async function GET({url, locals: {user}}: RequestEvent): Promise<RequestH
 
     const favs = await u.getFavoriteImages();
     const i = Object.values(favs).findIndex(fav => fav.src === link);
-    console.log(favs, i, Object.keys(favs)[i]);
+    // console.log(favs, i, Object.keys(favs)[i]);
 
     return {
       status: HttpStatus.OK,
@@ -83,7 +83,7 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   };
 
   if (typeof url !== 'string' || typeof name !== 'string' || typeof size !== 'object') {
-    console.log(!url, !name, !size)
+    // console.log(!url, !name, !size)
     return {
       status: HttpStatus.BAD_REQUEST,
     }

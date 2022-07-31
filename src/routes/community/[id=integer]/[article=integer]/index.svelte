@@ -176,7 +176,6 @@
 
       commentTextInput?.blur();
 
-      // console.log(commentData);
       // return;
       await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
         json: commentData,

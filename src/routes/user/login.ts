@@ -7,7 +7,7 @@ import {inRange} from 'lodash-es';
 
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
-  console.log('new login')
+  // console.log('new login')
   const login = new LoginRequest(await request.json() as LoginDto);
 
   if (!inRange(login.id.length, 3, 16)) {

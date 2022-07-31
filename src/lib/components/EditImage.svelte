@@ -15,10 +15,6 @@
     dispatch('close');
   }
 
-  onMount(async () => {
-    console.log('mounted')
-  });
-
   async function toBase64(element: HTMLImageElement): Promise<string> {
     return await new Promise(resolve => {
       element.addEventListener('load', () => {
@@ -55,7 +51,6 @@
     });
     selection.style.overscrollBehavior = 'contain';
     selection.$reset();
-    console.log('load cropper done');
   }
 
   type Rect = {x: number, y: number, width: number, height: number};
@@ -82,7 +77,7 @@
 
     const blob = new Blob(byteArrays, {type: 'image/png'});
 
-    console.log(blob);
+    // console.log(blob);
 
     dispatch('save', blob);
   }

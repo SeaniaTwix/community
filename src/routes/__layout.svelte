@@ -49,6 +49,7 @@
   import {iosStatusBarColor} from '$lib/stores/shared/theme';
   import Notifications from '$lib/components/Notifications.svelte';
   import {session} from '$app/stores';
+  import ky from 'ky-universal';
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
@@ -64,7 +65,13 @@
       const now = Date.now();
       const expiredAt = $session.user.exp * 1000;
       if (now - expiredAt > 0) {
-        $session.user = undefined;
+        ky.get('/user/profile/api/my').json()
+          .then(({user}) => {
+            $session.user = user;
+          })
+          .catch(() => {
+            $session.user = undefined;
+          })
       }
     }
   });

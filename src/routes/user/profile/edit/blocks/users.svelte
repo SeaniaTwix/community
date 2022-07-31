@@ -21,7 +21,7 @@
       users[user._key] = user;
     }
 
-    console.log(url.searchParams.get('id'))
+    // console.log(url.searchParams.get('id'))
 
     return {
       status: HttpStatus.OK,

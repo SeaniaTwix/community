@@ -5,7 +5,7 @@
   const dispatch = createEventDispatcher();
 
   function changed() {
-    console.log('changed', checked);
+    // console.log('changed', checked);
     dispatch('change', checked);
   }
 

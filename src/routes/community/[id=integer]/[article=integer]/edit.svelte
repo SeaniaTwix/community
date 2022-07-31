@@ -65,7 +65,8 @@
   let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
   let updating = false;
   let registeredAutoTag: string | undefined;
-  let fileUploading = false;
+  // let fileUploading = false;
+  let fileUploadingCount = 0;
 
   export let editorKey: string;
   export let article: string;
@@ -117,7 +118,8 @@
     ...defaultEditorSettings,
     //*
     images_upload_handler: async (blobInfo, success, failure) => {
-      fileUploading = true;
+      // fileUploading = true;
+      fileUploadingCount++;
       let link: string;
       try {
         link = await imageUpload(blobInfo.blob(), undefined, undefined);
@@ -128,7 +130,8 @@
       } catch (e) {
         failure(e);
       } finally {
-        fileUploading = false;
+        // fileUploading = false;
+        fileUploadingCount--;
       }
     }, // */
     setup: (_editor) => {
@@ -190,11 +193,16 @@
     unsub = f.subscribe(async (file) => {
       if (!file) return;
 
-      const url = await imageUpload(file);
-      if (file.type.startsWith('video')) {
-        insertVideo(url, file.type);
-      } else {
-        insertImage(url);
+      try {
+        fileUploadingCount++
+        const url = await imageUpload(file);
+        if (file.type.startsWith('video')) {
+          insertVideo(url, file.type);
+        } else {
+          insertImage(url);
+        }
+      } finally {
+        fileUploadingCount--;
       }
     });
   });
@@ -214,11 +222,16 @@
 
     await new Promise((resolve) => {
       const i = setInterval(() => {
-        if (!fileUploading) {
+        if (fileUploadingCount === 0) {
           clearInterval(i);
           return resolve();
         }
       }, 100);
+    });
+
+    // todo: check image src is all changed
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300);
     });
 
     addSizeAllImages();

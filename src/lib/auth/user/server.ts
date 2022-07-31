@@ -248,14 +248,13 @@ export class User {
    */
   async addFavoriteImage(src: string, name: string, size: {x: number, y: number}) {
     const uid = await this.uid;
-    const result = await db.query(aql`
+    await db.query(aql`
       let same = (
         for fav in favorites
           filter fav.type == 'image' && fav.user == ${uid} && fav.src == ${src}
             return fav)
       filter length(same) <= 0
         insert ${{type: 'image', src, name, user: uid, size}} into favorites return NEW`)
-    console.log(await result.next())
   }
 
   async getFavoriteImages(): Promise<Record<string, { src: string, size: Size }>> {

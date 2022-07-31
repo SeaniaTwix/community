@@ -1,8 +1,11 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
+import {CookieParser} from '$lib/cookie-parser';
+import njwt from 'njwt';
+import {key} from '$lib/auth/user/shared';
 
-export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
     return {
       status: HttpStatus.UNAUTHORIZED,
@@ -13,6 +16,19 @@ export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput>
   }
 
   const user = new User(locals.user.uid);
+
+
+  const cookies = (new CookieParser(request.headers.get('cookie') ?? '')).get();
+  if (cookies.token) {
+
+    return {
+      status: HttpStatus.OK,
+      body: {
+        user: njwt.verify(cookies.token, key)?.body.toJSON(),
+      }
+    }
+
+  }
 
   return {
     status: 200,
