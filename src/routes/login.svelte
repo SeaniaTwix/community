@@ -25,7 +25,6 @@
       json: {id, password},
     }).then(async (result) => {
       const {token} = await result.json<{token: string}>();
-      // console.log(token);
 
       session.update((store) => {
         // console.log('update');

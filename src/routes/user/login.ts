@@ -38,7 +38,7 @@ export async function POST({request}: RequestEvent): Promise<RequestHandlerOutpu
 
 export async function newLoginHeaders(user: User) {
   const token = user.token('user', {
-    uid: await user.uid, rank: await user.rank
+    uid: await user.uid, rank: await user.rank, adult: await user.isAdult(),
   });
   const expire = dayjs().add(10, 'minute').toDate();
   token.setExpiration(expire);

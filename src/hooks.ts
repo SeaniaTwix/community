@@ -109,7 +109,8 @@ async function refreshJwt(token: string) {
       const user = new User(id);
       const {_key, rank} = await user.safeData;
       const exp = dayjs().add(15, 'minute').toDate();
-      const newToken = await user.token('user', {uid: _key, rank});
+      const adult = await user.isAdult();
+      const newToken = await user.token('user', {uid: _key, rank, adult});
       newToken.setExpiration(exp);
       return {newToken: newToken.compact(), user: newToken.body.toJSON()};
     }
@@ -147,7 +148,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
   return {
-    user: event.locals.user ? {...event.locals.user, adult: event.locals.adult ?? false} : undefined,
+    user: event.locals.user,
     commentFolding: event.locals.commentFolding,
     buttonAlign: event.locals.buttonAlign,
   };
