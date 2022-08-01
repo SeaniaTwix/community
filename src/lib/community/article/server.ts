@@ -248,4 +248,9 @@ export class Article {
     return await db.query(aql`
       update {_key: ${this.id}, pub: false} in articles`);
   }
+
+  async isForAdult() {
+    const tags = await this.getAllTagsCounted();
+    return !!tags['성인'];
+  }
 }

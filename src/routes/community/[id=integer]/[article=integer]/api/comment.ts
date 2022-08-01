@@ -82,7 +82,6 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     const articleData = await comment.article.get();
-
     if (!articleData || articleData.board !== id) {
       return {
         status: HttpStatus.BAD_GATEWAY,
@@ -99,6 +98,9 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       },
     };
   }
+
+  const articleObj = new Article(article);
+  const isRequireAuth = await articleObj.isForAdult();
 
   const data = await request.json();
 
@@ -214,7 +216,9 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     if (savedComment) {
-      await Pusher.notify('comments', `${article}@${id}`, locals.user.uid, {...cd, _key: savedComment._key});
+      await Pusher.notify('comments', `${article}@${id}`, locals.user.uid, {
+        ...cd, _key: savedComment._key
+      }, isRequireAuth);
     }
   } catch (e) {
     console.error(e);
