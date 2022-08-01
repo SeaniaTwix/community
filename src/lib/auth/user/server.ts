@@ -274,7 +274,7 @@ export class User {
   async isSameAssignExists(solution: 'bbaton', text: string) {
     const cursor = await db.query(aql`
       for user in users
-        filter is_object(user.adult) && user.adult[${solution}] == ${text}
+        filter is_object(user.adult) && user.adult[${solution}] == ${text} && user.adult.approved
           return user`);
     return cursor.hasNext;
   }
