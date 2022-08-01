@@ -5,6 +5,7 @@ import HttpStatus from 'http-status-codes';
 import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {Pusher} from '$lib/pusher/server';
+import {User} from '../../../../../../lib/auth/user/server';
 
 /**
  * 예약된 태그들입니다.
@@ -150,13 +151,17 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
 class AddTagRequest {
   private article: Article;
 
-  constructor(articleId: string, private readonly tags: string[]) {
+  constructor(articleId: string, private tags: string[]) {
     this.article = new Article(articleId);
   }
 
   async addAll(userId: string) {
     if (!await this.article.exists) {
       return;
+    }
+    const user = await User.findByUniqueId(userId);
+    if (!user || !await user.isAdult()) {
+      this.tags = this.tags.filter(tag => tag !== '성인');
     }
     return await this.article.addTags(userId, uniq(this.tags));
   }
