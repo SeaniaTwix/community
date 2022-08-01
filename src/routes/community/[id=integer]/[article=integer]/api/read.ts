@@ -7,6 +7,7 @@ import HttpStatus from 'http-status-codes';
 import {isEmpty} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {EUserRanks} from '$lib/types/user-ranks';
+import type {IArticle} from '$lib/types/article';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
@@ -15,6 +16,23 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
     const uid = locals?.user?.uid;
     const force = uid ? locals.user.rank > EUserRanks.User : false;
     const article = await read.get(uid, force);
+
+    if (!article) {
+      return {
+        status: HttpStatus.NOT_FOUND,
+      }
+    }
+
+    if (article && Object.keys(article.tags ?? {}).includes('성인')) {
+      if (locals?.user?.adult !== true) {
+        return {
+          status: HttpStatus.NOT_ACCEPTABLE,
+          body: {
+            reason: 'you are not adult account',
+          },
+        };
+      }
+    }
 
     if (article?.serials) {
       const serialIds: string[] = article.serials;
@@ -25,15 +43,15 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
       status: 200,
       body: {
         article,
-      }
-    }
+      } as any,
+    };
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
         reason: 'article invalid:' + e.toString(),
-      }
-    }
+      },
+    };
   }
 }
 
@@ -42,7 +60,7 @@ class ReadArticleRequest {
               private readonly article: string) {
   }
 
-  async get(reader?: string, force = false) {
+  async get(reader?: string, force = false): Promise<Partial<IArticleGetResult> | null> {
     const cursor = await db.query(aql`
       for article in articles
         let isPub = ${force} || (is_bool(article.pub) ? article.pub : true)
@@ -94,7 +112,8 @@ class ReadArticleRequest {
       }
     }
 
-    const result: Record<string, any> = {
+    // @ts-ignore
+    const result: Partial<IArticleGetResult> = {
       ...article,
       user: {name: user.id},
       tags,
@@ -119,4 +138,11 @@ class ReadArticleRequest {
           return keep(article, "title", "_key", "createdAt")`);
     return await cursor.all();
   }
+}
+
+// @ts-ignore
+interface IArticleGetResult extends Partial<IArticle<Record<string, number>>> {
+  user: { name: string };
+  tags: Record<string, number>;
+  serials?: string[];
 }

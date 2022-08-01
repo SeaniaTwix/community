@@ -1,0 +1,48 @@
+<script lang="ts" context="module">
+
+  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  import HttpStatus from 'http-status-codes';
+
+  export async function load({session: {user}, url}: LoadEvent): Promise<LoadOutput> {
+    if (!user) {
+      return {
+        status: HttpStatus.MOVED_TEMPORARILY,
+        redirect: `/login`
+      };
+    }
+
+    const succeed = url.searchParams.get('result') === 'succeed';
+    const res = await fetch(url.origin + '/user/profile/api/my');
+    const {user: userData} = await res.json();
+    return {
+      props: {
+        adult: userData?.adult === true,
+        succeed,
+      },
+    };
+  }
+</script>
+<script lang="ts">
+  import {session} from '$app/stores';
+  import {onMount} from 'svelte';
+
+  export let succeed: boolean;
+  export let adult: boolean;
+
+  onMount(() => {
+
+    if (succeed) {
+      session.update((oldSession: any) => {
+        oldSession.adult = adult;
+        return oldSession;
+      });
+    }
+
+  })
+</script>
+
+{#if succeed}
+  성공!
+{:else}
+  실패...
+{/if}

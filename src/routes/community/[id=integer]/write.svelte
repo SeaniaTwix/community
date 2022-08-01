@@ -48,6 +48,7 @@
   import type {ArticleDto} from '$lib/types/dto/article.dto';
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
+  import {session} from '$app/stores';
   import Editor from '@tinymce/tinymce-svelte';
   import {onDestroy, onMount, tick} from 'svelte';
   import {theme} from '$lib/stores/shared/theme';
@@ -121,6 +122,7 @@
   let tags = [];
   let editorLoaded = false;
   let registeredAutoTag: string | undefined;
+  let adultTagError = false;
 
   let addMode = false;
 
@@ -203,6 +205,11 @@
   }
 
   function addTag(tag: string) {
+    if (!$session.user.adult && tag.trim() === '성인') {
+      return adultTagError = true;
+    } else {
+      adultTagError = false;
+    }
     tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]).slice(0, 20);
   }
 
@@ -254,6 +261,14 @@
       }
 
       registeredAutoTag = resultAutoTag[1];
+
+      if (!$session.user.adult && registeredAutoTag.trim() === '성인') {
+        registeredAutoTag = undefined;
+        return adultTagError = true;
+      } else {
+        adultTagError = false;
+      }
+
       tags = uniq([registeredAutoTag, ...tags].slice(0, 20));
     }
   }
@@ -351,8 +366,18 @@
         {#if registeredAutoTag}
           자동 태그가 활성화 되었습니다. 자동 태그를 포함해
         {/if}
-        태그는 최대 20개까지 등록할 수 있습니다. <button on:click={deleteAllTags} class="text-red-600">모든 태그 삭제</button>
+        태그는 최대 20개까지 등록할 수 있습니다.
+        {#if tags.includes('성인')}
+          <span class="text-red-600">성인 태그가 활성화되었습니다.</span>
+        {:else if adultTagError}
+          <span class="text-red-600">성인 태그는 성인인증을 한 사람만 추가 할 수 있습니다.</span>
+        {/if}
+        <button on:click={deleteAllTags} class="text-red-600">모든 태그 삭제</button>
       </p>
+    {:else}
+      {#if adultTagError}
+        <span class="text-red-600">성인 태그는 성인인증을 한 사람만 추가 할 수 있습니다.</span>
+      {/if}
     {/if}
     <ul id="__tags" class="inline-block flex flex-wrap space-x-2">
       {#each tags as tag}

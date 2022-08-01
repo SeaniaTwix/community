@@ -49,6 +49,7 @@
   import {goto} from '$app/navigation';
   import {darkThemes, defaultEditorSettings} from '$lib/editor/settings';
   import {upload as imageUpload} from '$lib/file/uploader';
+  import {session} from '$app/stores';
 
   export let title = '';
   export let source = '';
@@ -65,6 +66,7 @@
   let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
   let updating = false;
   let registeredAutoTag: string | undefined;
+  let adultTagError = false;
   // let fileUploading = false;
   let fileUploadingCount = 0;
 
@@ -98,13 +100,22 @@
     }
   }
 
+  function addTag(tag: string) {
+    if (!$session.user.adult && tag.trim() === '성인') {
+      return adultTagError = true;
+    } else {
+      adultTagError = false;
+    }
+    tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]).slice(0, 20);
+  }
+
   function detectEnter(event: KeyboardEvent) {
 
     if (event.isComposing || event.keyCode === 229) {
       return;
     }
     if (event.key === 'Enter') {
-      tags = _.uniq([...tags, ...tag.trim().split(' ').filter(isNotEmpty)]);
+      addTag(tag);
       tag = '';
     }
   }
@@ -275,6 +286,9 @@
     editor.insertContent('');
   }
 
+  function deleteAllTags() {
+    tags = [];
+  }
 </script>
 
 <svelte:head>
@@ -313,7 +327,25 @@
       {/if}
     </div>
   </div>
-  <div class="text-sm">
+  <div class="text-sm space-y-2">
+    {#if isNotEmpty(tags)}
+      <p>
+        {#if registeredAutoTag}
+          자동 태그가 활성화 되었습니다. 자동 태그를 포함해
+        {/if}
+        태그는 최대 20개까지 등록할 수 있습니다.
+        {#if tags.includes('성인')}
+          <span class="text-red-600">성인 태그가 활성화되었습니다.</span>
+        {:else if adultTagError}
+          <span class="text-red-600">성인 태그는 성인인증을 한 사람만 추가 할 수 있습니다.</span>
+        {/if}
+        <button on:click={deleteAllTags} class="text-red-600">모든 태그 삭제</button>
+      </p>
+    {:else}
+      {#if adultTagError}
+        <span class="text-red-600">성인 태그는 성인인증을 한 사람만 추가 할 수 있습니다.</span>
+      {/if}
+    {/if}
     <div id="__tags" class="space-x-2 inline-block">
       {#each tags as tag}
         <span class="rounded-md bg-zinc-100 dark:bg-gray-700 px-2 py-1 cursor-default"

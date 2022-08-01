@@ -15,7 +15,7 @@ export async function GET({request, locals}: RequestEvent): Promise<RequestHandl
     };
   }
 
-  const user = new User(locals.user.uid);
+  const user = new User(locals.user.sub.split('/')[1]);
 
 
   const cookies = (new CookieParser(request.headers.get('cookie') ?? '')).get();

@@ -11,6 +11,13 @@
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
     const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
+    if (res.status !== HttpStatus.OK) {
+      const {reason} = await res.json() as {reason: string};
+      return {
+        status: res.status,
+        error: reason,
+      }
+    }
     const {article} = await res.json() as ArticleDto;
     if (!article) {
       return {

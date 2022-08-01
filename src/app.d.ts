@@ -10,8 +10,7 @@ import type {IUser, JwtUser} from '$lib/types/user';
 declare global {
   namespace App {
     interface Locals {
-      user: JwtUser;
-      adult: boolean;
+      user: JwtUser & { adult: boolean };
       commentFolding: boolean;
       buttonAlign: 'left' | 'right';
     }
