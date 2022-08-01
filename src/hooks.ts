@@ -55,18 +55,8 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
     // console.error('[hooks]', event.request.headers.get('cookie'), e);
   }
 
-  if (result && result.user) {
-    const user = new User(result.user.sub.split('/')[1]);
-    if (user) {
-      event.locals.adult = await user.isAdult();
-    } else {
-      event.locals.adult = false;
-    }
-  }
-
   if (result?.newToken) {
     event.locals.user = result.user;
-
 
     const response = await resolve(event);
     const expire = dayjs().add(15, 'minute').toDate().toUTCString();
@@ -77,7 +67,6 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
     }
     return response;
   }
-
 
   if (!result) {
     // noinspection ES6RedundantAwait
@@ -121,7 +110,7 @@ async function refreshJwt(token: string) {
   return undefined;
 }
 
-type GetUserReturn = { user: JwtUser, newToken?: string };
+type GetUserReturn = { user: JwtUser & {adult: boolean}, newToken?: string };
 async function getUser(token?: string, refresh?: string): Promise<GetUserReturn | undefined> {
 
   if (!token) {
