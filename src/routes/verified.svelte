@@ -30,10 +30,16 @@
   export let adult: boolean;
 
   onMount(() => {
-
     if (succeed) {
-      session.update((oldSession: any) => {
-        oldSession.adult = adult;
+      session.update((oldSession) => {
+        oldSession.user.adult = adult;
+        return oldSession;
+      });
+    }
+
+    if (adult) {
+      session.update((oldSession) => {
+        oldSession.user.adult = adult;
         return oldSession;
       });
     }
