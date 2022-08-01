@@ -159,7 +159,13 @@
   }
 
   async function confirmEdit() {
-    // todo
+    await ky.patch(`/community/${board}/${article}/comments/${comment._key}/api/manage`, {
+      json: {
+        content: content,
+      }
+    });
+    comment.content = content;
+    cancelEdit();
   }
 
   function cancelEdit() {
@@ -317,7 +323,7 @@
               <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
             {/each}
           {:else}
-        <textarea class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"
+        <textarea prevent-reply class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"
                   bind:value={content}></textarea>
 
           {/if}
@@ -385,7 +391,7 @@
               {/if}
             </div>
           {:else}
-            <div class="flex space-x-2 w-full select-none">
+            <div class="flex space-x-2 w-full select-none" prevent-reply>
               <button on:click={confirmEdit} prevent-reply class="bg-sky-400 text-white dark:bg-sky-700 rounded-md py-2 w-full shadow-md">
                 수정 완료
               </button>

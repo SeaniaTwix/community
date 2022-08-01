@@ -5,7 +5,7 @@ import HttpStatus from 'http-status-codes';
 import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {Pusher} from '$lib/pusher/server';
-import {User} from '../../../../../../lib/auth/user/server';
+import {User} from '$lib/auth/user/server';
 
 /**
  * 예약된 태그들입니다.

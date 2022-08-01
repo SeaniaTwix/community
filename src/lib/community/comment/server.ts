@@ -38,7 +38,8 @@ export class Comment {
   }
 
   edit(newContent: string) {
-    //
+    return db.query(aql`
+      update {_key: ${this.id}} with {content: ${newContent}, editedAt: DATE_NOW()} in comments`)
   }
 
   unpub() {

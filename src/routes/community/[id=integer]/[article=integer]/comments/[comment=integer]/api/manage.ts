@@ -3,6 +3,7 @@ import HttpStatus from 'http-status-codes';
 import {Comment} from '$lib/community/comment/server';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {Pusher} from '$lib/pusher/server';
+import {sanitize} from '$lib/community/comment/client';
 
 const noPermisionError: RequestHandlerOutput = {
   status: HttpStatus.NOT_ACCEPTABLE,
@@ -10,6 +11,42 @@ const noPermisionError: RequestHandlerOutput = {
     reason: 'you have no permission of this action',
   },
 };
+
+export async function PATCH({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+  if (!locals.user) {
+    return noPermisionError;
+  }
+
+  const {comment} = params;
+
+  const manage = new ManageCommentRequest(comment);
+
+  if (!await manage.isAuthor(locals.user.uid)) {
+    return {
+      status: HttpStatus.NOT_ACCEPTABLE,
+      body: {
+        reason: 'you are not author',
+      },
+    };
+  }
+
+  try {
+    const {content} = await request.json() as { content: string };
+
+    await manage.edit(content);
+  } catch (e: any) {
+    return {
+      status: HttpStatus.BAD_GATEWAY,
+      body: {
+        reason: e.toString(),
+      },
+    };
+  }
+
+  return {
+    status: HttpStatus.ACCEPTED,
+  };
+}
 
 export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
@@ -23,7 +60,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
 
   const uid = locals.user.uid;
   const rank = locals.user.rank;
-  const isAdmin = rank >= EUserRanks.Manager
+  const isAdmin = rank >= EUserRanks.Manager;
 
   if (permanantly && !isAdmin) {
     return noPermisionError;
@@ -37,8 +74,8 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
         status: HttpStatus.NOT_FOUND,
         body: {
           reason: 'comment not exists',
-        }
-      }
+        },
+      };
     }
 
     const isAuthorsRequest = await manage.isAuthor(uid);
@@ -61,18 +98,19 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {
-        reason: e.toString()
-      }
-    }
+        reason: e.toString(),
+      },
+    };
   }
 
   return {
     status: HttpStatus.ACCEPTED,
-  }
+  };
 }
 
 class ManageCommentRequest {
-  private readonly comment: Comment
+  private readonly comment: Comment;
+
   constructor(private readonly commentId: string) {
     this.comment = new Comment(commentId);
   }
@@ -84,6 +122,12 @@ class ManageCommentRequest {
 
   exists(): Promise<boolean> {
     return this.comment.exists();
+  }
+
+  async edit(newContent: string) {
+    const content = await sanitize(newContent);
+
+    return await this.comment.edit(content);
   }
 
   unpub(): Promise<any> {

@@ -9,15 +9,11 @@ import type {PublicVoteType} from '$lib/types/dto/comment.dto';
 import {Pusher} from '$lib/pusher/server';
 import {isStringInteger} from '$lib/util';
 import type {IArangoDocumentIdentifier} from '$lib/database';
-import {UrlRegexSafe} from '$lib/url-regex-safe';
-import {unified} from 'unified';
-import rehypeParse from 'rehype-parse';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
 import {Notifications} from '$lib/notifications/server';
 import {User} from '$lib/auth/user/server';
 import type {IComment} from '$lib/types/comment';
 import {Comment} from '$lib/community/comment/server';
+import {sanitize} from '$lib/community/comment/client';
 
 export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {article} = params;
@@ -137,35 +133,8 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
       throw new Error('user invalid');
     }
 
-    let content = commentData.content ?? '';
+    const content = await sanitize(commentData.content ?? '');
 
-    const sanitized = await unified()
-      .use(rehypeParse, {fragment: true})
-      .use(rehypeSanitize, {
-        tagNames: [],
-      })
-      .use(rehypeStringify)
-      .process(content ?? '');
-
-    const urlFound = sanitized.value.toString().match(UrlRegexSafe());
-
-    if (urlFound) {
-      content = content
-        .split('\n')
-        .map((line) => {
-          return line.split(' ')
-            .map((text) => {
-              if (urlFound.includes(text)) {
-                const protocolExists = /^https?:\/\//.test(text);
-                const full = protocolExists ? text : `https://${text}`;
-                return `<a class="text-sky-300 hover:text-sky-400 transition-colors select-text" href="${full}">${full}</a>`;
-              } else {
-                return `<span>${text}</span>`;
-              }
-            })
-            .join(' ');
-        }).join('\n');
-    }
 
     cd = {
       votes: {},
