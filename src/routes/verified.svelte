@@ -40,9 +40,13 @@
 
   })
 </script>
-
-{#if succeed}
+{#if adult}
   성공!
 {:else}
-  실패...
+  {#if succeed}
+    성공!
+  {:else}
+    실패...
+  {/if}
 {/if}
+
