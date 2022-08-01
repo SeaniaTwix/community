@@ -687,7 +687,7 @@
         </div>
       {/if}
 
-      <Article {article} {contents} {users} />
+      <Article {article} {contents} {users} isAdult="{Object.keys(article.tags??{}).includes('성인')}" />
 
       {#if Object.keys(article.tags).find(tag => tag.startsWith('연재:'))}
         <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">

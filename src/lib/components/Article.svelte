@@ -10,6 +10,7 @@
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import RemoveTag from 'svelte-material-icons/Close.svelte';
+  import AdultBg from 'svelte-material-icons/Circle.svelte';
 
   import {session} from '$app/stores';
   import {goto} from '$app/navigation';
@@ -30,6 +31,7 @@
   export let article: IArticle<Record<string, Record<string, ITag>>, IUser>;
   export let users: Record<string, IUser>;
   export let contents: string;
+  export let isAdult = false;
 
   // noinspection TypeScriptUnresolvedFunction
   let liked = article?.myTags?.includes('_like');
@@ -130,7 +132,18 @@
   <div class="space-y-2 mb-4">
     <div class="flex justify-between">
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
-        <h2 class="text-2xl flex-shrink">{article.title}</h2>
+        <h2 class="text-2xl flex-shrink">
+          {article.title}
+
+          {#if isAdult}
+            <span>
+              <span class="mr-0.5 relative select-none">
+                <span class="text-md text-rose-500"><AdultBg /></span>
+                <span class="absolute left-1.5 top-[9px] text-white text-xs">19</span>
+              </span>
+            </span>
+          {/if}
+        </h2>
         <div class="inline-block flex space-x-2 pr-4">
           {#if $session.user}
             <div class="w-max py-2 md:py-0.5">

@@ -91,14 +91,21 @@
                   </div>
                 </div>
               </div>
-              <div class="flex flex-grow flex-shrink-0 justify-between">
-                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300">
+              <div class="flex flex-grow flex-shrink-0 justify-between leading-zero -mt-px">
+                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300 items-center flex flex-row">
                   <span class="inline-block md:hidden lg:hidden text-zinc-400 select-none">
                     {article._key}
                   </span>
                   {#if article.images}
                     <span>
                       <span class="mr-0.5"><Image size="1rem"/></span>
+                    </span>
+                  {/if}
+                  {#if Object.keys(article.tags??{}).includes('성인')}
+                    <span>
+                      <span class="mr-0.5 relative select-none">
+                        <span class="text-xs bg-rose-500 text-white rounded-md px-1 pb-0.5">19</span>
+                      </span>
                     </span>
                   {/if}
                   {#if article?.comments}
@@ -130,7 +137,7 @@
                     <div on:click|preventDefault class="cursor-pointer hover:text-sky-400 inline-block align-super
                               underline decoration-dashed decoration-sky-400">{article.author.id}</div>
                   </div>
-                  <span class="text-right inline-block flex-shrink-0 min-w-[7rem]">
+                  <span class="text-right inline-block flex-shrink-0 min-w-[7rem] leading-normal">
                     {formatDate(article.createdAt)}
                   </span>
                 </div>
@@ -172,3 +179,4 @@
     {/each}
   </ul>
 </div>
+
