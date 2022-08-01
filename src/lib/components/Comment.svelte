@@ -78,12 +78,14 @@
     });
   }
 
-  function onEditClicked(id: string) {
+  async function onEditClicked(id: string) {
     /*
     dispatch('edit', {
       id,
     }); // */
     editMode = true;
+    await tick();
+    editTextInput.focus();
   }
 
   function onDeleteClicked(id: string) {
@@ -159,12 +161,13 @@
   }
 
   async function confirmEdit() {
-    await ky.patch(`/community/${board}/${article}/comments/${comment._key}/api/manage`, {
+    const {newContent} = await ky.patch(`/community/${board}/${article}/comments/${comment._key}/api/manage`, {
       json: {
-        content: content,
+        content,
       }
-    });
-    comment.content = content;
+    }).json();
+    comment.content = newContent;
+    content = striptags(newContent);
     cancelEdit();
   }
 
@@ -195,6 +198,7 @@
   $: dislikeCount = allComments.find(c => c._key === comment._key).votes?.dislike ?? 0;
   let editMode = false;
   let content = striptags(comment?.content ?? '');
+  let editTextInput: HTMLTextAreaElement;
   // let deleted = (<any>comment)?.deleted === true;
   // export let voted: 'like' | 'dislike' | undefined;
   // eslint-disable-next-line no-undef
@@ -226,6 +230,13 @@
     }
     const type = last(avatar.split('.')).toLowerCase();
     return {src: avatar, type: `image/${type}`};
+  }
+
+  function detectDirectSend(event: KeyboardEvent) {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      confirmEdit();
+      return;
+    }
   }
 
   function highlightComment(id: string) {
@@ -323,8 +334,11 @@
               <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
             {/each}
           {:else}
-        <textarea prevent-reply class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"
-                  bind:value={content}></textarea>
+            <textarea prevent-reply
+                      class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"
+                      on:keydown={detectDirectSend}
+                      bind:this={editTextInput}
+                      bind:value={content}></textarea>
 
           {/if}
         </div>

@@ -30,10 +30,11 @@ export async function PATCH({params, request, locals}: RequestEvent): Promise<Re
     };
   }
 
+  let newContent: string;
   try {
     const {content} = await request.json() as { content: string };
 
-    await manage.edit(content);
+    newContent = await manage.edit(content);
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
@@ -45,6 +46,9 @@ export async function PATCH({params, request, locals}: RequestEvent): Promise<Re
 
   return {
     status: HttpStatus.ACCEPTED,
+    body: {
+      newContent,
+    },
   };
 }
 
@@ -127,7 +131,9 @@ class ManageCommentRequest {
   async edit(newContent: string) {
     const content = await sanitize(newContent);
 
-    return await this.comment.edit(content);
+    await this.comment.edit(content);
+
+    return content;
   }
 
   unpub(): Promise<any> {
