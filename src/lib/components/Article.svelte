@@ -132,17 +132,8 @@
   <div class="space-y-2 mb-4">
     <div class="flex justify-between">
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
-        <h2 class="text-2xl flex-shrink">
+        <h2 class="text-2xl flex-shrink after:bg-rose-500 after:text-white after:inline-block after:w-5 after:reading-zero after:pl-[3px] after:ml-1 after:text-sm" class:__warning-adult-content={isAdult}>
           {article.title}
-
-          {#if isAdult}
-            <span>
-              <span class="mr-0.5 relative select-none">
-                <span class="text-md text-rose-500"><AdultBg /></span>
-                <span class="absolute left-1.5 top-[9px] text-white text-xs">19</span>
-              </span>
-            </span>
-          {/if}
         </h2>
         <div class="inline-block flex space-x-2 pr-4">
           {#if $session.user}
@@ -273,3 +264,13 @@
     </ul>
   </div>
 </div>
+
+<style lang="scss">
+  .__warning-adult-content {
+    &:after {
+      content: "19";
+      border-radius: 50%;
+      aspect-ratio: 1/1;
+    }
+  }
+</style>

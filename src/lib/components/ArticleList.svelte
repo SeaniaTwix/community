@@ -74,7 +74,8 @@
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
-              <div class="flex justify-between min-w-0">
+              <div class="flex justify-between min-w-0 after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center"
+                   class:__warning-adult-content={Object.keys(article.tags??{}).includes('성인')}>
                 <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden truncate">
                   {#if article.autoTag}
                     <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
@@ -99,13 +100,6 @@
                   {#if article.images}
                     <span>
                       <span class="mr-0.5"><Image size="1rem"/></span>
-                    </span>
-                  {/if}
-                  {#if Object.keys(article.tags??{}).includes('성인')}
-                    <span>
-                      <span class="mr-0.5 relative select-none">
-                        <span class="text-xs bg-rose-500 text-white rounded-md px-1 pb-0.5">19</span>
-                      </span>
                     </span>
                   {/if}
                   {#if article?.comments}
@@ -180,3 +174,10 @@
   </ul>
 </div>
 
+<style lang="scss">
+  .__warning-adult-content {
+    &:after {
+      content: "19";
+    }
+  }
+</style>
