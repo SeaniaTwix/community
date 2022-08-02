@@ -14,14 +14,18 @@ export class Notifications {
    *                대댓글 같은 경우는 'comment'가 될 수 있습니다.
    * @param body 이 알림의 세부 데이터입니다.
    * @param instigator 이 알림을 발생시킨 인물입니다. undefined 일 수 있는데,
-   *                   이때는 발생 시킨 인물이 중요하지 않을 때 입니다.
+   *                   이때는 발생 시킨 인물이 중요하지 않을 때, 정책상 알릴 수 없을 때 입니다. (예를 들면 추천수 갱신 등)
    */
   async send(context: NotifyContext, body: INotify, instigator?: string) {
     // console.log(body);
     if (!await this.isAlreadyNotified(body)) {
       await this.saveToDb(body, instigator);
 
-      Pusher.notify('notify', `notifications:${await this.user.uid}`, instigator ?? '0', body, true).then();
+      Pusher.notify('notify',
+        `notifications:${await this.user.uid}`,
+        instigator ?? '0',
+        body,
+        true).then();
     }
   }
 
@@ -51,6 +55,7 @@ export class Notifications {
 
 export interface INotify {
   type: NotifyEventType,
+  // `/{board}/{article}
   root: string,
   // 알림의 타겟 id입니다. 주로 알림이 발생한 게시글이나 댓글의 id입니다.
   target: string;

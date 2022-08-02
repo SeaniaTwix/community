@@ -112,7 +112,6 @@ export class Pusher {
 
     ws.onmessage = (event) => {
       try {
-        console.log(event.data)
         let body = JSON.parse(event.data);
 
         // hack for escaping backslash

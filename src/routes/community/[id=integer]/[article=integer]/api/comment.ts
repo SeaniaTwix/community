@@ -202,8 +202,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
         noti.send('articles', {
           type: 'comment',
           value: savedComment._key,
-          // only comment. not reply on comment
-          root: id,
+          root: `${id}/${article}`,
           target: article,
         }, locals.user.uid).then().catch();
       }

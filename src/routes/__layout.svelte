@@ -51,6 +51,7 @@
   import Notifications from '$lib/components/Notifications.svelte';
   import {session} from '$app/stores';
   import ky from 'ky-universal';
+  import {NotificationsClient} from '$lib/notifications/client';
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
@@ -59,6 +60,11 @@
       const html = document.querySelector('html');
       html.classList.add('dark');
     }
+
+    if ($session.user) {
+      NotificationsClient.init($session.user.uid);
+    }
+
   });
 
   page.subscribe(() => {
