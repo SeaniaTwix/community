@@ -4,20 +4,22 @@
   import _, {isEmpty, uniq} from 'lodash-es';
   import {session} from '$app/stores';
   import Editor from '@tinymce/tinymce-svelte';
-  import type {Editor as TinyMCE, Events} from 'tinymce';
+  import type {Editor as TinyMCE} from 'tinymce';
   import Tag from '$lib/components/Tag.svelte';
   import {upload as imageUpload} from '$lib/file/uploader';
   import {defaultEditorSettings, darkThemes} from '$lib/editor/settings';
   import {theme} from '../stores/shared/theme';
   import ky from 'ky-universal';
-  import {tick} from 'svelte';
+  import {onDestroy, onMount, tick} from 'svelte';
   import {ArticleDto} from '../types/dto/article.dto';
   import {goto} from '$app/navigation';
+  import {writable} from 'svelte/store';
+  import type {Unsubscriber} from 'svelte/store';
 
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
   let fileUploader: HTMLInputElement;
-  let editor: TinyMCE & {iframeElement: HTMLIFrameElement};
+  let editor: TinyMCE & { iframeElement: HTMLIFrameElement };
   export let title = '';
   export let content = '';
   export let source = '';
@@ -36,6 +38,7 @@
 
   export let editorKey: string;
   export let board: string;
+  export let article: string;
   export let usedTags: string[] = [];
   export let isEditMode = false;
 
@@ -107,12 +110,12 @@
         },
       });
     },
-  }
+  };
 
   const settingsDark = {
     ...settings,
     ...darkThemes,
-  }
+  };
 
 
   function isNotEmpty(o) {
@@ -169,7 +172,6 @@
     }
   }
 
-
   async function upload() {
     if (uploading) {
       return;
@@ -191,6 +193,8 @@
       setTimeout(resolve, 300);
     });
 
+    editor.selection.setCursorLocation();
+
     addSizeAllImages();
 
     try {
@@ -202,7 +206,7 @@
           content,
           source,
           tags,
-        }
+        };
 
         await ky.post(`/community/${board}/${article}/api/edit`, {
           json: updateData,
@@ -213,7 +217,7 @@
 
       } else {
 
-        
+
         const data: Partial<ArticleDto<string[]>> = {
           views: 0,
           board,
@@ -238,15 +242,59 @@
     }
   }
 
+  const f = writable<File>(null);
+
+  function fileSelected() {
+    console.log(fileUploader);
+    f.set(fileUploader.files[0]);
+  }
+
+  function insertImage(imageUrl: string) {
+    editor.insertContent(`<img src="${imageUrl}" alt="uploaded at ${new Date}" /><p>&nbsp;</p>`);
+  }
+
+  function insertVideo(url: string, type: string) {
+    editor.insertContent(`<video muted preload="metadata"><source src="${url}" type="${type}" />비디오가 지원되지 않음</video><p>&nbsp;</p>`);
+  }
+
+  let unsubs: Unsubscriber[] = [];
+
+  onMount(() => {
+    unsubs.push(f.subscribe(async (file) => {
+      if (file) {
+        const link = await imageUpload(file, undefined, undefined);
+        // prevent blink when real url fetched
+        if (file.type.startsWith('video')) {
+          insertVideo(link, file.type);
+        } else if (file.type.startsWith('image')) {
+          await ky.get(link);
+          insertImage(link);
+        }
+      }
+    }));
+  });
+
+  onDestroy(() => {
+    for (const unsub of unsubs) {
+      unsub();
+    }
+  });
+
 </script>
 
+<div class="hidden">
+  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
+</div>
+
 <div class="space-y-4">
-  <div class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
+  <div
+    class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
     <input bind:this={titleInput} on:keyup={detectAutoTag}
            class="bg-transparent w-full outline-none"
            type="text" placeholder="제목" bind:value={title}/>
   </div>
-  <div class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
+  <div
+    class="px-4 py-1 w-full outline outline-zinc-400 dark:outline-zinc-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
     <input
       class="bg-transparent w-full outline-none"
       type="text" placeholder="출처" bind:value={source}/>
@@ -260,7 +308,7 @@
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
                 conf="{settingsDark}"
-                bind:value={content} />
+                bind:value={content}/>
       {:else}
         <Editor on:init={() => (editorLoaded = true)}
                 apiKey="{editorKey}"
@@ -319,7 +367,7 @@
           {#each appendableTags as usedTag}
             <li class="inline-block mb-2 text-zinc-500 dark:text-zinc-300">
               <span on:click={() => addTag(usedTag)} class="cursor-pointer">
-                <Tag><Plus />{usedTag}</Tag>
+                <Tag><Plus/>{usedTag}</Tag>
               </span>
             </li>
           {/each}
@@ -333,7 +381,11 @@
       {#if uploading}
         전송 중...
       {:else}
-        작성 완료
+        {#if isEditMode}
+          이렇게 수정
+        {:else}
+          작성 완료
+        {/if}
       {/if}
     </button>
     <a href="/community/{board}"

@@ -38,14 +38,11 @@
 </script>
 <script lang="ts">
   import FullEditor from '$lib/components/FullEditor.svelte';
-  import {writable} from 'svelte/store';
 
   export let title = '';
   export let source = '';
   export let content = '';
   export let tags: string[] = [];
-
-  let fileUploader: HTMLInputElement;
 
   export let editorKey: string;
   export let article: string;
@@ -53,24 +50,14 @@
   export let name: string;
   export let usedTags: string[] = [];
 
-  const f = writable<File>(null);
-
-  function fileSelected() {
-    f.set(fileUploader.files[0]);
-  }
-
 </script>
 
 <svelte:head>
   <title>{name} - {title} 수정 중</title>
 </svelte:head>
 
-<div class="hidden">
-  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
-</div>
-
 <div class="__mobile-bottom-fix mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
-  <FullEditor {editorKey} {board} {usedTags} {title} {source} {content} {tags} isEditMode="{true}" />
+  <FullEditor {editorKey} {board} {usedTags} {title} {source} {content} {tags} {article} isEditMode="{true}" />
 </div>
 
 <style lang="scss">

@@ -43,31 +43,17 @@
 </script>
 <script lang="ts">
   import FullEditor from '$lib/components/FullEditor.svelte';
-  import {writable} from 'svelte/store';
-
-  const f = writable<File>(null);
 
   export let editorKey: string;
   export let board: string;
   export let name: string;
   export let usedTags: string[] = [];
 
-
-  let fileUploader: HTMLInputElement;
-
-  function fileSelected() {
-    f.set(fileUploader.files[0]);
-  }
-
 </script>
 
 <svelte:head>
   <title>게시판 - {name} - 새 글 쓰기</title>
 </svelte:head>
-
-<div class="hidden">
-  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
-</div>
 
 <div class="mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto">
   <FullEditor {editorKey} {board} {usedTags} />
