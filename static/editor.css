@@ -1,3 +1,5 @@
+@import url('/css/BinggraeMelona.css');
+
 body {
   padding: 1rem;
 }
@@ -10,8 +12,6 @@ img {
 p {
   margin: 0.25rem 0 !important;
 }
-
-@import url('/css/BinggraeMelona.css');
 
 * {
   font-family: BinggraeMelona,sans-serif;
