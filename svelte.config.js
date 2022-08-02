@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-node';
 import preprocess from 'svelte-preprocess';
+import path from 'node:path';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,9 +15,9 @@ const config = {
       out: './build',
     }),
     alias: {
-      'static-folder': 'static'
-    }
-  }
+      '@static': path.resolve('./static'),
+    },
+  },
 };
 
 export default config;
