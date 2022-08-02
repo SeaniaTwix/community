@@ -13,7 +13,10 @@ const config = {
     adapter: adapter({
       out: './build',
     }),
-  },
+    alias: {
+      'static-folder': 'static'
+    }
+  }
 };
 
 export default config;
