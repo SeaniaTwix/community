@@ -21,7 +21,7 @@ export class Notifications {
     if (!await this.isAlreadyNotified(body)) {
       await this.saveToDb(body, instigator);
 
-      Pusher.notify('notify', `notifications:${await this.user.uid}`, instigator ?? '0', body).then();
+      Pusher.notify('notify', `notifications:${await this.user.uid}`, instigator ?? '0', body, true).then();
     }
   }
 

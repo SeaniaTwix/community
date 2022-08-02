@@ -445,6 +445,8 @@
       pusher.subscribe('tag', whenTagChanged);
       pusher.subscribe('comments:vote', whenVoteChanged);
 
+      pusher.setToken();
+
       prevParams = {...$page.params};
     }
   })

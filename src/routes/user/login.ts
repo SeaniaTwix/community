@@ -37,13 +37,13 @@ export async function POST({request}: RequestEvent): Promise<RequestHandlerOutpu
 }
 
 export async function newLoginHeaders(user: User) {
-  const token = user.token('user', {
-    uid: await user.uid, rank: await user.rank, adult: await user.isAdult(),
+  const token = await user.token('user', {
+    rank: await user.rank, adult: await user.isAdult(),
   });
   const expire = dayjs().add(10, 'minute').toDate();
   token.setExpiration(expire);
 
-  const refresh = user.token('refresh');
+  const refresh = await user.token('refresh');
   const expireRefresh = dayjs().add(1, 'day').toDate();
   refresh.setExpiration(expireRefresh);
 

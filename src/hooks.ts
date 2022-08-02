@@ -36,12 +36,14 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
         if (refresh) {
           const r = njwt.verify(refresh, key);
           if (r) {
+            // console.log(r)
             const exp = r.body.toJSON().exp as number * 1000;
             const now = Date.now();
             // console.log('limit:', exp - 18000000, ' now: ', now, exp - 18000000 <= now, (exp - 18000000 - now) / 1000 / 60 / 60);
             if (exp - 18000000 <= now) {
-              const user = new User(r.body.toJSON().uid as string);
-              newRefresh = user.token('refresh');
+              const body = r.body.toJSON();
+              const user = await User.findByUniqueId(body.uid as string);
+              newRefresh = await user!.token('refresh');
               const expireRefresh = dayjs().add(1, 'day').toDate();
               newRefresh.setExpiration(expireRefresh);
             }
@@ -96,10 +98,10 @@ async function refreshJwt(token: string) {
       const {sub} = refresh.body.toJSON() as { sub: string };
       const id = sub.split('/')[1];
       const user = new User(id);
-      const {_key, rank} = await user.safeData;
+      const {rank} = await user.safeData;
       const exp = dayjs().add(15, 'minute').toDate();
       const adult = await user.isAdult();
-      const newToken = await user.token('user', {uid: _key, rank, adult});
+      const newToken = await user.token('user', {rank, adult});
       newToken.setExpiration(exp);
       return {newToken: newToken.compact(), user: newToken.body.toJSON()};
     }
@@ -128,6 +130,13 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 
   const jwt = njwt.verify(token!, key);
   if (!jwt) {
+    return undefined;
+  }
+
+  const body = jwt.body.toJSON();
+  // console.log('check body:', body)
+
+  if (body.iss !== 'https://ru.hn/' || body.scope !== 'user') {
     return undefined;
   }
 

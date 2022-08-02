@@ -1,6 +1,7 @@
 import {Subject, Subscription} from 'rxjs';
 import type {Observable} from 'rxjs';
 import type {PushAbout} from './shared';
+import ky from 'ky-universal';
 
 try {
   if (!Object.hasOwn) {
@@ -19,6 +20,7 @@ export class Pusher {
   private subjects: Record<string, Subject<{ body: any, socket: WebSocket }>> = {};
   private subscriptions: Record<string, Subscription> = {};
   private timers: number[] = [];
+  private static token?: string;
 
   private reconnecting = false;
 
@@ -56,6 +58,16 @@ export class Pusher {
     for (const url in this.sockets) {
       console.log('close:', url);
       this.clearConnection(url);
+    }
+  }
+
+  async setToken() {
+    if (!Pusher.token) {
+      const {token} = await ky.get('/user/wst').json<{token: string}>();
+      Pusher.token = token;
+    }
+    for (const socket of Object.values(this.sockets)) {
+      socket.send(`command:auth:${Pusher.token}`);
     }
   }
 
@@ -100,6 +112,7 @@ export class Pusher {
 
     ws.onmessage = (event) => {
       try {
+        console.log(event.data)
         let body = JSON.parse(event.data);
 
         // hack for escaping backslash

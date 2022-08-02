@@ -4,13 +4,11 @@
   import ky from 'ky-universal';
   import Notification from './Notification.svelte';
   import {nanoid} from 'nanoid';
-  import {page, session} from '$app/stores';
   import {goto} from '$app/navigation';
   import {onMount, onDestroy} from 'svelte';
 
   import {Pusher} from '$lib/pusher/client';
   import type {Subscription} from 'rxjs';
-  import {currentReply} from '../community/comment/client';
 
   let pusher: Pusher;
   let subscriptions: Subscription[] = [];

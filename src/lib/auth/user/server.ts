@@ -154,11 +154,12 @@ export class User {
     }
   }
 
-  token(type: 'user' | 'refresh', payload: Rec<unknown> = {}): njwt.Jwt {
+  async token(type: 'user' | 'refresh' | 'ws', payload: Rec<unknown> = {}): Promise<njwt.Jwt> {
     return njwt.create({
       iss: 'https://ru.hn/',
       sub: `user/${this.id}`,
       scope: type,
+      uid: await this.uid,
       ...payload,
     }, key);
   }

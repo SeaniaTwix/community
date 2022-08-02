@@ -11,15 +11,17 @@ domain.on('error', () => {
 });
 
 export class Pusher {
-  static notify(about: PushAbout, context: string, userId: string, body: object, auth = false) {
+  static notify(about: PushAbout, context: string, userId: string, body: object, auth = false, adult = false) {
     return new Promise<void>((resolve) => {
       domain.run(async () => {
         try {
           got.post(`${url}/notify`, {
             json: {
               context: `${context}/${about}`,
-              body: JSON.stringify({author: userId, ...body, auth}),
+              body: JSON.stringify({author: userId, ...body}),
               key: process.env.PUSHER_KEY,
+              auth,
+              adult,
             },
           }).then().catch();
         } finally {
