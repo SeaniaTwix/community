@@ -82,7 +82,7 @@
 
   afterNavigate(({from, to}) => {
     const page = to.searchParams.get('page');
-    // console.log('afterNavigate');
+    console.log(from, to)
   });
 
   afterUpdate(() => {

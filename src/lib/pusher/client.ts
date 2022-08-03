@@ -61,12 +61,12 @@ export class Pusher {
     }
   }
 
-  async setToken(socket: WebSocket) {
+  async getToken(): Promise<string> {
     if (!Pusher.token) {
       const {token} = await ky.get('/user/wst').json<{ token: string }>();
       Pusher.token = token;
     }
-    socket.send(`command:auth:${Pusher.token}`);
+    return Pusher.token;
   }
 
   clearConnection(url: string | URL) {
@@ -106,11 +106,8 @@ export class Pusher {
     const ws = this.sockets[url.toString()];
     const subject = new Subject<{ body: any, socket: WebSocket }>();
 
-    ws.onopen = () => {
-      this.setToken(ws)
-        .then(() => {
-          ws.onopen = null;
-        });
+    ws.onopen = async () => {
+      ws.send(`command:auth:${await this.getToken()}`);
     };
 
     this.subjects[url.toString()] = subject;

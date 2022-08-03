@@ -21,8 +21,6 @@ export class NotificationsClient {
     this.pusher = new Pusher(`notifications:${uid}`);
     this.pusher.subscribe('notify', this.sendEvent);
 
-    this.pusher.setToken().then();
-
   }
 
   static async sendEvent({body}: { body: IPublicNotify }) {

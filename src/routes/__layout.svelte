@@ -76,7 +76,7 @@
       try {
         const {unread: u} = await ky.get('/notifications/api/unread?exists').json<{unread: boolean}>();
         unread.set(u ?? false);
-        console.log('set:', u);
+        // console.log('set:', u);
       } catch {
         unread.set(false);
       }
