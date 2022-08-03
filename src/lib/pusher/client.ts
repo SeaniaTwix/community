@@ -61,14 +61,12 @@ export class Pusher {
     }
   }
 
-  async setToken() {
+  async setToken(socket: WebSocket) {
     if (!Pusher.token) {
-      const {token} = await ky.get('/user/wst').json<{token: string}>();
+      const {token} = await ky.get('/user/wst').json<{ token: string }>();
       Pusher.token = token;
     }
-    for (const socket of Object.values(this.sockets)) {
-      socket.send(`command:auth:${Pusher.token}`);
-    }
+    socket.send(`command:auth:${Pusher.token}`);
   }
 
   clearConnection(url: string | URL) {
@@ -108,6 +106,13 @@ export class Pusher {
     const ws = this.sockets[url.toString()];
     const subject = new Subject<{ body: any, socket: WebSocket }>();
 
+    ws.onopen = () => {
+      this.setToken(ws)
+        .then(() => {
+          ws.onopen = null;
+        });
+    };
+
     this.subjects[url.toString()] = subject;
 
     ws.onmessage = (event) => {
@@ -133,7 +138,7 @@ export class Pusher {
 
     ws.onclose = () => {
 
-    }
+    };
 
     return subject;
   }
