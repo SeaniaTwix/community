@@ -252,13 +252,12 @@
       <div id="__best-list" on:scroll={checkPage}
            class="overflow-x-scroll snap-mandatory snap-x relative inline-block flex flex-row gap-4">
 
-        <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink">
+        <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink truncate min-w-0">
           <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
             {#each bests.slice(0, 5) as best}
               <li>
                 <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                  <div
-                    class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                  <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                     <p class="truncate text-sm">{best.title}</p>
                   </div>
                 </a>
@@ -268,13 +267,12 @@
         </div>
 
         {#if bests.length > 5}
-          <div class="snap-center w-full flex-gro flex-shrink-0 sm:flex-shrink">
+          <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink truncate">
             <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
               {#each bests.slice(5) as best}
                 <li>
                   <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                    <div
-                      class="inline-block px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                    <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                       <p class="truncate text-sm">{best.title}</p>
                     </div>
                   </a>
