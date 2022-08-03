@@ -142,7 +142,7 @@
       </li>
     </ul>
     <div class="overflow-hidden space-x-2">
-      <a class="hidden sm:inline-block bg-sky-400 hover:bg-sky-500 dark:bg-transparent dark:hover:bg-gray-500 w-[52px] h-full relative transition-colors text-gray-700 transition-colors" href="/">
+      <a class="hidden md:inline-block bg-sky-400 hover:bg-sky-500 dark:bg-transparent dark:hover:bg-gray-500 w-[52px] h-full relative transition-colors text-gray-700 transition-colors" href="/">
         <svg class="absolute h-full top-0 right-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 106.74 117.45">
           <defs><style>.__main-icon-1{fill:#fff;}.__main-icon-2{fill:#d97a74;}</style></defs>
           <path class="__main-icon-1" d="M61.12,0C55.47.68,43,11.5,43,11.5h7.59c.44,3.2,3,6.2,6.2,6.62S62.69,16,63,15.73a7.09,7.09,0,0,0,1.94-4.23h.59S66.76-.63,61.12,0Z"/><path class="__main-icon-1" d="M26.94,12S11.16,4.79,5.83,6.84,7.4,23.08,7.4,23.08l1-.56c.88,1.95,2,3.44,3.77,4,3.89,1.17,9.7-2.71,10.06-7.58a6.66,6.66,0,0,0-.89-3.77Z"/><path class="__main-icon-1" d="M0,117.38H20.46l15-46.16h9.94v46.23h20l.1-2.94V71.22h21v46.23h20.17V9.82H86.57V56h-21V9.82H32.19q-14.41,0-21.82,7.66T3.06,39.61Q3.06,49.5,6.38,56A23.83,23.83,0,0,0,16.89,66.62ZM23.32,40.45q0-7.94,2.93-11.56c1.75-2.22,4.45-3.34,8.08-3.34H45.45V56h-11a9.61,9.61,0,0,1-8.19-3.76Q23.33,48.38,23.32,40.45Zm12.76-6H55.54v3.18H36.26C30,37.59,29.72,34.41,36.08,34.41Zm0,8.82H55.54v3.19H36.26C30,46.42,29.72,43.23,36.08,43.23Z"/><path class="__main-icon-2" d="M10.37,17.48a22.47,22.47,0,0,1,7.27-5c-2.64-.93-5.87-1.8-7.44-1.19-1.86.71-1,4.13-.12,6.49Z"/><path class="__main-icon-2" d="M60.46,9.82c0-1.92-.45-4.6-2.44-4.37s-5.3,2.62-7.55,4.37Z"/>

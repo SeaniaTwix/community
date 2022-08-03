@@ -74,14 +74,18 @@
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
-              <div class="flex justify-between min-w-0 after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center"
-                   class:__warning-adult-content={Object.keys(article.tags??{}).includes('성인')}>
-                <div class="hover:text-sky-400 transition-colors inline-block text-ellipsis overflow-hidden truncate">
-                  {#if article.autoTag}
-                    <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
-                  {/if}<span>{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}</span>
+              <div class="flex justify-between min-w-0">
+                <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
+                  <div class="truncate">
+                    {#if article.autoTag}
+                      <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
+                    {/if}<span>{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}</span>
+                  </div>
+                  {#if Object.keys(article.tags??{}).includes('성인')}
+                    <span class="after:ml-1 after:inline-block __warning-adult-content after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center"></span>
+                  {/if}
                 </div>
-                <!-- i have no idea to make no duplicated elements... -->
+                <!-- (mobile only) i have no idea to make no duplicated elements... -->
                 <div on:click|preventDefault={() => toggleUserMenu(i)} class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
                   <div class="w-6 max-h-6">
                     <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
@@ -91,6 +95,7 @@
                     <span>{article.author.id}</span>
                   </div>
                 </div>
+                <!-- (mobile only end) -->
               </div>
               <div class="flex flex-grow flex-shrink-0 justify-between leading-zero -mt-px">
                 <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300 items-center flex flex-row">
