@@ -3,7 +3,14 @@
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import HttpStatus from 'http-status-codes';
 
-  export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
+  export async function load({session, fetch}: LoadEvent): Promise<LoadOutput> {
+    if (!session.user) {
+      return {
+        status: HttpStatus.MOVED_TEMPORARILY,
+        redirect: '/login',
+      };
+    }
+
     const res = await fetch('/notifications/api/list');
     const {list} = await res.json();
     return {
@@ -54,7 +61,8 @@
     {#each list as notify}
       <li>
         <a href="{href(notify)}">
-          <div class="px-4 py-3 bg-zinc-100 dark:bg-gray-500 rounded-md shadow-md transition-colors" class:text-zinc-400={!notify.unread}>
+          <div class="px-4 py-3 bg-zinc-100 dark:bg-gray-500 rounded-md shadow-md transition-colors"
+               class:text-zinc-400={!notify.unread}>
             <p class="__notify-content">{@html content(notify)}</p>
           </div>
         </a>

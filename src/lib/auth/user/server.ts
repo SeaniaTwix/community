@@ -309,8 +309,17 @@ export class User {
     return this.notifications.getAll(page, amount);
   }
 
+  getAllUnreadNotifications(max: number) {
+    return this.notifications.getAllUnread(max);
+  }
+
   readAllNotifications(article: string) {
     return this.notifications.readAll(article);
+  }
+
+  async isBlockedUser(userId: string) {
+    const blockedUser = await this.getBlockedUsers();
+    return blockedUser.includes(userId);
   }
 }
 

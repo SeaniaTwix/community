@@ -4,6 +4,7 @@
   import Switch from 'svelte-material-icons/ThemeLightDark.svelte';
   import Console from 'svelte-material-icons/Tools.svelte';
   import Search from 'svelte-material-icons/Magnify.svelte';
+  import NewNoti from 'svelte-material-icons/Circle.svelte';
   import Cookies from 'js-cookie';
   import {dayjs} from 'dayjs';
   import {fly, fade} from 'svelte/transition';
@@ -12,6 +13,7 @@
   import {goto} from '$app/navigation';
   import {darkColor, iosStatusBar, iosStatusBarColor, theme} from '$lib/stores/shared/theme';
   import {tick} from 'svelte';
+  import {unread} from '$lib/notifications/client';
 
   export let boards: string[] = [];
   let searchInput: HTMLInputElement;
@@ -192,11 +194,18 @@
 
       {#if $session.user}
         <li>
-          <a sveltekit:prefetch aria-label="내 프로필" href="/user"
-             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
-                  dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
-            {$session.user.sub?.split('/')?.[1] ?? '알 수 없음'}
-          </a>
+          <span class="relative">
+            <a sveltekit:prefetch aria-label="내 프로필" href="/user"
+               class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
+                    dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
+              {$session.user.sub?.split('/')?.[1] ?? '알 수 없음'}
+            </a>
+            {#if $unread === true}
+              <span class="absolute mt-1 right-1 text-xs text-red-400">
+                <NewNoti />
+              </span>
+            {/if}
+          </span>
         </li>
       {:else}
         <li>

@@ -197,7 +197,8 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     if (cd) {
       const {author: authorId} = await comment.article.get();
       const author = await User.findByUniqueId(authorId);
-      if (author && await author.uid !== locals.user.uid) {
+      const blocked = await author?.isBlockedUser(locals.user.uid) === true;
+      if (author && await author.uid !== locals.user.uid && !blocked) {
         const noti = new Notifications(author);
         noti.send('articles', {
           type: 'comment',

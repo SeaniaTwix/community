@@ -3,13 +3,14 @@ import type {IPublicNotify} from '$lib/types/notify';
 import {Pusher} from '$lib/pusher/client';
 import ky from 'ky-universal';
 
+export const unread = writable(false);
 export const notifications = writable<IPublicNotify>(undefined);
 
 export class NotificationsClient {
   private static pusher: Pusher;
   private static isUnloadEventRegistered = false;
 
-  static init(uid: string) {
+  static init(uid: string, preloaded: IPublicNotify[] = []) {
     if (!this.isUnloadEventRegistered) {
       this.isUnloadEventRegistered = true;
       window.addEventListener('unload', () => this.pusher.close());
@@ -21,6 +22,7 @@ export class NotificationsClient {
     this.pusher.subscribe('notify', this.sendEvent);
 
     this.pusher.setToken().then();
+
   }
 
   static async sendEvent({body}: { body: IPublicNotify }) {

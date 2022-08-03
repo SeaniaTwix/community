@@ -58,9 +58,16 @@ export class Notifications {
 
   async getAll(page: number, amount: number): Promise<IPublicNotify[]> {
     const cursor = await db.query(aql`
+      let u = ${await this.user.uid}
+      let blockedUsers = is_string(u) ? flatten(
+              for user in users
+                filter user._key == u && has(user, "blockedUsers")
+                  return (for blockedUser in user.blockedUsers return blockedUser.key)
+            ) : []
       for noti in notifications
         sort noti.createdAt desc
         filter noti.receiver == ${await this.user.uid} && noti.createdAt != null
+        filter noti.instigator not in blockedUsers
           limit ${(page - 1) * amount}, ${amount}
           return noti`);
     return await cursor.all();
@@ -68,9 +75,16 @@ export class Notifications {
 
   async getAllUnread(max: number): Promise<IPublicNotify[]> {
     const cursor = await db.query(aql`
+      let u = ${await this.user.uid}
+      let blockedUsers = is_string(u) ? flatten(
+              for user in users
+                filter user._key == u && has(user, "blockedUsers")
+                  return (for blockedUser in user.blockedUsers return blockedUser.key)
+            ) : []
       for noti in notifications
         sort noti.createdAt desc
         filter noti.receiver == ${await this.user.uid} && noti.createdAt != null && noti.unread == true
+        filter noti.instigator not in blockedUsers
           limit ${max}
           return noti`);
     return await cursor.all();

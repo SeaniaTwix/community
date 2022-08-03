@@ -3,10 +3,15 @@
   import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
   import HttpStatus from 'http-status-codes';
 
-  export async function load({url, fetch}: LoadEvent): Promise<LoadOutput> {
+  export async function load({url, fetch, session}: LoadEvent): Promise<LoadOutput> {
     try {
       const response = await fetch(`${url.origin}/community/api/all`);
       const {boards} = await response.json<{ boards: BoardItemDto[] }>();
+
+      if (session.user) {
+        const notiRes = await fetch('/notifications/api/unread');
+        const {unread} = await notiRes.json();
+      }
 
       /*
       let user: IUser;
@@ -50,7 +55,7 @@
   import Notifications from '$lib/components/Notifications.svelte';
   import {session} from '$app/stores';
   import ky from 'ky-universal';
-  import {NotificationsClient} from '$lib/notifications/client';
+  import {NotificationsClient, unread} from '$lib/notifications/client';
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();
@@ -66,8 +71,16 @@
 
   });
 
-  page.subscribe(() => {
+  page.subscribe(async () => {
     if ($session.user) {
+      try {
+        const {unread: u} = await ky.get('/notifications/api/unread?exists').json<{unread: boolean}>();
+        unread.set(u ?? false);
+        console.log('set:', u);
+      } catch {
+        unread.set(false);
+      }
+
       const now = Date.now();
       const expiredAt = $session.user.exp * 1000;
       if (isNaN(now - expiredAt)) {
