@@ -39,6 +39,11 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
       article.serials = await read.getSerialTitles(serialIds);
     }
 
+    const reader = await User.findByUniqueId(locals?.user?.uid);
+    if (reader) {
+      await reader.readAllNotifications(params.article);
+    }
+
     return {
       status: 200,
       body: {

@@ -195,10 +195,10 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     if (cd) {
-      const {author} = await comment.article.get();
-      const user = await User.findByUniqueId(author);
-      if (user && await user.uid !== locals.user.uid) {
-        const noti = new Notifications(user);
+      const {author: authorId} = await comment.article.get();
+      const author = await User.findByUniqueId(authorId);
+      if (author && await author.uid !== locals.user.uid) {
+        const noti = new Notifications(author);
         noti.send('articles', {
           type: 'comment',
           value: savedComment._key,

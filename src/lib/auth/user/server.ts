@@ -7,11 +7,14 @@ import {key} from './shared';
 import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '$lib/util';
 import type {IArangoDocumentIdentifier} from '$lib/database';
+import {Notifications} from '$lib/notifications/server';
 
 type UnsafeUser = IUser & { password: string };
 
 export class User {
+  private readonly notifications: Notifications;
   constructor(readonly id: string) {
+    this.notifications = new Notifications(this);
   }
 
   private stored: UnsafeUser | undefined;
@@ -300,6 +303,14 @@ export class User {
   async isAdult(): Promise<boolean> {
     const user = await this.data;
     return user.adult?.approved === true;
+  }
+
+  loadAllNotifications(page: number, amount: number) {
+    return this.notifications.getAll(page, amount);
+  }
+
+  readAllNotifications(article: string) {
+    return this.notifications.readAll(article);
   }
 }
 

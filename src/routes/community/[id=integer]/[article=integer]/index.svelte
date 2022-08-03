@@ -90,7 +90,7 @@
   import {striptags} from 'striptags';
   import {page, session} from '$app/stores';
   import Cookies from 'js-cookie';
-  import {currentReply} from '$lib/community/comment/client';
+  import {currentReply, highlighed} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
   import {deletedComment} from '$lib/community/comment/client';
   import CommentInput from '$lib/components/CommentInput.svelte';
@@ -348,6 +348,7 @@
   let prevParams: {id: string, article: string};
   afterUpdate(() => {
     if (prevParams?.article !== $page.params.article) {
+      $highlighed = undefined;
 
       if (pusher) {
         pusher.close();
@@ -456,6 +457,10 @@
   let unsubscribers: Unsubscriber[] = [];
   let pusher: Pusher;
   onMount(async () => {
+    if ($page.url.hash.startsWith('#c')) {
+      $highlighed = $page.url.hash.slice(2);
+    }
+
     try {
       document.querySelector('html').classList.add('__page-view');
       document.querySelector('body').classList.add('__page-view', 'overflow-hidden');

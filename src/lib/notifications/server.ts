@@ -2,6 +2,8 @@ import type {User} from '$lib/auth/user/server';
 import {Pusher} from '$lib/pusher/server';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
+import type {IPublicNotify} from '$lib/types/notify';
+import {Article} from '../community/article/server';
 
 export class Notifications {
   constructor(private readonly user: User) {
@@ -49,7 +51,49 @@ export class Notifications {
         ...body,
         instigator,
         receiver: await this.user.uid,
+        createdAt: new Date,
+        unread: true,
       }} into notifications`);
+  }
+
+  async getAll(page: number, amount: number): Promise<IPublicNotify[]> {
+    const cursor = await db.query(aql`
+      for noti in notifications
+        sort noti.createdAt desc
+        filter noti.receiver == ${await this.user.uid} && noti.createdAt != null
+          limit ${(page - 1) * amount}, ${amount}
+          return noti`);
+    return await cursor.all();
+  }
+
+  async getAllUnread(max: number): Promise<IPublicNotify[]> {
+    const cursor = await db.query(aql`
+      for noti in notifications
+        sort noti.createdAt desc
+        filter noti.receiver == ${await this.user.uid} && noti.createdAt != null && noti.unread == true
+          limit ${max}
+          return noti`);
+    return await cursor.all();
+  }
+
+  async read(_key: string) {
+    await db.query(aql`
+      update {_key: ${_key}} with {unread: false} in notifications`);
+  }
+
+  async readAll(article: string) {
+    const a = new Article(article);
+    if (!await a.exists) {
+      return;
+    }
+
+    const data = await a.get();
+    const root = `${data.board}/${data._key}`;
+
+    await db.query(aql`
+      for noti in notifications
+        filter noti.root == ${root} && noti.receiver == ${await this.user.uid}
+          update noti with {unread: false} in notifications`)
   }
 }
 
