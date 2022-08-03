@@ -1,7 +1,6 @@
 <script lang="ts" context="module">
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
-  import type {IUser} from '$lib/types/user';
   import HttpStatus from 'http-status-codes';
 
   export async function load({url, fetch}: LoadEvent): Promise<LoadOutput> {
