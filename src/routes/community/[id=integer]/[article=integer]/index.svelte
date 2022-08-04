@@ -113,8 +113,8 @@
   const bestComments = comments
     .filter(comment => comment.votes.like >= 1)
     .sort((a, b) => {
-      const aLike = a.votes.like;
-      const bLike = b.votes.like;
+      const aLike = a.votes.like - a.votes.dislike;
+      const bLike = b.votes.like - a.votes.dislike;
 
       const like = aLike - bLike;
 
