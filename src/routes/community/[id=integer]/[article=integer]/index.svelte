@@ -383,6 +383,7 @@
           if (body.relative) {
             const newComment: IComment = {
               ...body,
+              myVote: {like: false, dislike: false},
               createdAt: new Date
             };
             comments = [...comments, newComment];
@@ -392,6 +393,7 @@
           if (body.content || body.image) {
             const newComment: IComment = {
               ...body,
+              myVote: {like: false, dislike: false},
               createdAt: new Date,
             };
             comments = [...comments, newComment];
