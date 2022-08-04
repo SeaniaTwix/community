@@ -150,14 +150,7 @@ class EditArticleRequest {
   async update(author: string, data: EditDto) {
     const {title, content, tags, source} = data;
 
-    const sanitizedContent = await unified()
-      .use(rehypeParse, {fragment: true})
-      .use(rehypeSanitize, {
-        ...defaultSchema,
-        tagNames: [...defaultSchema.tagNames as any[], 'source'],
-      })
-      .use(rehypeStringify)
-      .process(content ?? '');
+    const sanitizedContent = await Article.Sanitize(content);
 
     /*
     const newTags: ITag[] = tags.map(tag => ({
@@ -168,7 +161,7 @@ class EditArticleRequest {
     const edited = {
       title,
       editedAt: new Date,
-      content: sanitizedContent.value.toString(),
+      content: sanitizedContent,
       source: source ?? '',
       images: await this.getImage(),
     };

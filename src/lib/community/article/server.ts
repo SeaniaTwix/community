@@ -5,6 +5,10 @@ import type {ITag} from '$lib/types/tag';
 import type {IArticle} from '$lib/types/article';
 import type {IComment} from '$lib/types/comment';
 import {inRange} from 'lodash-es';
+import {unified} from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
+import rehypeStringify from 'rehype-stringify';
 
 export class Article {
 
@@ -12,6 +16,23 @@ export class Article {
   content: string | undefined;
 
   constructor(readonly id: string) {
+  }
+
+  static async Sanitize(content?: string): Promise<string> {
+    const sanitizedContent = await unified()
+      .use(rehypeParse, {fragment: true})
+      .use(rehypeSanitize, {
+        ...defaultSchema,
+        tagNames: [...defaultSchema.tagNames ?? [], 'video', 'source'],
+        attributes: {
+          ...defaultSchema.attributes,
+          video: ['preload', 'muted'],
+          source: ['src', 'type']
+        }
+      })
+      .use(rehypeStringify)
+      .process(content ?? '');
+    return sanitizedContent.value.toString();
   }
 
   async get(): Promise<IArticle> {

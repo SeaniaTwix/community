@@ -10,10 +10,6 @@ import {User} from '$lib/auth/user/server';
 import type {IArticle} from '$lib/types/article';
 import {Article} from '$lib/community/article/server';
 import {load as loadHtml} from 'cheerio';
-import {unified} from 'unified';
-import rehypeParse from 'rehype-parse';
-import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import type {IUser} from '$lib/types/user';
@@ -232,16 +228,7 @@ class WriteRequest {
       return;
     }
 
-    const sanitizedContent = await unified()
-      .use(rehypeParse, {fragment: true})
-      .use(rehypeSanitize, {
-        ...defaultSchema,
-        tagNames: [...defaultSchema.tagNames ?? [], 'source'],
-      })
-      .use(rehypeStringify)
-      .process(this.content ?? '');
-
-    const content = sanitizedContent.value.toString();
+    const content = await Article.Sanitize(this.content);
 
     const data: Partial<IArticle> = {
       source: this.source,
