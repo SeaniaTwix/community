@@ -111,7 +111,7 @@
   export let comments: IComment[];
   $: noRelativeComments = comments.filter(comment => !comment.relative);
   const bestComments = comments
-    .filter(comment => comment.votes.like >= 1)
+    .filter(comment => comment.votes.like - comment.votes.dislike >= 1)
     .sort((a, b) => {
       const aLike = a.votes.like - a.votes.dislike;
       const bLike = b.votes.like - a.votes.dislike;
