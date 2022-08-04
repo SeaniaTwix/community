@@ -265,12 +265,19 @@
         <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
           <div class="flex space-x-2 pt-1 flex-col md:flex-row lg:flex-row">
             <div prevent-reply class="flex space-x-2 hover:cursor-pointer group items-center">
+
               <div class="w-10 min-h-[2.5rem]">
                 <CircleAvatar fallback="{toImageSource()}"/>
               </div>
               <span class="group-hover:text-sky-400">
-              {users[comment.author]?.id ?? '[이름을 불러지 못 했습니다]'}
-            </span>
+                {users[comment.author]?.id ?? '[이름을 불러지 못 했습니다]'}
+              </span>
+
+              {#if isBest}
+                <div class="select-none px-1">
+                  <span class="bg-sky-400 text-white px-1.5 py-1 rounded-md text-sm">베스트</span>
+                </div>
+              {/if}
             </div>
           </div>
           <div>
@@ -293,9 +300,29 @@
           </div>
         {/if}
       </div>
-      <div class="flex flex-col justify-between px-2 pt-4"
+      <div class="flex flex-col justify-between px-2 pt-2"
            class:divide-y={!editMode} class:divide-dotted={!editMode}>
-        <div class="flex-grow __comment-contents" prevent-reply="selection" class:pb-4={!editMode}>
+        <div class="flex-grow __comment-contents space-y-2" prevent-reply="selection" class:pb-2={!editMode}>
+          {#if comment.relative}
+            {#if getRelative(comment.relative) && !getRelative(comment.relative).deleted}
+              <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
+                <div>
+                  <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                    <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author]?.id}</span>
+                    <p class="flex-grow w-0 truncate">
+                      {getRelative(comment.relative).content}
+                    </p>
+                  </div>
+                </div>
+              </a>
+            {:else}
+              <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
+                {#if getRelative(comment.relative).author}
+                  <span class="w-max after:content-[':'] mr-1">{users[getRelative(comment.relative).author]?.id}</span>
+                {/if} <i>[댓글이 삭제되었습니다.]</i>
+              </div>
+            {/if}
+          {/if}
           {#if comment.image}
             <div>
               <Image src="{comment.image}" size="{comment.imageSize}">
@@ -306,34 +333,11 @@
             </div>
           {/if}
           {#if !editMode}
-            {#if comment.relative}
-              {#if getRelative(comment.relative) && !getRelative(comment.relative).deleted}
-                <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
-                  <div>
-                    <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                      <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author]?.id}</span>
-                      <p class="flex-grow w-0 truncate">
-                        {getRelative(comment.relative).content}
-                      </p>
-                    </div>
-                  </div>
-                </a>
-              {:else}
-                <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                  {#if getRelative(comment.relative).author}
-                    <span class="w-max after:content-[':'] mr-1">{users[getRelative(comment.relative).author]?.id}</span>
-                  {/if} <i>[댓글이 삭제되었습니다.]</i>
-                </div>
-              {/if}
+            {#if !isEmpty(comment.content.trim())}
+              {#each comment.content.split('\n') as line}
+                <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
+              {/each}
             {/if}
-            {#if isBest}
-              <div class="select-none px-1">
-                <span class="bg-sky-400 text-white px-1.5 py-1 rounded-md text-sm">베스트</span>
-              </div>
-            {/if}
-            {#each comment.content.split('\n') as line}
-              <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
-            {/each}
           {:else}
             <textarea prevent-reply
                       class="p-1 rounded-md bg-zinc-200 dark:bg-gray-500 w-full focus:outline-none"

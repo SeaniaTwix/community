@@ -289,7 +289,7 @@
 <div class="space-y-4">
   <div
     class="px-4 py-2 w-full outline outline-sky-400 dark:outline-sky-800 rounded-md bg-zinc-50/50 dark:bg-gray-200 dark:text-gray-800 shadow-md">
-    <input bind:this={titleInput} on:keyup={detectAutoTag}
+    <input bind:this={titleInput} on:keyup={detectAutoTag} maxlength="48"
            class="bg-transparent w-full outline-none"
            type="text" placeholder="제목" bind:value={title}/>
   </div>
