@@ -197,21 +197,38 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
 
   try {
     if (cd) {
-      const {author: authorId} = await comment.article.get();
-      const author = await User.findByUniqueId(authorId);
-      const blocked = await author?.isBlockedUser(locals.user.uid) === true;
-      if (author && await author.uid !== locals.user.uid && !blocked) {
-        const noti = new Notifications(author);
-        noti.send('articles', {
-          type: 'comment',
-          value: savedComment._key,
-          root: `${id}/${article}`,
-          target: article,
-        }, locals.user.uid).then().catch();
+      if (!commentData.relative) {
+        const {author: authorId} = await comment.article.get();
+        const author = await User.findByUniqueId(authorId);
+        const blocked = await author?.isBlockedUser(locals.user.uid) === true;
+        if (author && await author.uid !== locals.user.uid && !blocked) {
+          const noti = new Notifications(author);
+          noti.send('articles', {
+            type: 'comment',
+            value: savedComment._key,
+            root: `${id}/${article}`,
+            target: article,
+          }, locals.user.uid).then().catch();
+        }
+      } else {
+        const replyTarget = new Comment(commentData.relative);
+        const {author} = await replyTarget.get();
+        const commentAuthor = await User.findByUniqueId(author);
+        const blocked = await commentAuthor?.isBlockedUser(locals.user.uid) === true;
+        if (commentAuthor && await commentAuthor.uid !== locals.user.uid && !blocked) {
+          const noti = new Notifications(commentAuthor);
+          noti.send('articles', {
+            type: 'reply',
+            value: savedComment._key,
+            root: `${id}/${article}`,
+            target: article,
+          }, locals.user.uid).then().catch();
+        }
       }
     }
   } catch (e) {
     // todo: error handling when notification failed
+    console.error(e);
   }
 
   return {
