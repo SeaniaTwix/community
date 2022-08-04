@@ -77,11 +77,11 @@
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
-  import {onMount, onDestroy, tick, afterUpdate} from 'svelte';
+  import {onMount, onDestroy, tick} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import {fade} from 'svelte/transition';
   import Comment from '$lib/components/Comment.svelte';
-  import {goto} from '$app/navigation';
+  import {afterNavigate, goto} from '$app/navigation';
   import {writable} from 'svelte/store';
   import type {Unsubscriber} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
@@ -362,9 +362,8 @@
     goto(`/community/${article.board}${$page.url.search}`);
   }
 
-  let prevParams: {id: string, article: string};
-  afterUpdate(() => {
-    if (prevParams?.article !== $page.params.article) {
+  afterNavigate(({from, to}) => {
+    if (from?.pathname !== to.pathname) {
       $highlighed = undefined;
 
       if (pusher) {
@@ -464,8 +463,6 @@
       pusher.subscribe<Partial<IComment>>('comments', whenCommentChanged);
       pusher.subscribe('tag', whenTagChanged);
       pusher.subscribe('comments:vote', whenVoteChanged);
-
-      prevParams = {...$page.params};
     }
   })
 
