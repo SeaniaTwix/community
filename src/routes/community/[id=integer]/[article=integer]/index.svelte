@@ -451,6 +451,12 @@
             if (!comment.votes) {
               comment.votes = {like: 0, dislike: 0};
             }
+            if (typeof comment.votes?.like !== 'number') {
+              comment.votes.like = 0;
+            }
+            if (typeof comment.votes?.dislike !== 'number') {
+              comment.votes.dislike = 0;
+            }
             const amount = body.amount;
             await tick();
             comment.votes[body.type] += amount;
