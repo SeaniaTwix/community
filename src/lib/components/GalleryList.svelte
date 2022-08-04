@@ -55,7 +55,7 @@
                   {/if}
                 </span>
               {/if}
-              <img class:blur-xl={isToHide(gallery)} class="bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"
+              <img class:blur-xl={isToHide(gallery)} class="w-full h-full object-cover bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"
                    src="{gallery.images}" alt="main image of {gallery.title}" />
             {:else}
               <span class="absolute rounded-md px-1 py-px -translate-x-1/2 left-1/2 -translate-y-1/2 top-1/2 text-zinc-600 dark:text-zinc-200 w-fit text-2xl">
