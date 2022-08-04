@@ -4,7 +4,7 @@ import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
 import {Mutex} from 'async-mutex';
 import type {ArrayCursor} from 'arangojs/cursor';
-import type {EnsureFulltextIndexOptions} from 'arangojs/indexes';
+import type {EnsureFulltextIndexOptions, EnsurePersistentIndexOptions} from 'arangojs/indexes';
 // import type {MutexInterface} from 'async-mutex';
 
 const mutex = new Mutex;
@@ -16,8 +16,17 @@ export default class DefaultDatabase {
     'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications', 'favorites',
   ];
   private static readonly requireEdgeCollections = [
-    'reply'
-  ]
+    'reply',
+  ];
+  private static readonly indexRequires: Record<string, EnsurePersistentIndexOptions[]> = {
+    users: [
+      {
+        fields: ['id'],
+        type: 'persistent',
+        unique: true,
+      },
+    ],
+  };
   private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
     'articles': [
       {
@@ -25,24 +34,24 @@ export default class DefaultDatabase {
         inBackground: false,
         minLength: 1,
         name: 'title',
-        type: 'fulltext'
+        type: 'fulltext',
       },
       {
         fields: ['content'],
         inBackground: false,
         minLength: 1,
         name: 'content',
-        type: 'fulltext'
-      }
-    ]
-  }
+        type: 'fulltext',
+      },
+    ],
+  };
 
   private static get info(): IDatabaseInfo {
     return {
       user: process.env.DB_USER ?? 'root',
       url: process.env.DB_ENDPOINT ?? 'http://localhost:8529',
       password: process.env.DB_PASSWORD ?? 'root',
-    }
+    };
   }
 
   private system: Database;
@@ -97,6 +106,14 @@ export default class DefaultDatabase {
 
     if (created > 0) {
       console.log('필요한 컬렉션을 모두 생성했습니다.');
+    }
+
+    for (const collectionName in DefaultDatabase.indexRequires) {
+      const collection = this.db.collection(collectionName);
+      const settings = DefaultDatabase.indexRequires[collectionName];
+      for (const setting of settings) {
+        await collection.ensureIndex(setting);
+      }
     }
 
     for (const collectionName in DefaultDatabase.fulltextRequires) {
