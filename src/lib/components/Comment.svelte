@@ -10,9 +10,6 @@
   import LikeEmpty from 'svelte-material-icons/ThumbUpOutline.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
-  import Lock from 'svelte-material-icons/Lock.svelte';
-  import Pub from 'svelte-material-icons/EyeCheck.svelte';
-  import Private from 'svelte-material-icons/EyeOff.svelte';
   import Reply from 'svelte-material-icons/CommentMultiple.svelte';
   import Admin from 'svelte-material-icons/Settings.svelte';
 
@@ -115,15 +112,15 @@
     voting = true;
 
     try {
-      if (liked) {
-        liked = false;
+      if (comment.myVote.like) {
+        comment.myVote.like = false;
         return await vote('like', true);
       }
 
-      liked = true;
+      comment.myVote.like = true;
 
-      if (disliked) {
-        disliked = false;
+      if (comment.myVote.dislike) {
+        comment.myVote.dislike = false;
         await vote('dislike', true);
       }
 
@@ -141,15 +138,15 @@
     voting = true;
 
     try {
-      if (disliked) {
-        disliked = false;
+      if (comment.myVote.dislike) {
+        comment.myVote.dislike = false;
         return await vote('dislike', true);
       }
 
-      disliked = true;
+      comment.myVote.dislike = true;
 
-      if (liked) {
-        liked = false;
+      if (comment.myVote.like) {
+        comment.myVote.like = false;
         await vote('like', true);
         await tick();
       }
@@ -185,6 +182,7 @@
   export let allComments: IComment[] = [];
   export let isReplyMode = false;
   export let deleted = comment?.deleted === true;
+  export let isBest = false;
   // $: replies = allComments.filter(c => c.relative === comment._key);
   let replies = allComments.filter(c => {
     return c.relative === comment._key
@@ -192,8 +190,6 @@
   $: allReplies = allComments.filter(c => c.relative === comment._key);
   $: notFetchedReplyCounts = allReplies.length - replies.length;
   $: myVote = allComments.find(c => c._key === comment._key).myVote;
-  $: liked = myVote?.like === true;
-  $: disliked = myVote?.dislike === true;
   $: likeCount = allComments.find(c => c._key === comment._key).votes?.like ?? 0;
   $: dislikeCount = allComments.find(c => c._key === comment._key).votes?.dislike ?? 0;
   let editMode = false;
@@ -330,6 +326,14 @@
                 </div>
               {/if}
             {/if}
+            {#if isBest}
+              <div class="select-none px-1">
+                <span class="bg-sky-400 text-white px-1.5 py-1 rounded-md text-sm">베스트</span>
+              </div>
+            {/if}
+            <div>
+              {JSON.stringify(allComments.find(c => c._key === comment._key))}
+            </div>
             {#each comment.content.split('\n') as line}
               <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
             {/each}
@@ -347,8 +351,8 @@
             <div class="pt-2 flex justify-between select-none">
           <span class="space-x-2 flex-shrink-0">
             <span on:click|preventDefault={like} prevent-reply class:cursor-progress={voting}
-                  class="text-sky-500 {$session.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'}  cursor-pointer p-2 sm:p-0">
-              {#if liked}
+                  class="text-sky-500 {$session.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+              {#if comment.myVote.like}
                 <Like size="1rem" />
               {:else}
                 <LikeEmpty size="1rem" />
@@ -357,7 +361,7 @@
             </span>
             <span on:click={dislike} prevent-reply class:cursor-progress={voting}
                   class="text-red-500 {$session.user.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
-              {#if disliked}
+              {#if comment.myVote.dislike}
                 <Dislike size="1rem" />
               {:else}
                 <DislikeEmpty size="1rem" />
@@ -365,7 +369,7 @@
               {dislikeCount}
             </span>
           </span>
-              {#if !isReplyMode}
+            {#if !isReplyMode}
             <span class="inline-block flex-grow w-0 flex flex-row justify-end overflow-x-scroll space-x-2">
               {#if notFetchedReplyCounts > 0}
                 <span class="cursor-pointer hover:text-sky-600 text-sm flex-grow-0 w-fit flex-shrink-0"
@@ -401,7 +405,7 @@
                   <Admin size="1rem"/>
                 </span>
               {/if}
-            </span>
+              </span>
               {/if}
             </div>
           {:else}
@@ -415,14 +419,14 @@
             </div>
           {/if}
         {:else}
-      <span class="space-x-2 pt-2 select-none">
-        <span class="text-sky-500 cursor-default p-2 sm:p-0">
-          <LikeEmpty size="1rem" /> {likeCount}
-        </span>
-        <span class="text-red-500 cursor-default p-2 sm:p-0">
-          <DislikeEmpty size="1rem" /> {dislikeCount}
-        </span>
-      </span>
+          <span class="space-x-2 pt-2 select-none">
+            <span class="text-sky-500 cursor-default p-2 sm:p-0">
+              <LikeEmpty size="1rem" /> {likeCount}
+            </span>
+            <span class="text-red-500 cursor-default p-2 sm:p-0">
+              <DislikeEmpty size="1rem" /> {dislikeCount}
+            </span>
+          </span>
         {/if}
       </div>
     </div>

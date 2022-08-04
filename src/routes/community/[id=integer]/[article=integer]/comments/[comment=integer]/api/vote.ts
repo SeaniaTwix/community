@@ -99,7 +99,7 @@ export async function PUT({params, url, locals, clientAddress, platform}: Reques
       comment,
       type,
       amount: 1,
-    }).catch()
+    }).catch();
   } catch (e) {
     console.error(e);
   }
@@ -128,6 +128,16 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   try {
     if (!await vote.isCommentExists()) {
       return errorCommentNotFound;
+    }
+
+    const mv = await vote.myVote(locals.user.uid);
+    if (!mv) {
+      return {
+        status: HttpStatus.NOT_ACCEPTABLE,
+        body: {
+          reason: 'not exists vote',
+        },
+      };
     }
 
     await vote.withdrawal(locals.user.uid);
@@ -179,7 +189,8 @@ class CommentVoteRequest {
       const cursor = await db.query(aql`
         for comment in comments
           filter comment._key == ${this.commentId}
-            return comment[${user}].type`);
+            let votes = is_object(comment.votes) ? comment.votes : {}
+            return votes[${user}].type`);
       return await cursor.next();
     } catch {
       return undefined;

@@ -37,14 +37,16 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
   return {
     status: HttpStatus.OK,
     body: {
-      comments: await Promise.all(comments.map(async (comment) => {
+      comments: await Promise.all(comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
+        const pubVoteResult = {like: 0, dislike: 0};
         if (!Object.hasOwn(comment, 'votes')) {
+          (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
           comment.myVote = {like: false, dislike: false};
           return comment;
         }
-        const pubVoteResult = {like: 0, dislike: 0};
         for (const vote of Object.values(comment.votes)) {
           if (vote) {
+            // @ts-ignore
             pubVoteResult[vote.type] += 1;
           }
         }
@@ -56,8 +58,8 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
               filter comment._key == ${comment._key}
                 return comment.votes[${locals.user.uid}].type`);
             const type = await cursor.next() as 'like' | 'dislike';
+            comment.myVote = {like: false, dislike: false};
             if (type) {
-              comment.myVote = {like: false, dislike: false};
               comment.myVote[type] = true;
             }
           }

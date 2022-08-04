@@ -37,7 +37,6 @@
     // const {user} = await ar.json();
     const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
     const {comments} = await cr.json() as { comments: IComment[] };
-    // console.log('ids:', comments[0]);
     const userInfo = {};
 
     if (!isEmpty(comments)) {
@@ -111,6 +110,24 @@
   export let users: Record<string, IUser>;
   export let comments: IComment[];
   $: noRelativeComments = comments.filter(comment => !comment.relative);
+  const bestComments = comments
+    .filter(comment => comment.votes.like >= 1)
+    .sort((a, b) => {
+      const aLike = a.votes.like;
+      const bLike = b.votes.like;
+
+      const like = aLike - bLike;
+
+      if (like !== 0) {
+        return like;
+      }
+
+      const at = (new Date(a.createdAt)).getTime();
+      const bt = (new Date(b.createdAt)).getTime();
+
+      return at - bt;
+    })
+    .slice(0, 5);
   export let mainImage: string | undefined;
   // noinspection TypeScriptUnresolvedVariable
   $: commentFolding = $session.commentFolding;
@@ -731,6 +748,27 @@
           </div>
 
         {:else}
+
+          {#if !isEmpty(bestComments)}
+            <div class="mb-6">
+              <h3 class="ml-2 mb-2 text-zinc-500">
+                댓글 베스트
+              </h3>
+              <ul class="space-y-3">
+                {#each bestComments as comment}
+                  <li id="best-c{comment._key}" in:fade class="relative">
+                    <Comment board="{article.board}"
+                             article="{article._key}"
+                             on:delete={() => deleteComment(comment)}
+                             bind:allComments="{comments}"
+                             bind:users="{users}"
+                             selected="{selectedComment?._key === comment._key}"
+                             {comment} isBest="{true}" />
+                  </li>
+                {/each}
+              </ul>
+            </div>
+          {/if}
 
           <ul class="space-y-3">
 

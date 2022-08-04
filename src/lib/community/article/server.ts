@@ -53,7 +53,8 @@ export class Article {
         filter comment.article == ${this.id} && (isPub || replyExists)
         filter comment.author not in blockedUsers
           limit ${(page - 1) * amount}, ${amount}
-          return isPub ? comment : merge(keep(comment, "_key", "author", "createdAt"), {deleted: true})`);
+          let publicComment = unset(comment, "_rev", "_id", "pub")
+          return isPub ? publicComment : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true})`);
     return await cursor.all();
   }
 
