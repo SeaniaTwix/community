@@ -116,7 +116,7 @@
       const aLike = a.votes.like - a.votes.dislike;
       const bLike = b.votes.like - a.votes.dislike;
 
-      const like = aLike - bLike;
+      const like = bLike - aLike;
 
       if (like !== 0) {
         return like;
