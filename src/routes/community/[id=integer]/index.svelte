@@ -48,7 +48,7 @@
     return {
       status: 200,
       props: {
-        list: list.map(initAutoTag),
+        articles: list.map(initAutoTag),
         id,
         params,
         name,
@@ -72,12 +72,12 @@
   import {session, page} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
-  import {onDestroy, afterUpdate} from 'svelte';
+  import {onDestroy, afterUpdate, tick} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
 
-  export let list: ArticleItemDto[];
+  export let articles: ArticleItemDto[];
   export let bests: ArticleItemDto[];
   export let params;
   export let id: string = params.id;
@@ -85,7 +85,7 @@
   export let currentPage: number;
   export let maxPage: number;
 
-  $: listType = $session.ui.listType;
+  let listType = $session.ui.listType;
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
@@ -99,9 +99,6 @@
     }
   });
 
-  afterUpdate(() => {
-  });
-
   async function fullRefresh() {
     const p = $page.url.searchParams.get('page') ?? '1';
     const res = await fetch(`${$page.url.pathname}/api/list?page=${p}`);
@@ -109,27 +106,16 @@
   }
 
   async function toggleViewMode() {
-    const isList = listType === 'list';
-    if (isList) {
-      Cookies.set('list_type', 'gallery');
-      session.update((s) => {
-        s.ui.listType = 'gallery';
-        return s;
-      });
-    } else {
-      Cookies.set('list_type', 'list');
-      session.update((s) => {
-        s.ui.listType = 'list';
-        return s;
-      });
-    }
+    listType = listType === 'list' ? 'gallery' : 'list';
+
+    Cookies.set('list_type', listType);
+
     const {list: l, maxPage: mp} = await fullRefresh();
 
-    // i dont know why it's blinking and data going back without timout
-    setTimeout(() => {
-      list = l.map(initAutoTag);
-      maxPage = mp;
-    }, 100);
+    console.log(l);
+
+    articles = l;
+    maxPage = mp;
   }
 
   let buffer: INewPublishedArticle[] = [];
@@ -177,7 +163,7 @@
     });
 
     // todo: make list limit to max
-    list = [...newArticles, ...list]; // .slice(0, 30);
+    articles = [...newArticles, ...articles]; // .slice(0, 30);
     buffer = [];
   }
 
@@ -355,9 +341,9 @@
 
 
   {#if listType === 'list'}
-    <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <ArticleList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else if listType === 'gallery'}
-    <GalleryList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <GalleryList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else}
     <p>정의되지 않음.</p>
   {/if}
