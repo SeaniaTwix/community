@@ -217,8 +217,10 @@ class CommentVoteRequest {
     await db.query(aql`
       for comment in comments
         filter comment._key == ${this.commentId}
-          let newVotes = unset(is_object(comment.vote) ? comment.vote : {}, ${userId})
-          update comment with {votes: newVotes} in comments`);
+          let v = is_object(comment.votes) ? comment.votes : {}
+          let nv = unset(v, ${userId})
+          let newCo = merge(comment, {votes: nv})
+          replace comment with newCo in comments`);
   }
 
 }
