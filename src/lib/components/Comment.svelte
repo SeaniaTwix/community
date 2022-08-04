@@ -331,9 +331,6 @@
                 <span class="bg-sky-400 text-white px-1.5 py-1 rounded-md text-sm">베스트</span>
               </div>
             {/if}
-            <div>
-              {JSON.stringify(allComments.find(c => c._key === comment._key))}
-            </div>
             {#each comment.content.split('\n') as line}
               <p class="p-1 __contents-line"><span prevent-reply>{@html line}</span></p>
             {/each}
