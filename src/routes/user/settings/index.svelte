@@ -22,12 +22,15 @@
   import Checkbox from '$lib/components/Checkbox.svelte';
   import Cookies from 'js-cookie';
   import {session} from '$app/stores';
+  import {dayjs} from 'dayjs';
 
   export let leftAlign: boolean;
 
   function changeSettingLeftButtons(event: CustomEvent<boolean>) {
     const isSetAlignLeft = event.detail;
-    Cookies.set('button_align', isSetAlignLeft ? 'left' : 'right');
+    Cookies.set('button_align', isSetAlignLeft ? 'left' : 'right', {
+      expires: dayjs().add(1000, 'years').toDate(),
+    });
 
     session.update((s) => {
       s.ui.buttonAlign = isSetAlignLeft ? 'left' : 'right';
