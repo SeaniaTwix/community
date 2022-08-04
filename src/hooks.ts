@@ -19,10 +19,11 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
   let newRefresh: njwt.Jwt | undefined;
 
   const cookie = event.request.headers.get('cookie') ?? '';
-  const {comment_folding, button_align} = (new CookieParser(cookie!)).get();
+  const {comment_folding, button_align, list_type} = (new CookieParser(cookie!)).get();
   event.locals.ui = {
     commentFolding: (comment_folding ?? 'false') === 'true',
-    buttonAlign: button_align === 'left' ? 'left' : 'right'
+    buttonAlign: button_align === 'left' ? 'left' : 'right',
+    listType: (list_type ?? 'list') === 'list' ? 'list' : 'gallery',
   };
   try {
     const cookie = event.request.headers.get('cookie');

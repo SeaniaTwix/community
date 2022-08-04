@@ -80,7 +80,7 @@ export class Board {
     });
   }
 
-  async getRecentArticles(page: number, amount: number, reader: string | null, imageShow = false) {
+  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false) {
     if (page <= 0) {
       throw new Error('page must be lt 0')
     }
@@ -93,7 +93,7 @@ export class Board {
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
-          let imgs = ${imageShow} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
+          let imgs = ${showImage} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
           let reader = ${reader}
           let blockedTags = is_string(reader) ? flatten(
             for user in users

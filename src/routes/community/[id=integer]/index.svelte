@@ -3,6 +3,16 @@
   import HttpStatus from 'http-status-codes';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
+  function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
+    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
+    const regx = autoTag.exec(articleItem.title.trim());
+    // console.log(item.title, regx);
+    if (regx) {
+      articleItem.autoTag = regx[1];
+    }
+    return articleItem;
+  }
+
   export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
@@ -38,15 +48,7 @@
     return {
       status: 200,
       props: {
-        list: list.map((item) => {
-          const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-          const regx = autoTag.exec(item.title.trim());
-          // console.log(item.title, regx);
-          if (regx) {
-            item.autoTag = regx[1];
-          }
-          return item;
-        }),
+        list: list.map(initAutoTag),
         id,
         params,
         name,
@@ -63,14 +65,17 @@
   import Pagination from '$lib/components/Pagination.svelte';
   import Refresh from 'svelte-material-icons/Refresh.svelte';
   import Circle from 'svelte-material-icons/Circle.svelte';
+  import List from 'svelte-material-icons/ViewList.svelte';
+  import Gallery from 'svelte-material-icons/ViewGallery.svelte';
 
   import {afterNavigate} from '$app/navigation';
-  import {session} from '$app/stores';
+  import {session, page} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {onDestroy, afterUpdate} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
-  import type {Unsubscribable} from 'rxjs';
+  import GalleryList from '$lib/components/GalleryList.svelte';
+  import Cookies from 'js-cookie';
 
   export let list: ArticleItemDto[];
   export let bests: ArticleItemDto[];
@@ -80,20 +85,52 @@
   export let currentPage: number;
   export let maxPage: number;
 
+  $: listType = $session.ui.listType;
+
   afterNavigate(({from, to}) => {
-    const page = to.searchParams.get('page');
-    console.log(from, to)
+    // const page = to.searchParams.get('page');
+    if (from?.pathname !== to.pathname) {
+      if (pusher) {
+        pusher.destory();
+      }
+
+      pusher = new Pusher(`@${params.id}`);
+      pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
+    }
   });
 
   afterUpdate(() => {
-    if (pusher) {
-      pusher.destory();
-    }
-
-    pusher = new Pusher(`@${params.id}`);
-    pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
-
   });
+
+  async function fullRefresh() {
+    const p = $page.url.searchParams.get('page') ?? '1';
+    const res = await fetch(`${$page.url.pathname}/api/list?page=${p}`);
+    return await res.json() as { list: ArticleItemDto[], maxPage: number };
+  }
+
+  async function toggleViewMode() {
+    const isList = listType === 'list';
+    if (isList) {
+      Cookies.set('list_type', 'gallery');
+      session.update((s) => {
+        s.ui.listType = 'gallery';
+        return s;
+      });
+    } else {
+      Cookies.set('list_type', 'list');
+      session.update((s) => {
+        s.ui.listType = 'list';
+        return s;
+      });
+    }
+    const {list: l, maxPage: mp} = await fullRefresh();
+
+    // i dont know why it's blinking and data going back without timout
+    setTimeout(() => {
+      list = l.map(initAutoTag);
+      maxPage = mp;
+    }, 100);
+  }
 
   let buffer: INewPublishedArticle[] = [];
   let bestScrollPage = 1;
@@ -181,7 +218,7 @@
 <div class="justify-between flex-col flex-row"></div>
 
 <!-- todo: move to __layout -->
-<div class="w-11/12 md:w-4/5 lg:w-3/4 xl:w-3/5 2xl:w-1/2 mx-auto space-y-2 transition-transform __mobile-bottom-fix">
+<div class="w-11/12 md:w-4/5 lg:w-3/4 xl:w-3/5 2xl:w-[60%] mx-auto space-y-2 transition-transform __mobile-bottom-fix">
   <nav class="flex ml-4 grow-0 shrink" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
       <li class="inline-flex items-center">
@@ -296,11 +333,18 @@
     </div>
   {/if}
 
-  <div class="flex justify-center text-sm">
+  <div class="flex flex-row text-sm pt-0.5">
 
-    {#if isEmpty(buffer)}
-      <hr class="mt-4 h-3 border-zinc-200 dark:border-gray-400 border-dashed w-full block"/>
-    {:else}
+    <button on:click={toggleViewMode}
+            class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors" >
+      {#if listType === 'list'}
+        <List /> 리스트로 보는 중
+      {:else}
+        <Gallery /> 갤러리로 보는 중
+      {/if}
+    </button>
+
+    {#if !isEmpty(buffer)}
       <button on:click={updateList}
               class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
         <Refresh/>
@@ -309,7 +353,14 @@
     {/if}
   </div>
 
-  <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+
+  {#if listType === 'list'}
+    <ArticleList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+  {:else if listType === 'gallery'}
+    <GalleryList board={id} {list} on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+  {:else}
+    <p>정의되지 않음.</p>
+  {/if}
 
   {#if $session.user}
     <div class="flex flex-row justify-end" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>

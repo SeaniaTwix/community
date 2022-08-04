@@ -164,6 +164,7 @@ class EditArticleRequest {
       target: this.id, user:author, name: tag, createdAt: new Date, pub: true
     })); // */
 
+
     const edited = {
       title,
       editedAt: new Date,

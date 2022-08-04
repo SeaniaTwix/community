@@ -189,7 +189,7 @@
            width="{size ? undefined : width}"
            height="{size ? undefined : height}"/>
     </span>
-    {#if folded}
+    {#if !(nsfw && !forceShow) && folded}
       <div on:click={() => (folded = false)} prevent-reply
            class="cursor-pointer select-none text-center p-1 transition-colors hover:bg-zinc-200 dark:bg-gray-700 dark:hover:bg-gray-800">
         펼치기

@@ -7,7 +7,7 @@ import HttpStatus from 'http-status-codes';
 import {parseInt} from 'lodash-es';
 import {Board} from '$lib/community/board/server';
 
-export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url, locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!isStringInteger(params.id)) {
     return {
       status: HttpStatus.BAD_REQUEST,
@@ -19,7 +19,8 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
   const page = isStringInteger(pageParam) ? parseInt(pageParam) : 1;
   const amountParam = url.searchParams.get('amount') ?? '30';
   const amount = isStringInteger(amountParam) ? parseInt(amountParam) : 30;
-  const list = await board.getListRecents(page, amount, locals?.user?.uid) as any[];
+  const showImage = locals.ui.listType === 'gallery';
+  const list = await board.getListRecents(page, amount, locals?.user?.uid ?? null, showImage) as any[];
 
   // todo: find diff way for mapping tags count (in aql if available)
 
@@ -32,6 +33,11 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
           tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
         }
         article.tags = tags;
+
+        if (Object.keys(tags).includes('성인') && showImage && locals?.user?.adult !== true) {
+          article.images = '';
+        }
+
         return article;
       }),
       maxPage: await board.getMaxPage(amount),
@@ -50,10 +56,10 @@ class ListBoardRequest {
     return this.board.getMaxPage(amount);
   }
 
-  getListRecents(page = 1, amount = 25, reader?: string): Promise<ArticleDto[]> {
+  getListRecents(page = 1, amount = 25, reader: string | null, showImage: boolean): Promise<ArticleDto[]> {
     if (amount > 50) {
       throw new Error('too many');
     }
-    return this.board.getRecentArticles(page, amount, reader ?? null);
+    return this.board.getRecentArticles(page, amount, reader, showImage);
   }
 }

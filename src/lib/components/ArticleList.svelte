@@ -161,7 +161,7 @@
         {/if}
         {#if Object.keys(article.tags).length > 0}
           <div class="w-full px-2">
-            <ul class="space-x-1">
+            <ul class="gap-1">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
                   <li class="inline-block">
