@@ -130,7 +130,7 @@
     .slice(0, 5);
   export let mainImage: string | undefined;
   // noinspection TypeScriptUnresolvedVariable
-  $: commentFolding = $session.commentFolding;
+  $: commentFolding = $session.ui.commentFolding;
 
   let commentTextInput: HTMLTextAreaElement;
   let commentContent = '';
@@ -346,7 +346,7 @@
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
     session.update((s) => {
-      s.commentFolding = !folding;
+      s.ui.commentFolding = !folding;
       return s;
     });
     if (!commentFolding) {

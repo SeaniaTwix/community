@@ -3,19 +3,17 @@
   import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
   import HttpStatus from 'http-status-codes';
 
-  export async function load({session: {user, buttonAlign}}: LoadEvent): Promise<LoadOutput> {
+  export async function load({session: {user, ui}}: LoadEvent): Promise<LoadOutput> {
     if (!user) {
       return {
         redirect: '/',
       };
     }
 
-    // console.log(buttonAlign)
-
     return {
       status: HttpStatus.OK,
       props: {
-        leftAlign: buttonAlign === 'left',
+        leftAlign: ui.buttonAlign === 'left',
       }
     }
   }
@@ -32,7 +30,7 @@
     Cookies.set('button_align', isSetAlignLeft ? 'left' : 'right');
 
     session.update((s) => {
-      s.buttonAlign = isSetAlignLeft ? 'left' : 'right';
+      s.ui.buttonAlign = isSetAlignLeft ? 'left' : 'right';
       return s;
     })
   }

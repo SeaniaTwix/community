@@ -11,8 +11,7 @@ declare global {
   namespace App {
     interface Locals {
       user: JwtUser & { adult: boolean };
-      commentFolding: boolean;
-      buttonAlign: 'left' | 'right';
+      ui: UI,
     }
 
     // interface Platform {}
@@ -24,10 +23,14 @@ declare global {
         exp: number;
         adult: boolean;
       };
-      commentFolding: boolean;
-      buttonAlign: 'left' | 'right';
+      ui: UI,
     }
 
     // interface Stuff {}
   }
+}
+
+interface UI {
+  commentFolding: boolean;
+  buttonAlign: 'left' | 'right';
 }

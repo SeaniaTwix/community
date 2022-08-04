@@ -20,9 +20,10 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
 
   const cookie = event.request.headers.get('cookie') ?? '';
   const {comment_folding, button_align} = (new CookieParser(cookie!)).get();
-  event.locals.commentFolding = (comment_folding ?? 'false') === 'true';
-  event.locals.buttonAlign = button_align === 'left' ? 'left' : 'right';
-
+  event.locals.ui = {
+    commentFolding: (comment_folding ?? 'false') === 'true',
+    buttonAlign: button_align === 'left' ? 'left' : 'right'
+  };
   try {
     const cookie = event.request.headers.get('cookie');
     if (!_.isEmpty(cookie)) {
@@ -147,8 +148,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 export function getSession(event: RequestEvent) {
   return {
     user: event.locals.user,
-    commentFolding: event.locals.commentFolding,
-    buttonAlign: event.locals.buttonAlign,
+    ui: event.locals.ui,
   };
 }
 
