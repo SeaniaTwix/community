@@ -136,9 +136,8 @@ class EditArticleRequest {
     return {title, content, tags: userTags, source};
   }
 
-  async getImage(): Promise<string> {
-    const {content} = await this.article.get();
-    if (!content) {
+  async getImage(newContent: string): Promise<string> {
+    if (isEmpty(newContent)) {
       return '';
     }
 
