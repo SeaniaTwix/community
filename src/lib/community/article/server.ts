@@ -26,7 +26,7 @@ export class Article {
         tagNames: [...defaultSchema.tagNames ?? [], 'video', 'source'],
         attributes: {
           ...defaultSchema.attributes,
-          video: ['preload', 'muted'],
+          video: ['preload', 'muted', 'controls'],
           source: ['src', 'type']
         }
       })
