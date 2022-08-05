@@ -58,6 +58,17 @@
     dispatch('userclick', {already: showingUserContextMenuIndex === i, i});
   }
 
+  function unwrapAutotag(title: string) {
+    const e = /^[[(]?(.+)[\])]/gm.exec(title);
+    return e ? e[1] : title;
+    // return title.replace(new RegExp('^[[(]' + title + '[\])]'), '')
+  }
+
+  function getAutotag(title: string) {
+    const e = /^([[(]?.+[\])])/gm.exec(title);
+    return e ? e[1] : '';
+  }
+
   interface IImage {
     src: string
     type: string
@@ -78,8 +89,8 @@
                 <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
                   <div class="truncate">
                     {#if article.autoTag}
-                      <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{article.autoTag})</a>
-                    {/if}<span>{typeof article.autoTag === 'string' ? article.title.replace(new RegExp('^' + article.autoTag + '.'), '') : article.title}</span>
+                      <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
+                    {/if}<span>{typeof article.autoTag === 'string' ? unwrapAutotag(article.title) : article.title}</span>
                   </div>
                   {#if Object.keys(article.tags??{}).includes('성인')}
                     <span class="after:ml-1 after:inline-block __warning-adult-content after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center"></span>
@@ -161,7 +172,7 @@
         {/if}
         {#if Object.keys(article.tags).length > 0}
           <div class="w-full px-2">
-            <ul class="gap-1">
+            <ul class="flex flex-row gap-1">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
                   <li class="inline-block">
