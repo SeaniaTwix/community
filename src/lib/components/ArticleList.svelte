@@ -59,8 +59,8 @@
   }
 
   function unwrapAutotag(title: string) {
-    const e = /^[[(]?(.+)[\])]/gm.exec(title);
-    return e ? e[1] : title;
+    const e = /^[[(]?.+[\])]/gm.exec(title);
+    return e ? title.replace(e[0], '') : title;
     // return title.replace(new RegExp('^[[(]' + title + '[\])]'), '')
   }
 
