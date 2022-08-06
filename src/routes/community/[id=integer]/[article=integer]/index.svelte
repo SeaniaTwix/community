@@ -71,6 +71,7 @@
     };
   }
 </script>
+<!--suppress TypeScriptValidateTypes -->
 <script lang="ts">
   import Up from 'svelte-material-icons/ArrowUp.svelte';
   import Down from 'svelte-material-icons/ArrowDown.svelte';
@@ -161,42 +162,41 @@
 
     commenting = true;
 
-    const commentData: IComment = {
-      article: article._key,
-      content: commentContent,
-    };
-
-    if (selectedComment) {
-      commentData.relative = selectedComment._key;
-    }
-
-    if (!isEmpty(commentImageUploadSrc)) {
-      if (commentImageUploadSrc.startsWith('https://s3.ru.hn')) {
-        commentData.image = commentImageUploadSrc;
-      } else {
-        const data = editedImage ? editedImage : commentImageUploadFileInfo;
-        const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
-        const name = 'UZ-is-Kawaii.png';
-        commentData.image = await upload(data, type, name);
-      }
-    }
-
-    if (image100x100) {
-      commentData.imageSize = {x: 100, y: 100};
-    } else if (imageSize.x > 0 && imageSize.y > 0) {
-      commentData.imageSize = imageSize;
-    } else if (commentData.image) {
-      const getNaturalSize = new Promise<{x: number, y: number}>((resolve) => {
-        const img = new Image();
-        img.addEventListener('load', () => {
-          resolve({x: img.naturalWidth, y: img.naturalHeight});
-        })
-        img.src = commentData.image;
-      });
-      commentData.imageSize = await getNaturalSize;
-    }
-
     try {
+      const commentData: IComment = {
+        article: article._key,
+        content: commentContent,
+      };
+
+      if (selectedComment) {
+        commentData.relative = selectedComment._key;
+      }
+
+      if (!isEmpty(commentImageUploadSrc)) {
+        if (commentImageUploadSrc.startsWith('https://s3.ru.hn')) {
+          commentData.image = commentImageUploadSrc;
+        } else {
+          const data = editedImage ? editedImage : commentImageUploadFileInfo;
+          const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
+          const name = 'UZ-is-Kawaii.png';
+          commentData.image = await upload(data, type, name);
+        }
+      }
+
+      if (image100x100) {
+        commentData.imageSize = {x: 100, y: 100};
+      } else if (imageSize.x > 0 && imageSize.y > 0) {
+        commentData.imageSize = imageSize;
+      } else if (commentData.image) {
+        const getNaturalSize = new Promise<{x: number, y: number}>((resolve) => {
+          const img = new Image();
+          img.addEventListener('load', () => {
+            resolve({x: img.naturalWidth, y: img.naturalHeight});
+          })
+          img.src = commentData.image;
+        });
+        commentData.imageSize = await getNaturalSize;
+      }
 
       commentTextInput?.blur();
 

@@ -17,15 +17,18 @@ export function upload(file: File | Blob, type?: string, name?: string) {
         body.set(key, request.presigned.fields[key]);
       }
       body.append('file', file);
-      await ky.post('https://s3.ru.hn', {body});
+      await ky.post('https://s3.ru.hn', {
+        body,
+        timeout: false,
+      });
       const uploadedUrl = `https://s3.ru.hn/${request.prefix + n ?? `UZ-is-Kawaii.${t.split('/')[1]}`}`;
       resolve(uploadedUrl);
 
-      await ky.post('/file/complete', {
+      ky.post('/file/complete', {
         json: {
           src: uploadedUrl,
         },
-      });
+      }).then();
     } catch (e) {
       reject(e);
     }
