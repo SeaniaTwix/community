@@ -1,4 +1,5 @@
 import {defaultEditorSettings} from '$lib/editor/settings';
+import {isEmpty} from 'lodash-es';
 
 export const uploadAllowedExtensions = defaultEditorSettings.images_file_types
   .split(',')
@@ -6,6 +7,9 @@ export const uploadAllowedExtensions = defaultEditorSettings.images_file_types
   .join('|');
 
 export function toSources(images: string[]) {
+  if (isEmpty(images)) {
+    return [];
+  }
   const srcParser = new RegExp(`https://s3.ru.hn/(.+)(${uploadAllowedExtensions})$`);
   return images.map(link => {
     const result = srcParser.exec(link);
