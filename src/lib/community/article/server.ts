@@ -9,6 +9,9 @@ import {unified} from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
+import {load} from 'cheerio'
+import type {Element as CheerioElement} from 'cheerio/lib'
+import {uploadAllowedExtensions} from '$lib/file/image/shared';
 
 export class Article {
 
@@ -23,16 +26,44 @@ export class Article {
       .use(rehypeParse, {fragment: true})
       .use(rehypeSanitize, {
         ...defaultSchema,
-        tagNames: [...defaultSchema.tagNames ?? [], 'video', 'source'],
+        tagNames: [
+          ...defaultSchema.tagNames ?? [],
+          'video',
+          'source',
+          'iframe'
+        ],
         attributes: {
           ...defaultSchema.attributes,
           video: ['preload', 'muted', 'controls'],
-          source: ['src', 'type']
+          source: ['src', 'type'],
+          iframe: ['src', 'allow', 'allowfullscreen'],
         }
       })
       .use(rehypeStringify)
       .process(content ?? '');
-    return sanitizedContent.value.toString();
+
+    const sanitzedString = sanitizedContent.value.toString();
+
+    const $ = load(sanitzedString);
+
+    const iframes: CheerioElement[] = $('iframe').toArray() as any[];
+    for (const iframe of iframes) {
+      const src = iframe.attribs?.src;
+      if (src) {
+        if (!src.startsWith('https://iframe.videodelivery.net/')) {
+          $($.root()).find(iframe as any).removeAttr('src');
+        } else {
+          const elem = $($.root()).find(iframe as any);
+          const parent = $(elem.parent('div'));
+
+          parent?.attr('style', 'position: relative; padding-top: 56.25%')
+          elem.attr('style', 'border: none; position: absolute; top: 0; height: 100%; width: 100%');
+
+        }
+      }
+    }
+
+    return $('body').html() ?? '';
   }
 
   async get(): Promise<IArticle> {
@@ -71,11 +102,16 @@ export class Article {
             filter user._key == reader && has(user, "blockedUsers")
               return (for blockedUser in user.blockedUsers return blockedUser.key)
         ) : []
+        let imageSrcKey = regex_matches(comment.image, ${'https:\\/\\/s3\\.ru\\.hn(.+)' + `(${uploadAllowedExtensions})$`}, true)
+        let images = first(
+          for image in images
+            filter image.src == imageSrcKey[1]
+              return image.converted)
         filter comment.article == ${this.id} && (isPub || replyExists)
         filter comment.author not in blockedUsers
           limit ${(page - 1) * amount}, ${amount}
           let publicComment = unset(comment, "_rev", "_id", "pub")
-          return isPub ? publicComment : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true})`);
+          return isPub ? merge(publicComment, {images: images}) : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true, images: images})`);
     return await cursor.all();
   }
 

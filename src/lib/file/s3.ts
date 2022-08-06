@@ -1,6 +1,6 @@
-import {Client} from 'minio';
 import aws from 'aws-sdk';
 import type {PresignedPost} from 'aws-sdk/lib/s3/presigned_post';
+import * as process from 'process';
 
 const _S3 = aws.S3;
 
@@ -12,29 +12,24 @@ const s3 = new _S3({
   endpoint: process.env.S3_ENDPOINT,
 });
 
-
 export class S3 {
-  private static minio: Client;
+  static upload(name: string, buffer: Buffer) {
+    let Bucket: string, Key: string;
 
-  static upload(name: string, buffer: Buffer): Promise<UploadedObjectInfo> {
-    return new Promise((resolve, reject) => {
-      if (!S3.minio) {
-        S3.minio = new Client( {
-          accessKey: process.env.S3_ACCESS_KEY!,
-          secretKey: process.env.S3_SECRET_KEY!,
-          endPoint: process.env.S3_ENDPOINT!,
-          useSSL: true,
-        });
-      }
+    if (process.env?.S3_ENDPOINT === 's3.ru.hn') {
+      Bucket = 'uu';
+      Key = name.replace(/^\/uu\//, '');
+    } else {
+      Bucket = process.env.BUCKET_NAME;
+      Key = name;
+    }
 
-      S3.minio.putObject('s3.ru.hn', name, buffer, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      });
-    })
+    return s3.upload({
+      Bucket,
+      Key,
+      ACL: 'public-read',
+      Body: buffer,
+    }).promise();
   }
 
   static newUploadLink(prefix: string, type: string) {
@@ -78,9 +73,3 @@ export class S3 {
     }
   }
 }
-
-export interface UploadedObjectInfo {
-  etag: string;
-  versionId: string | null;
-}
-//

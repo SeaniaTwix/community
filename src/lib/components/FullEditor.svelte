@@ -15,6 +15,8 @@
   import {goto} from '$app/navigation';
   import {writable} from 'svelte/store';
   import type {Unsubscriber} from 'svelte/store';
+  import {fade} from 'svelte/transition';
+  import {load} from 'cheerio'
 
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
@@ -32,6 +34,7 @@
   let addMode = false;
 
   let uploading = false;
+  let uploadingExternalLinks = false;
   // let fileUploading = false;
   let fileUploadingCount = 0;
 
@@ -45,6 +48,8 @@
   $: dark = $theme.mode === 'dark';
   $: appendableTags = usedTags.filter(tag => !tags.find(t => t === tag));
 
+  let detectedExternalLinks = false;
+  let detectedExternalLinksCount = 0;
 
   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
 
@@ -102,13 +107,22 @@
     setup: (_editor) => {
       editor = _editor;
       _editor.ui.registry.addButton('uploadImageRu', {
-        text: '바로 업로드',
+        icon: 'upload',
+        text: '이미지',
         onAction: async () => {
           await tick();
           fileUploader.click();
           // console.log(editor);
         },
       });
+      _editor.ui.registry.addButton('uploadVideoRu', {
+        icon: 'upload',
+        text: '동영상',
+        onAction: async () => {
+          await tick();
+
+        }
+      })
     },
   };
 
@@ -150,14 +164,36 @@
     tags = [];
   }
 
-  function addSizeAllImages() {
+  function getExteranlImages() {
     const imgs = editor.iframeElement.contentWindow.document.querySelectorAll('img');
-    for (const img of imgs) {
-      if (isEmpty(img.getAttribute('width'))) {
+    return Array.from(imgs).filter(image => !image.src.startsWith('https://s3.ru.hn'));
+  }
+
+  function setToNaturalSize(img: HTMLImageElement) {
+    if (isEmpty(img.getAttribute('width'))) {
+      if (img.naturalWidth > 0) {
         img.width = img.naturalWidth;
       }
-      if (isEmpty(img.getAttribute('height'))) {
+    }
+    if (isEmpty(img.getAttribute('height'))) {
+      if (img.naturalHeight > 0) {
         img.height = img.naturalHeight;
+      }
+    }
+  }
+
+  async function addSizeAllImages() {
+    const imgs = editor.iframeElement.contentWindow.document.querySelectorAll('img');
+    for (const img of imgs) {
+      if (img.naturalWidth + img.naturalHeight <= 0) {
+        await new Promise(resolve => {
+          img.addEventListener('load', () => {
+            setToNaturalSize(img);
+            resolve();
+          });
+        });
+      } else {
+        setToNaturalSize(img);
       }
     }
 
@@ -174,6 +210,14 @@
 
   async function upload() {
     if (uploading) {
+      return;
+    }
+
+    const externalImages = getExteranlImages();
+    detectedExternalLinks = !isEmpty(externalImages);
+
+    if (detectedExternalLinks) {
+      detectedExternalLinksCount = externalImages.length;
       return;
     }
 
@@ -195,7 +239,7 @@
 
     editor.selection.setCursorLocation();
 
-    addSizeAllImages();
+    await addSizeAllImages();
 
     try {
 
@@ -242,11 +286,10 @@
     }
   }
 
-  const f = writable<File>(null);
+  const f = writable<File | null>(null);
 
   function fileSelected() {
-    console.log(fileUploader);
-    f.set(fileUploader.files[0]);
+    f.set(fileUploader.files?.[0]);
   }
 
   function insertImage(imageUrl: string) {
@@ -280,11 +323,81 @@
     }
   });
 
+  async function uploadAllImagesToS3AndPost() {
+    uploadingExternalLinks = true;
+
+    try {
+      editor.selection.setCursorLocation();
+
+      closeExternalLinkWarning();
+
+      const $ = load(content);
+
+      const imgs = $('img');
+
+      const reqs = imgs.toArray().map(async img => {
+        const {uploadedLink} = await ky.post('/file/upload/', {
+          json: {
+            src: img.attribs?.src,
+          }
+        }).json<{ uploadedLink: string }>()
+        $(img).attr('src', uploadedLink);
+      });
+
+      await Promise.all(reqs);
+
+      content = $('body').html() ?? '';
+      // editor.insertContent('<p>&nbsp;</p>')
+    } finally {
+
+      setTimeout(() => {
+        upload();
+        uploadingExternalLinks = false;
+      }, 150);
+    }
+
+     // upload().then();
+  }
+
+  function closeExternalLinkWarning() {
+    detectedExternalLinks = false;
+  }
+
 </script>
 
 <div class="hidden">
   <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
 </div>
+
+{#if uploading || uploadingExternalLinks}
+  <div transition:fade class="fixed top-0 left-0 bg-zinc-200/50 w-full h-full z-20 backdrop-blur-md">
+    <div class="absolute w-fit px-4 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 rounded-md shadow-md bg-zinc-700/60 p-4 text-zinc-100">
+      업로드 중
+    </div>
+  </div>
+{/if}
+
+{#if detectedExternalLinks}
+  <div class="fixed top-0 left-0 bg-zinc-200/50 w-full h-full z-20 backdrop-blur-md">
+    <div class="absolute w-fit px-4 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 rounded-md shadow-md bg-zinc-700/60 p-4 text-zinc-100">
+      <h2 class="text-xl text-center font-bold mb-2">
+        {detectedExternalLinksCount}개의 외부 이미지가 감지되었습니다.
+      </h2>
+      <p>모두 루헨을 통해 업로드 한 다음 진행할까요?</p>
+      <p class="text-red-200 rounded-md bg-zinc-400/20 p-2">
+        경고: 루헨은 저작권 관련 검사를 자동적으로 하지 않으며, 저작권 침해가 적발되어 고발당할 시 책임은 본인에게 있습니다.
+      </p>
+      <div class="flex flex-row gap-2 mt-2">
+        <button on:click={uploadAllImagesToS3AndPost} class="flex-grow bg-sky-400 rounded-md shadow-md px-4 py-2">
+          네, 위 경고를 읽었고 이해했으며, 루헨으로 자동 업로드 한 다음 게시글을 올릴게요.
+        </button>
+        <button on:click={closeExternalLinkWarning} class="flex-grow bg-red-400 rounded-md shadow-md px-4 py-2">
+          아뇨. 조금 더 생각해볼게요.
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <div class="space-y-4">
   <div
@@ -390,7 +503,7 @@
     </button>
     <a href="/community/{board}"
        class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md shadow-md">
-      취소
+      게시판으로 돌아가기
     </a>
   </div>
 </div>

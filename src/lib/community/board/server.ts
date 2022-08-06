@@ -1,6 +1,7 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import type {EUserRanks} from '$lib/types/user-ranks';
+import {uploadAllowedExtensions} from '$lib/file/image/shared';
 
 export class Board {
   constructor(private readonly id: string) {
@@ -94,6 +95,11 @@ export class Board {
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
           let imgs = ${showImage} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
+          let imageSrcKey = ${showImage} ? regex_matches(imgs, ${'https:\\/\\/s3\\.ru\\.hn(.+)' + `(${uploadAllowedExtensions})$`}, true) : []
+          let convertedImages = ${showImage} ? first(
+            for image in images
+              filter image.src == imageSrcKey[1]
+                return image.converted) : []
           let reader = ${reader}
           let blockedTags = is_string(reader) ? flatten(
             for user in users
@@ -114,7 +120,7 @@ export class Board {
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}
             let authorData = keep(first(for u in users filter u._key == article.author return u), "_key", "id", "avatar", "rank")
-            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, author: authorData})`)
+            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, convertedImages: convertedImages, author: authorData})`)
 
     return await cursor.all();
   }

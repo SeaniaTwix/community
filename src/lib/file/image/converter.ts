@@ -1,23 +1,107 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import magic from 'magic-bytes.js';
 import {TmpDir} from 'temp-file';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs, {closeSync, openSync, readSync, readFileSync} from 'node:fs';
 import {execSync} from 'node:child_process';
 import sharp from 'sharp';
-// @ts-ignore
 import WebP from 'node-webpmux';
-// @ts-ignore
-import * as isAnimated from 'is-animated';
+import isAnimated from 'is-animated';
+import {S3} from '$lib/file/s3';
+import db from '$lib/database/instance';
+import {aql} from 'arangojs';
+import {extname} from 'node:path';
+import {isEmpty} from 'lodash-es';
 
 
 export class ImageConverter {
-  static async processing(images: Record<string, Promise<unknown>>, key: string, prefix: string) {
-    const extensions = Object.keys(images);
-    const imageProcessed = await Promise.all(Object.values(images));
-    const imgs = imageProcessed
-      .map((buf, i) => ({buf, ext: extensions[i]}));
-    // await Promise.all(images.map(v => ))
+  static getBasePath(s3Url: string, srcFullPath: string, tempFilePath?: string) {
+    const ext = getExtension(srcFullPath, tempFilePath);
+    const basePathParser = new RegExp(`^${s3Url}(.+)(?:${ext}$)`);
+    const basePath = basePathParser.exec(srcFullPath);
+    return basePath ? basePath[1] : srcFullPath;
+  }
+
+  static async saveAll(s3Url: string, srcFullPath: string, tempFilePath: string) {
+    const allConverted = await ImageConverter.all(tempFilePath);
+
+    const base = this.getBasePath(s3Url, srcFullPath, tempFilePath);
+    const ext = extname(srcFullPath);
+
+    const uploaded = await Promise.all(
+      Object.keys(allConverted)
+        .filter(e => !!allConverted[e] && ext !== `.${e}`)
+        .map(async (convertedExt) => {
+          return await S3.upload(`${base}.${convertedExt}`, await allConverted[convertedExt]);
+        }),
+    );
+
+    try {
+      const links = uploaded.map(u => u.Location);
+      db.query(aql`insert {src: ${base}, converted: ${links}} into images`)
+        .then()
+        .catch((e) => console.error(e));
+    } catch (e) {
+      console.error(e);
+    }
+
+  }
+
+  static checkType(path: string, length = 64) {
+    const file = openSync(path);
+    const buf = Buffer.alloc(length);
+    readSync(file, buf, 0, length, 0);
+    const guessed = magic(buf);
+    closeSync(file);
+    return guessed;
+  }
+
+  static async all(path: string) {
+    const guessed = this.checkType(path);
+
+    let isWebp = false;
+    let isPng = false;
+    let isAvif = false;
+    let isJxl = false;
+    if (guessed.length > 0) {
+      const g = guessed[0];
+      isWebp = g.extension === 'webp';
+      isPng = g.extension === 'png';
+      isJxl = g.extension === 'jxl';
+      isAvif = g.extension === 'avif';
+    }
+
+    const image = readFileSync(path);
+
+    const converter = new ImageConverter;
+
+    let png: Promise<Buffer>;
+
+    if (isWebp) {
+      png = wrapper(await converter.png(image));
+    } else if (isPng) {
+      png = wrapper(image);
+    } else {
+      png = converter.png(image);
+    }
+
+    function wrapper(buf: Buffer): Promise<Buffer> {
+      return new Promise(resolve => resolve(buf));
+    }
+
+    const result: Record<string, Promise<Buffer>> = {
+      jxl: isJxl ? wrapper(image) : converter.jxl(isWebp ? await png : image),
+      avif: isAvif ? wrapper(image) : converter.avif(image),
+      webp: isWebp ? wrapper(image) : converter.webp(image),
+      png,
+    }
+
+    const promises = Object.values(result);
+    await Promise.all(promises);
+
+    for (const ext in result) {
+      result[ext] = await result[ext];
+    }
+
+    return result;
   }
 
   async jxl(input: Buffer): Promise<Buffer | null> {
@@ -39,8 +123,7 @@ export class ImageConverter {
     const tmpJxl = await tmp.getTempFile({suffix: '.jxl'});
 
     try {
-      const cur = path.resolve('.');
-      const command = `node ${cur}/node_modules/jxl-wasm/lib/cjxl-wrap.js ${tmpFile} ${tmpJxl}`;
+      const command = `cjxl ${tmpFile} ${tmpJxl}`;
       execSync(command);
       return fs.readFileSync(tmpJxl);
     } catch {
@@ -50,7 +133,7 @@ export class ImageConverter {
     }
   }
 
-  async avif(input: Buffer, lossless = true): Promise<Buffer | null> {
+  async avif(input: Buffer, lossless = false): Promise<Buffer | null> {
     const tmp = new TmpDir();
 
     try {
@@ -69,7 +152,7 @@ export class ImageConverter {
         }
       }
       return await sharp(input).avif({lossless}).toBuffer();
-    } catch {
+    } catch (e) {
       return null;
     } finally {
       tmp.cleanup().then();
@@ -91,16 +174,28 @@ export class ImageConverter {
       return await sharp(input, {animated: isAnimated(input)})
         .webp({smartSubsample: true})
         .toBuffer()
-    } catch {
+    } catch (e) {
+      console.trace(e);
       return null
     }
   }
 
   async png(input: Buffer): Promise<Buffer | null> {
     try {
-      return await sharp(input).png().toBuffer()
+      return await sharp(input, {animated: isAnimated(input)}).png().toBuffer()
     } catch {
       return null
     }
   }
+}
+
+function getExtension(path: string, filePath?: string) {
+  const ext = extname(path);
+  if (ext.length <= 1 && filePath) {
+    const guessed = ImageConverter.checkType(filePath);
+    if (!isEmpty(guessed)) {
+      return guessed[0].extension;
+    }
+  }
+  return ext;
 }

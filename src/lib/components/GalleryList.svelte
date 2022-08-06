@@ -9,6 +9,7 @@
   import View from 'svelte-material-icons/Eye.svelte';
   import Comment from 'svelte-material-icons/Comment.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
+  import {toSources} from '$lib/file/image/shared.js';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -55,8 +56,18 @@
                   {/if}
                 </span>
               {/if}
-              <img class:blur-xl={isToHide(gallery)} class="w-full h-full object-cover bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"
-                   src="{gallery.images}" alt="main image of {gallery.title}" />
+              {#if isEmpty(gallery.convertedImages)}
+                <img class:blur-xl={isToHide(gallery)} class="w-full h-full object-cover bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"
+                     src="{gallery.images}" alt="main image of {gallery.title}" />
+              {:else}
+                <picture>
+                  {#each toSources(gallery.convertedImages) as source}
+                    <source srcset="{source.srcset}" type="{source.type}" />
+                  {/each}
+                  <img class:blur-xl={isToHide(gallery)} class="w-full h-full object-cover bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"
+                       src="{gallery.images}" alt="main image of {gallery.title}" />
+                </picture>
+              {/if}
             {:else}
               <span class="absolute rounded-md px-1 py-px -translate-x-1/2 left-1/2 -translate-y-1/2 top-1/2 text-zinc-600 dark:text-zinc-200 w-fit text-2xl">
                 <NoImage />

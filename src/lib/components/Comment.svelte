@@ -24,6 +24,8 @@
   import {session, page} from '$app/stores';
   import {isEmpty, last} from 'lodash-es';
   import {currentReply, deletedComment, highlighed} from '$lib/community/comment/client';
+  import {uploadAllowedExtensions} from '$lib/file/image/shared';
+  import {toSources} from '$lib/file/image/shared.js';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -112,15 +114,15 @@
     voting = true;
 
     try {
-      if (comment.myVote.like) {
-        comment.myVote.like = false;
+      if (comment.myVote!.like) {
+        comment.myVote!.like = false;
         return await vote('like', true);
       }
 
-      comment.myVote.like = true;
+      comment.myVote!.like = true;
 
-      if (comment.myVote.dislike) {
-        comment.myVote.dislike = false;
+      if (comment.myVote!.dislike) {
+        comment.myVote!.dislike = false;
         await vote('dislike', true);
       }
 
@@ -138,15 +140,15 @@
     voting = true;
 
     try {
-      if (comment.myVote.dislike) {
-        comment.myVote.dislike = false;
+      if (comment.myVote!.dislike) {
+        comment.myVote!.dislike = false;
         return await vote('dislike', true);
       }
 
-      comment.myVote.dislike = true;
+      comment.myVote!.dislike = true;
 
-      if (comment.myVote.like) {
-        comment.myVote.like = false;
+      if (comment.myVote!.like) {
+        comment.myVote!.like = false;
         await vote('like', true);
         await tick();
       }
@@ -325,11 +327,7 @@
           {/if}
           {#if comment.image}
             <div>
-              <Image src="{comment.image}" size="{comment.imageSize}">
-                <p>
-                  <img src="{comment.image}" alt="{comment.image}" />
-                </p>
-              </Image>
+              <Image src="{comment.image}" size="{comment.imageSize}" sources="{toSources(comment.images)}" />
             </div>
           {/if}
           {#if !editMode}

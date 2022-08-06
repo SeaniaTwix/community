@@ -106,13 +106,13 @@
   }
 
   async function toggleViewMode() {
+    buffer = [];
+
     listType = listType === 'list' ? 'gallery' : 'list';
 
     Cookies.set('list_type', listType);
 
     const {list: l, maxPage: mp} = await fullRefresh();
-
-    console.log(l);
 
     articles = l;
     maxPage = mp;
@@ -134,6 +134,7 @@
   }
 
   function newArticlePublished({body}: { body: INewPublishedArticle }) {
+    // noinspection SuspiciousTypeOfGuard
     if (body.key && typeof body.key === 'string') {
       userContextMenuIndex = -1;
       buffer = [body, ...buffer];

@@ -33,6 +33,8 @@ export class ArticleDto<TagType = InternalTagType> {
   // new api: string (image src)
   images: string | boolean = false;
 
+  convertedImages: string[] = [];
+
   // @SafeType({type: Number})
   // comments = 0;
 

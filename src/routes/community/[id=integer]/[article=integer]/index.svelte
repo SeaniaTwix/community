@@ -370,7 +370,7 @@
         pusher.close();
       }
 
-      console.log(`new sub => ${article._key}@${article.board}`);
+      // console.log(`new sub => ${article._key}@${article.board}`);
 
       pusher = new Pusher(`${article._key}@${article.board}`);
 

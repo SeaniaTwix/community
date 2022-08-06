@@ -141,7 +141,7 @@ class EditArticleRequest {
       return '';
     }
 
-    const $ = loadHtml(content);
+    const $ = loadHtml(newContent);
     const images = $('img');
     return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '')
   }
@@ -162,7 +162,7 @@ class EditArticleRequest {
       editedAt: new Date,
       content: sanitizedContent,
       source: source ?? '',
-      images: await this.getImage(),
+      images: await this.getImage(sanitizedContent),
     };
 
     await db.query(aql`

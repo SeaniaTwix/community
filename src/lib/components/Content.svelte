@@ -7,14 +7,30 @@
   function hasImages(content: string) {
     const $ = load(content);
     const imgs = $('p > img');
-    return imgs.length > 0;
+    if (imgs.length <= 0) {
+      const picutres = $('p > picture');
+      return picutres.length > 0;
+    }
+    return true;
   }
 
   function getImages(content: string) {
     const $ = load(content);
-    const imgs = $('p > img');
-    // console.log(imgs.length);
-    return imgs.toArray();
+    const allImages = $('p > img,picture');
+    return allImages.toArray().map((element) => {
+      if (element.name === 'picture') {
+        const original = $(element).children('img').first();
+        return {
+          attribs: {
+            src: original.attr('src'),
+            width: original.attr('width'),
+            height: original.attr('height'),
+          },
+          sources: $(element).children('source').toArray().map(elem => elem.attribs),
+        }
+      }
+      return element;
+    });
   }
 
   export let nsfw = false;
@@ -34,7 +50,7 @@
             allowfullscreen></iframe>
   {:else if hasImages(content)}
     {#each getImages(content) as image}
-      <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" />
+      <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
     {/each}
   {:else}
     {@html content}

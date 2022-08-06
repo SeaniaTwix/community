@@ -13,6 +13,7 @@
   let img: HTMLImageElement;
   let wrapper: HTMLDivElement;
   export let src: string | undefined;
+  export let sources: {srcset: string, type: string}[] = [];
   export let nsfw = false;
   export let size: { x: number, y: number } | undefined;
   let loading = true;
@@ -181,13 +182,29 @@
     <span class="relative transition-all __target {folded ? '__folded-image' : '__unfolded-image'}"
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
-      <img {src} alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
-           class="min-w-full"
-           bind:this={img}
-           on:load={() => onImageLoaded(img)}
-           class:blur-2xl={nsfw && !forceShow}
-           width="{size ? undefined : width}"
-           height="{size ? undefined : height}"/>
+      {#if isEmpty(sources)}
+        <img {src} alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
+             class="min-w-full"
+             bind:this={img}
+             on:load={() => onImageLoaded(img)}
+             class:blur-2xl={nsfw && !forceShow}
+             width="{size ? undefined : width}"
+             height="{size ? undefined : height}"/>
+      {:else}
+        <picture>
+          {#each sources as image}
+            <source srcset={image.srcset} type={image.type} />
+          {/each}
+
+          <img {src} alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
+               class="min-w-full"
+               bind:this={img}
+               on:load={() => onImageLoaded(img)}
+               class:blur-2xl={nsfw && !forceShow}
+               width="{size ? undefined : width}"
+               height="{size ? undefined : height}"/>
+        </picture>
+      {/if}
     </span>
     {#if !(nsfw && !forceShow) && folded}
       <div on:click={() => (folded = false)} prevent-reply

@@ -13,7 +13,15 @@ export default class DefaultDatabase {
   private static url = process.env.DB_ENDPOINT ?? 'http://localhost:8529';
   private static readonly dbName = 'community';
   private static readonly requireCollections = [
-    'users', 'boards', 'articles', 'comments', 'tags', 'alias', 'notifications', 'favorites',
+    'users',
+    'boards',
+    'articles',
+    'comments',
+    'tags',
+    'alias',
+    'notifications',
+    'favorites',
+    'images',
   ];
   private static readonly requireEdgeCollections = [
     'reply',
@@ -26,6 +34,13 @@ export default class DefaultDatabase {
         unique: true,
       },
     ],
+    images: [
+      {
+        fields: ['src'],
+        type: 'persistent',
+        unique: true,
+      }
+    ]
   };
   private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
     'articles': [

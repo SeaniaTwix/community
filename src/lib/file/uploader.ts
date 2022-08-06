@@ -8,7 +8,7 @@ export function upload(file: File | Blob, type?: string, name?: string) {
       const request = await ky.post(`/file/request?type=${t}`)
         .json<IUploadRequestResult>();
       const body = new FormData();
-      const n = (<File>file).name ?? name
+      const n = (<File>file).name ?? name;
       body.set('key', request.prefix + n ?? `UZ-is-Kawaii.${t.split('/')[1]}`);
       body.set('acl', 'public-read');
       body.set('Content-Type', file.type ?? type);
@@ -17,10 +17,15 @@ export function upload(file: File | Blob, type?: string, name?: string) {
         body.set(key, request.presigned.fields[key]);
       }
       body.append('file', file);
-      // console.log(file.type);
       await ky.post('https://s3.ru.hn', {body});
-      // console.log(blobInfo.blob());
-      resolve(`https://s3.ru.hn/${request.prefix + n ?? `UZ-is-Kawaii.${t.split('/')[1]}`}`);
+      const uploadedUrl = `https://s3.ru.hn/${request.prefix + n ?? `UZ-is-Kawaii.${t.split('/')[1]}`}`;
+      resolve(uploadedUrl);
+
+      await ky.post('/file/complete', {
+        json: {
+          src: uploadedUrl,
+        },
+      });
     } catch (e) {
       reject(e);
     }

@@ -8,6 +8,10 @@ import {isEmpty} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {EUserRanks} from '$lib/types/user-ranks';
 import type {IArticle} from '$lib/types/article';
+import {load} from 'cheerio';
+import type {Element} from 'cheerio/lib'
+import * as process from 'process';
+import {extname} from 'node:path';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
@@ -65,6 +69,48 @@ class ReadArticleRequest {
               private readonly article: string) {
   }
 
+  private async toConvertedImages(content: string): Promise<string> {
+    const $ = load(content ?? '');
+    const imgs = $('img');
+    // @ts-ignore
+    const exes = imgs.toArray().map(async (img: Element) => {
+      const src = img.attribs?.src;
+      if (src && src.startsWith(`https://${process.env.S3_ENDPOINT}`)) {
+        const ext = extname(src);
+        const keyParser = new RegExp(`https://${process.env.S3_ENDPOINT}/(.+)(?:${ext})`);
+        const keyParsed = keyParser.exec(src);
+        if (keyParsed) {
+          const key = `/${keyParsed[1]}`;
+          const cursor = await db.query(aql`
+          for image in images
+            filter image.src == ${key}
+              return image.converted`);
+          if (cursor.hasNext) {
+            const converted: string[] = await cursor.next();
+            const sources = converted
+              .map((link) => {
+                const mime = extname(link).replace(/^\./, 'image/');
+
+                return `<source srcset="${link}" type="${mime}"/>`
+              })
+              .join('');
+            let attribs = '';
+            if (img?.attribs) {
+              attribs = Object.keys(img!.attribs)
+                .map((key) => {
+                  return `${key}="${img!.attribs[key]}"`
+                })
+                .join(' ');
+            }
+            $(img).replaceWith(`<picture>${sources}<img ${attribs} alt="유즈는 귀엽다." /></picture>`)
+          }
+        }
+      }
+    });
+    await Promise.allSettled(exes);
+    return $('body').html() ?? '';
+  }
+
   async get(reader?: string, force = false): Promise<Partial<IArticleGetResult> | null> {
     const cursor = await db.query(aql`
       for article in articles
@@ -116,6 +162,9 @@ class ReadArticleRequest {
         tags[tag] = 1;
       }
     }
+
+    // console.log('original:', article.content);
+    article.content = await this.toConvertedImages(article.content ?? '')
 
     // @ts-ignore
     const result: Partial<IArticleGetResult> = {

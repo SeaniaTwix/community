@@ -34,6 +34,9 @@ export class CommentDto<VoteType = InternalVoteType> {
   // 코멘트용 이미지 (상단 고정. 단일 이미지)
   image?: string;
 
+  // 코멘트용 변환된 이미지 (jxl, avif, webp, png) 원본은 없음
+  images?: string[]
+
   // 이미지용 사이즈. undefined라면 원본 크기
   imageSize?: {x: number, y: number};
 
