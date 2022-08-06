@@ -49,9 +49,11 @@
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen></iframe>
   {:else if hasImages(content)}
-    {#each getImages(content) as image}
-      <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
-    {/each}
+    <p>
+      {#each getImages(content) as image}
+        <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
+      {/each}
+    </p>
   {:else}
     {@html content}
   {/if}
