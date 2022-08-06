@@ -1,4 +1,4 @@
-import magic from 'magic-bytes.js';
+import {filetypeinfo as magic} from 'magic-bytes.js';
 import {TmpDir} from 'temp-file';
 import fs, {closeSync, openSync, readSync, readFileSync} from 'node:fs';
 import {execSync} from 'node:child_process';
@@ -30,6 +30,7 @@ export class ImageConverter {
       Object.keys(allConverted)
         .filter(e => !!allConverted[e] && ext !== `.${e}`)
         .map(async (convertedExt) => {
+          // @ts-ignore
           return await S3.upload(`${base}.${convertedExt}`, await allConverted[convertedExt]);
         }),
     );
@@ -46,7 +47,7 @@ export class ImageConverter {
   }
 
   static checkType(path: string, length = 64) {
-    const file = openSync(path);
+    const file = openSync(path, 'r');
     const buf = Buffer.alloc(length);
     readSync(file, buf, 0, length, 0);
     const guessed = magic(buf);
@@ -73,7 +74,7 @@ export class ImageConverter {
 
     const converter = new ImageConverter;
 
-    let png: Promise<Buffer>;
+    let png: Promise<Buffer | null>;
 
     if (isWebp) {
       png = wrapper(await converter.png(image));
@@ -83,11 +84,11 @@ export class ImageConverter {
       png = converter.png(image);
     }
 
-    function wrapper(buf: Buffer): Promise<Buffer> {
+    function wrapper(buf: Buffer | null): Promise<Buffer | null> {
       return new Promise(resolve => resolve(buf));
     }
 
-    const result: Record<string, Promise<Buffer>> = {
+    const result: Record<string, Promise<Buffer | null>> = {
       jxl: isJxl ? wrapper(image) : converter.jxl(isWebp ? await png : image),
       avif: isAvif ? wrapper(image) : converter.avif(image),
       webp: isWebp ? wrapper(image) : converter.webp(image),
@@ -98,13 +99,17 @@ export class ImageConverter {
     await Promise.all(promises);
 
     for (const ext in result) {
+      // @ts-ignore
       result[ext] = await result[ext];
     }
 
     return result;
   }
 
-  async jxl(input: Buffer): Promise<Buffer | null> {
+  async jxl(input: Buffer | null): Promise<Buffer | null> {
+    if (!input) {
+      return null;
+    }
     const guessed = magic(input);
     let ext: string | undefined;
     if (guessed.length > 0) {

@@ -7,7 +7,6 @@
 		"start": "node run.js",
 		"package": "svelte-kit package",
 		"preview": "vite preview --port 60001",
-		"prepare": "svelte-kit sync",
 		"test": "playwright test",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
