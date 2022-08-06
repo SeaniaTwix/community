@@ -13,7 +13,7 @@
     return articleItem;
   }
 
-  export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
+  export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
     const nr = await fetch(`/community/${params.id}/api/info`);
     const {name} = await nr.json();
     if (!name) {
@@ -56,6 +56,7 @@
         currentPage: parseInt(page),
         maxPage,
         bests,
+        ui: session.ui,
       },
     };
   }
@@ -76,6 +77,7 @@
   import {Pusher} from '$lib/pusher/client';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
+  import type {UI} from '../../../app';
 
   export let articles: ArticleItemDto[];
   export let bests: ArticleItemDto[];
@@ -84,8 +86,8 @@
   export let name: string;
   export let currentPage: number;
   export let maxPage: number;
-
-  let listType = $session.ui.listType;
+  export let ui: UI;
+  let listType = ui?.listType ?? 'list';
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
@@ -113,6 +115,11 @@
     Cookies.set('list_type', listType);
 
     const {list: l, maxPage: mp} = await fullRefresh();
+
+    session.update((s) => {
+      s.ui.listType = listType;
+      return s;
+    });
 
     articles = l;
     maxPage = mp;
