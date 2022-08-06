@@ -146,7 +146,7 @@
   }
 
 </script>
-<div class="relative group inline-block max-w-full" class:cursor-pointer={nsfw && !forceShow}>
+<div class="relative group block max-w-full" class:cursor-pointer={nsfw && !forceShow}>
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
