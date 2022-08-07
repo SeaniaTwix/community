@@ -4,9 +4,10 @@ import got from 'got';
 import {ImageConverter} from '$lib/file/image/converter';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
+import {EUserRanks} from '$lib/types/user-ranks';
 
 export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
-  if (!locals.user) {
+  if (!locals.user || locals.user.rank <= EUserRanks.Banned) {
     return {
       status: HttpStatus.UNAUTHORIZED,
     };
@@ -38,16 +39,19 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
   const cursor = await db.query(aql`
     for image in images
       filter image.src == ${basePath}
-        return image`);
+        return image.converted`);
 
-  if (cursor.hasNext) {
-    return {
-      status: HttpStatus.CONFLICT,
-      body: {
-        reason: `src is already registerd`,
-        src: basePath,
-      },
-    };
+  if (cursor.hasNext && locals.user.rank <= EUserRanks.User) {
+    const converted = await cursor.next() as string[];
+    if (converted.length >= 4) {
+      return {
+        status: HttpStatus.CONFLICT,
+        body: {
+          reason: `src is already registerd`,
+          src: basePath,
+        },
+      };
+    }
   }
 
   const info = await got.head(src);
