@@ -1,8 +1,6 @@
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
-import {createWriteStream} from 'node:fs';
-import {TmpDir} from 'temp-file';
 import {ImageConverter} from '$lib/file/image/converter';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -35,7 +33,7 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
     };
   }
 
-  const basePath = ImageConverter.getBasePath(s3Url, src);
+  const basePath = ImageConverter.getBasePath(src);
 
   const cursor = await db.query(aql`
     for image in images
@@ -60,29 +58,12 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
     };
   }
 
-  const tmp = new TmpDir('upload-completed');
-
-  const tmpPath = await tmp.getTempFile();
-
-  const fileWrite = createWriteStream(tmpPath);
-
-  const downloadStream = got.stream(src);
-
-  fileWrite.on('finish', async () => {
-    try {
-      await ImageConverter.saveAll(s3Url, src, tmpPath);
-    } catch (e) {
-      console.trace(e);
-    } finally {
-      tmp.cleanup().then();
-    }
-  });
-
-
-  downloadStream.pipe(fileWrite);
-
+  const isRequestDone = await ImageConverter.saveAll(src);
 
   return {
     status: HttpStatus.ACCEPTED,
+    body: {
+      ok: isRequestDone,
+    }
   };
 }

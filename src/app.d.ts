@@ -30,7 +30,7 @@ declare global {
   }
 }
 
-interface UI {
+export interface UI {
   commentFolding: boolean;
   buttonAlign: 'left' | 'right';
   listType: 'list' | 'gallery';

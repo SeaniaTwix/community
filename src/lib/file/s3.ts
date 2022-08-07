@@ -1,5 +1,6 @@
 import aws from 'aws-sdk';
 import type {PresignedPost} from 'aws-sdk/lib/s3/presigned_post';
+import type {Body} from 'aws-sdk/clients/s3';
 import * as process from 'process';
 
 const _S3 = aws.S3;
@@ -13,14 +14,14 @@ const s3 = new _S3({
 });
 
 export class S3 {
-  static upload(name: string, buffer: Buffer) {
+  static upload(name: string, buffer: Body) {
     let Bucket: string, Key: string;
 
     if (process.env?.S3_ENDPOINT === 's3.ru.hn') {
       Bucket = 'uu';
       Key = name.replace(/^\/uu\//, '');
     } else {
-      Bucket = process.env.BUCKET_NAME;
+      Bucket = process.env.BUCKET_NAME!;
       Key = name;
     }
 

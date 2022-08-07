@@ -2,7 +2,7 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
 import {createReadStream, createWriteStream} from 'node:fs';
-import {basename} from 'node:path';
+import {basename, extname} from 'node:path';
 import {TmpDir} from 'temp-file';
 import {S3} from '$lib/file/s3';
 import {nanoid} from 'nanoid';
@@ -43,9 +43,9 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   }
 
   const uploadedLink = await new Promise<string>(async (resolve, reject) => {
-    const tmp = new TmpDir('upload-link');
+    const tmp = new TmpDir('upload-via-external-link');
 
-    const tmpFilePath = await tmp.getTempFile(basename(src));
+    const tmpFilePath = await tmp.getTempFile({suffix: extname(src)});
     const fileWrite = createWriteStream(tmpFilePath);
 
     fileWrite
@@ -56,9 +56,7 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
           const rs = createReadStream(tmpFilePath);
           const sendData = await S3.upload(p, rs);
 
-          const s3Url = `https://${process.env.S3_ENDPOINT}`;
-          ImageConverter.saveAll(s3Url, `${s3Url}${p}`, tmpFilePath)
-            .then(() => tmp.cleanup().then());
+          ImageConverter.saveAll(p).then(() => tmp.cleanup().then());
           resolve(sendData.Location);
         } catch (e) {
           reject(e);
