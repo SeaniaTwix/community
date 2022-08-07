@@ -37,7 +37,7 @@ export async function POST({request, url: {searchParams}}: RequestEvent): Promis
         let converted = is_array(image.converted) ? (
           for link in image.converted
             return link) : []
-        update image with {converted: push(converted, ${to}, true)}`);
+        update image with {converted: push(converted, ${to}, true)} in images`);
 
   return {};
 }
