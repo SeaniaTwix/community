@@ -34,7 +34,11 @@ export class ImageConverter {
       return false;
     }
 
-    await ImageConverter.all(src, mime);
+    const all = ImageConverter.all(src, mime);
+
+    for (const ext in all) {
+      await all[ext];
+    }
 
     try {
       db.query(aql`insert {src: ${this.getBasePath(src)}, converted: []} into images`)
@@ -50,49 +54,51 @@ export class ImageConverter {
   static all(relativeSrc: string, mime: string) {
     const converter = new ImageConverter;
 
-    const converts = {
-      jxl: mime === 'image/jxl' ? undefined : converter.jxl(relativeSrc),
-      avif: mime === 'image/avif' ? undefined : converter.avif(relativeSrc),
-      webp: mime === 'image/webp' ? undefined : converter.webp(relativeSrc),
-      png: mime === 'image/png' ? undefined : converter.png(relativeSrc),
+    const result: Record<string, Promise<unknown>> = {
+      jxl: converter.jxl(relativeSrc),
+      avif: converter.avif(relativeSrc),
+      webp: converter.webp(relativeSrc),
+      png: converter.png(relativeSrc),
     };
 
-    return Promise.allSettled(Object.values(converts).filter(value => !!value));
+    if (mime === 'image/jxl') {
+      delete result.jxl;
+    } else if (mime === 'image/avif') {
+      delete result.avif;
+    } else if (mime === 'image/webp') {
+      delete result.webp;
+    } else if (mime === 'image/png') {
+      delete result.png;
+    }
+
+    return result;
   }
 
-  async jxl(src: string) {
-    await got.post(`https://${process.env.EICO_ENDPOINT}/convert/jxl`, {
-      json: {
-        key: process.env.EICO_KEY ?? 'test',
-        src,
-      },
-    });
+  private request(src: string, ext: string) {
+    return new Promise((resolve, reject) => {
+      console.log('requesting ', ext);
+      got.post(`https://${process.env.EICO_ENDPOINT}/convert/${ext}`, {
+        json: {
+          key: process.env.EICO_KEY ?? 'test',
+          src,
+        },
+      }).then(resolve).catch(reject);
+    })
   }
 
-  async avif(src: string) {
-    await got.post(`https://${process.env.EICO_ENDPOINT}/convert/avif`, {
-      json: {
-        key: process.env.EICO_KEY ?? 'test',
-        src,
-      }
-    });
+  jxl(src: string) {
+    return this.request(src, 'jxl');
   }
 
-  async webp(src: string) {
-    await got.post(`https://${process.env.EICO_ENDPOINT}/convert/webp`, {
-      json: {
-        key: process.env.EICO_KEY ?? 'test',
-        src,
-      }
-    });
+  avif(src: string) {
+    return this.request(src, 'avif');
   }
 
-  async png(src: string) {
-    await got.post(`https://${process.env.EICO_ENDPOINT}/convert/png`, {
-      json: {
-        key: process.env.EICO_KEY ?? 'test',
-        src,
-      }
-    });
+  webp(src: string) {
+    return this.request(src, 'webp');
+  }
+
+  png(src: string) {
+    return this.request(src, 'png');
   }
 }
