@@ -90,7 +90,7 @@
   import {striptags} from 'striptags';
   import {page, session} from '$app/stores';
   import Cookies from 'js-cookie';
-  import {currentReply, highlighed} from '$lib/community/comment/client';
+  import {commentInput, commentMobileCursorPosition, currentReply, highlighed} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
   import {deletedComment} from '$lib/community/comment/client';
   import CommentInput from '$lib/components/CommentInput.svelte';
@@ -130,6 +130,8 @@
     })
     .slice(0, 5);
   export let mainImage: string | undefined;
+  // eslint-disable-next-line no-redeclare
+  declare var commentFolding: boolean;
   // noinspection TypeScriptUnresolvedVariable
   $: commentFolding = $session.ui.commentFolding;
 
@@ -143,6 +145,7 @@
   let mobileTextInput: HTMLTextAreaElement;
   let mobileInputLastCursor = 0;
   let generalScrollView: HTMLDivElement;
+  let mobileCommentInputModeScrollView: HTMLDivElement;
 
   let commentImage1: HTMLImageElement;
   let commentImage2: HTMLImageElement;
@@ -219,8 +222,6 @@
 
   }
 
-  let escPressed = false;
-
   async function disableReplyMode() {
     selectedComment = undefined;
     currentReply.set(undefined);
@@ -231,10 +232,9 @@
     }, 5);
   }
 
-  async function onBlurGeneralCommentInput(event: FocusEvent) {
-    if (selectedComment && escPressed) {
+  async function onBlurGeneralCommentInput(event: CustomEvent<boolean>) {
+    if (selectedComment && event.detail) {
       event.preventDefault();
-      console.log(selectedComment, escPressed)
       await disableReplyMode();
       return;
     }
@@ -275,10 +275,11 @@
     commentFolding = false;
     mobileInputMode = true;
     await tick();
-    mobileTextInput.focus();
-    await tick();
-    mobileTextInput.selectionStart = mobileInputLastCursor;
-    mobileTextInput.selectionEnd = mobileInputLastCursor;
+    $commentInput?.focus();
+
+    setTimeout(() => {
+      mobileCommentInputModeScrollView.scrollTop = mobileCommentInputModeScrollView.scrollHeight + 500;
+    }, 100);
 
     visualViewport.addEventListener('touchmove', blockMobileScroll, true);
   }
@@ -351,7 +352,7 @@
     });
     if (!commentFolding) {
       await tick();
-      commentTextInput.focus();
+      event.detail.focus();
     }
   }
 
@@ -542,6 +543,7 @@
   }
 
   onDestroy(() => {
+    $commentMobileCursorPosition = 0;
     clearSubscribes();
     try {
       document.querySelector('html').classList.remove('__page-view');
@@ -591,10 +593,11 @@
     const textGeneral = document.querySelector('#__textarea-general');
     const textMobile = document.querySelector('#__textarea-mobile');
     const isMobileTextEnabled = textMobile.clientHeight > textGeneral.clientHeight;
+
     if (isMobileTextEnabled) {
       enableMobileInput();
     } else {
-      commentTextInput.focus();
+      $commentInput?.focus();
     }
   }
 
@@ -826,7 +829,8 @@
     </div>
   {:else}
 
-    <div class="mt-6 p-2">
+    <div bind:this={mobileCommentInputModeScrollView}
+         class="mt-6 p-2 overflow-x-hidden overflow-y-scroll">
       <h2 class="text-xl mb-2">댓글 작성 중...</h2>
 
       {#if selectedComment}
@@ -840,7 +844,7 @@
                  {users} />
       {/if}
 
-      <CommentInput {commenting} {commentFolding} {selectedComment} {users}
+      <CommentInput {commenting} bind:commentFolding={commentFolding} {selectedComment} {users}
                     iosMode="{true}"
                     on:submit={addComment}
                     on:cancelimageupload={cancelImageUpload}
@@ -887,7 +891,7 @@
       </div>
 
       {#if $session.user}
-        <CommentInput {commenting} {commentFolding} {selectedComment} {users}
+        <CommentInput {commenting} bind:commentFolding={commentFolding} {selectedComment} {users}
                       on:submit={addComment}
                       on:cancelimageupload={cancelImageUpload}
                       on:togglefold={toggleCommentFold}

@@ -13,7 +13,7 @@
   import type {IUser} from '$lib/types/user';
   import Checkbox from './Checkbox.svelte';
   import ky from 'ky-universal';
-  import {imageSrc} from '$lib/community/comment/client';
+  import {commentInput, commentMobileCursorPosition, imageSrc} from '$lib/community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
 
   const dispatch = createEventDispatcher();
@@ -36,6 +36,12 @@
 
   let imgSrcUnsub: () => void;
   onMount(() => {
+    if (mobileTextInput) {
+      mobileTextInput.focus();
+      mobileTextInput.selectionStart = $commentMobileCursorPosition;
+      mobileTextInput.selectionEnd = $commentMobileCursorPosition;
+    }
+
     imgSrcUnsub = imageSrc.subscribe((image) => {
       if (image) {
         commentImageUploadSrc = image.src;
@@ -63,7 +69,7 @@
   }
 
   function toggleCommentFold() {
-    dispatch('togglefold');
+    dispatch('togglefold', iosMode ? mobileTextInput : textInput);
   }
 
   function openImageEditor() {
@@ -92,11 +98,14 @@
   }
 
   function onBlur() {
-    dispatch('blur');
+    if (iosMode) {
+      $commentMobileCursorPosition = mobileTextInput.selectionEnd;
+    }
+    dispatch('blur', escPressed);
   }
 
   function enableMobileInput() {
-    dispatch('mobilemode');
+    dispatch('mobilemode', mobileTextInput);
   }
 
   function loadFileDialog() {

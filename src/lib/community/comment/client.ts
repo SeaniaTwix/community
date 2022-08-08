@@ -6,6 +6,8 @@ import rehypeStringify from 'rehype-stringify';
 import {UrlRegexSafe} from '$lib/url-regex-safe';
 
 export const currentReply = writable<string | undefined>();
+export const commentInput = writable<HTMLTextAreaElement | undefined>();
+export const commentMobileCursorPosition = writable<number>(0);
 export const deletedComment = writable<string | undefined>();
 export const highlighed = writable<string | undefined>();
 export const imageSrc = writable<FavoriteImage | undefined>();
