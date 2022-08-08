@@ -5,7 +5,7 @@
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
   import {session} from '$app/stores';
-  import {isEmpty, parseInt} from 'lodash-es';
+  import {isEmpty, last, parseInt} from 'lodash-es';
   import HttpStatus from 'http-status-codes';
   import {imageSrc} from '../community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
@@ -70,7 +70,7 @@
 
   function onlyNumber(text: string): number | undefined {
     try {
-      return parseInt(/\d+/.exec(text)[0]);
+      return parseInt(/\d+/.exec(text)![0]);
     } catch {
       return undefined;
     }
@@ -145,6 +145,19 @@
     forceShow = false;
   }
 
+  // todo: user defined load order
+  const order = ['jxl', 'avif', 'webp', 'png'];
+
+  function sortSources(images: (typeof sources)) {
+    return images.sort(({srcset: a}, {srcset: b}) => {
+      const baseA: string = last(a.split('/'));
+      const baseB: string = last(b.split('/'));
+      const extA = last(baseA.split('.'));
+      const extB = last(baseB.split('.'));
+      return order.indexOf(extA) - order.indexOf(extB);
+    });
+  }
+
 </script>
 <div class="relative group inline-block max-w-full" class:cursor-pointer={nsfw && !forceShow}>
   <div class="absolute w-full">
@@ -192,7 +205,7 @@
              height="{size ? undefined : height}"/>
       {:else}
         <picture>
-          {#each sources as image}
+          {#each sortSources(sources) as image}
             <source srcset={image.srcset} type={image.type} />
           {/each}
 
