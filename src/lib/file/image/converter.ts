@@ -5,6 +5,7 @@ import {extname} from 'node:path';
 import got from 'got';
 
 const s3Url = `https://${process.env.S3_ENDPOINT}`;
+const PngSignature = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 export class ImageConverter {
   static getBasePath(_url: string) {
@@ -29,6 +30,32 @@ export class ImageConverter {
       mime = info.headers['content-type'] ?? 'image/png';
       src = originalSrc;
     }
+
+    console.log('mime:', mime);
+
+    if (mime === 'application/octet-stream') {
+      const s = got.stream(originalSrc);
+      // check png signature
+      const data = new Promise<string>((resolve) => {
+        s.on('readable', () => {
+          let bytes = '';
+          while (null !== (bytes += s.read(1))) {
+            if (bytes.length >= 8) {
+              return resolve(bytes);
+            }
+          }
+        });
+      });
+      console.log('data:', await data);
+      if (!data) {
+        return false;
+      } else if (Buffer.compare(Buffer.from(await data), PngSignature)) {
+        mime = 'image/png';
+      } else {
+        return false;
+      }
+    }
+
 
     if (!mime.startsWith('image/')) {
       return false;
@@ -83,7 +110,7 @@ export class ImageConverter {
           src,
         },
       }).then(resolve).catch(reject);
-    })
+    });
   }
 
   jxl(src: string) {
