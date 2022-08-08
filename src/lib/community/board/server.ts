@@ -14,11 +14,21 @@ export class Board {
     return await cursor.next();
   }
 
-  async getMaxPage(amount = 30): Promise<number> {
+  async getMaxPage(amount = 30, requireLikes: number | null = null): Promise<number> {
     const cursor = await db.query(aql`
       let count = length(
         for article in articles
           filter article.board == ${this.id}
+          let minLike = ${requireLikes}
+          let savedTags = (
+            for savedTag in tags
+              filter savedTag.target == article._key && savedTag.pub
+                return savedTag.name)
+          
+          let likeCount = length(for tn in savedTags filter tn == "_like" return tn)
+          let dislikeCount = length(for tn in savedTags filter tn == "_dislike" return tn)
+          filter is_number(minLike) ? likeCount - dislikeCount >= minLike : true
+          
             return article)
       return max([1, ceil(count / ${amount})])`);
     return await cursor.next();
@@ -81,10 +91,11 @@ export class Board {
     });
   }
 
-  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false) {
+  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false, requireLikes: number | null = null) {
     if (page <= 0) {
       throw new Error('page must be lt 0')
     }
+    console.log(requireLikes)
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
@@ -94,6 +105,12 @@ export class Board {
             for savedTag in tags
               filter savedTag.target == article._key && savedTag.pub
                 return savedTag.name)
+          
+          let minLike = ${requireLikes}
+          let likeCount = length(for tn in savedTags filter tn == "_like" return tn)
+          let dislikeCount = length(for tn in savedTags filter tn == "_dislike" return tn)
+          filter is_number(minLike) ? likeCount - dislikeCount >= minLike : true
+          
           let imgs = ${showImage} ? article.images : ((is_string(article.images) && length(article.images) > 0) || is_bool(article.images) && article.images)
           let imageSrcKey = ${showImage} ? regex_matches(imgs, ${'https:\\/\\/s3\\.ru\\.hn(.+)' + `(${uploadAllowedExtensions})$`}, true) : []
           let convertedImages = ${showImage} ? first(

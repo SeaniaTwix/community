@@ -359,6 +359,12 @@
     if (selectedComment) {
       return disableReplyMode();
     }
+    if ($page.url.search.includes('type=best')) {
+      const q = $page.url.search.slice(1).split('&');
+      const noBestQuery = q.filter(v => v !== 'type=best');
+      const result = isEmpty(q) ? '' : `?${noBestQuery.join('&')}`;
+      return goto(`/community/${article.board}/best${result}`);
+    }
     goto(`/community/${article.board}${$page.url.search}`);
   }
 
@@ -679,6 +685,22 @@
             </a>
           </div>
         </li>
+        {#if $page.url.search.includes('type=best')}
+          <li class="flex-shrink-0">
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                   xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clip-rule="evenodd"></path>
+              </svg>
+              <a href="/community/{article.board}/best"
+                 class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 hover:drop-shadow w-max">
+                베스트
+              </a>
+            </div>
+          </li>
+        {/if}
         <li class="flex-shrink min-w-0" aria-current="page">
           <div class="flex items-center text-ellipsis overflow-hidden min-w-0">
             <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"

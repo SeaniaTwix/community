@@ -7,7 +7,7 @@ import HttpStatus from 'http-status-codes';
 import {parseInt} from 'lodash-es';
 import {Board} from '$lib/community/board/server';
 
-export async function GET({params, url, locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!isStringInteger(params.id)) {
     return {
       status: HttpStatus.BAD_REQUEST,
@@ -19,8 +19,11 @@ export async function GET({params, url, locals, request}: RequestEvent): Promise
   const page = isStringInteger(pageParam) ? parseInt(pageParam) : 1;
   const amountParam = url.searchParams.get('amount') ?? '30';
   const amount = isStringInteger(amountParam) ? parseInt(amountParam) : 30;
+  const type: 'default' | 'best' = url.searchParams.get('type') !== 'best' ? 'default' : 'best';
   const showImage = locals.ui.listType === 'gallery';
-  const list = await board.getListRecents(page, amount, locals?.user?.uid ?? null, showImage) as any[];
+  const list = type === 'default' ?
+    await board.getListRecents(page, amount, locals?.user?.uid ?? null, showImage) as any[]
+  : await board.getBestListRecents(page, amount, locals?.user?.uid ?? null, showImage) as any[];
 
   // todo: find diff way for mapping tags count (in aql if available)
 
@@ -40,7 +43,7 @@ export async function GET({params, url, locals, request}: RequestEvent): Promise
 
         return article;
       }),
-      maxPage: await board.getMaxPage(amount),
+      maxPage: type === 'default' ? await board.getMaxPage(amount) : await board.getBestMaxPage(amount),
     },
   };
 }
@@ -56,10 +59,22 @@ class ListBoardRequest {
     return this.board.getMaxPage(amount);
   }
 
+  getBestMaxPage(amount: number) {
+    return this.board.getMaxPage(amount, 1);
+  }
+
   getListRecents(page = 1, amount = 25, reader: string | null, showImage: boolean): Promise<ArticleDto[]> {
     if (amount > 50) {
       throw new Error('too many');
     }
     return this.board.getRecentArticles(page, amount, reader, showImage);
+  }
+
+  getBestListRecents(page = 1, amount = 25, reader: string | null, showImage: boolean): Promise<ArticleDto[]> {
+    if (amount > 50) {
+      throw new Error('too many');
+    }
+    // todo: based on board setting minLike
+    return this.board.getRecentArticles(page, amount, reader, showImage, 1);
   }
 }
