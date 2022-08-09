@@ -335,14 +335,16 @@
 
       const imgs = $('img');
 
-      const reqs = imgs.toArray().map(async img => {
-        const {uploadedLink} = await ky.post('/file/upload/', {
-          json: {
-            src: img.attribs?.src,
-          }
-        }).json<{ uploadedLink: string }>()
-        $(img).attr('src', uploadedLink);
-      });
+      const reqs = imgs.toArray()
+        .filter(img => img.attribs.src && !img.attribs.src.startsWith('https://s3.ru.hn'))
+        .map(async img => {
+          const {uploadedLink} = await ky.post('/file/upload/', {
+            json: {
+              src: img.attribs?.src,
+            }
+          }).json<{ uploadedLink: string }>()
+          $(img).attr('src', uploadedLink);
+        });
 
       await Promise.all(reqs);
 
