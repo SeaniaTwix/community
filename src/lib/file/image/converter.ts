@@ -19,19 +19,14 @@ export class ImageConverter {
   static async saveAll(originalSrc: string): Promise<boolean> {
     //const allConverted = await ImageConverter.all(tempFilePath);
 
-    let src: string;
-    let mime: string;
-    if (originalSrc.startsWith(s3Url)) {
-      const info = await got.head(originalSrc);
-      mime = info.headers['content-type'] ?? 'image/png';
-      src = originalSrc.replace(new RegExp(`^${s3Url}`), '');
-    } else {
-      const info = await got.head(`${s3Url}${originalSrc}`);
-      mime = info.headers['content-type'] ?? 'image/png';
-      src = originalSrc;
+    if (!originalSrc.startsWith(s3Url)) {
+      originalSrc = `${s3Url}${originalSrc}`;
     }
+    const info = await got.head(originalSrc);
+    let mime = info.headers['content-type'] ?? 'image/png';
+    const src = originalSrc.replace(new RegExp(`^${s3Url}`), '');
 
-    console.log('mime:', mime);
+    // console.log('mime:', mime);
 
     if (mime === 'application/octet-stream') {
       const s = got.stream(originalSrc);
@@ -46,7 +41,7 @@ export class ImageConverter {
           }
         });
       });
-      console.log('data:', await data);
+      // console.log('data:', await data);
       if (!data) {
         return false;
       } else if (Buffer.compare(Buffer.from(await data), PngSignature)) {
@@ -55,7 +50,6 @@ export class ImageConverter {
         return false;
       }
     }
-
 
     if (!mime.startsWith('image/')) {
       return false;
