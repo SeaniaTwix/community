@@ -104,7 +104,7 @@
         </button>
         {#if !isEmpty(gallery.tags)}
           <div class="mt-1">
-            <ol class="flex flex-row gap-1">
+            <ol class="flex flex-row gap-1 flex-wrap">
               {#each Object.keys(gallery.tags).filter(tag => !tag.startsWith('_')) as tagName}
                 <li class="inline-block">
                   <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
