@@ -844,7 +844,9 @@
                  {users} />
       {/if}
 
-      <CommentInput {commenting} bind:commentFolding={commentFolding} {selectedComment} {users}
+      <CommentInput {commenting} {users}
+                    bind:commentFolding={commentFolding}
+                    bind:selectedComment={selectedComment}
                     iosMode="{true}"
                     on:submit={addComment}
                     on:cancelimageupload={cancelImageUpload}
@@ -891,7 +893,9 @@
       </div>
 
       {#if $session.user}
-        <CommentInput {commenting} bind:commentFolding={commentFolding} {selectedComment} {users}
+        <CommentInput {commenting} {users}
+                      bind:commentFolding={commentFolding}
+                      bind:selectedComment={selectedComment}
                       on:submit={addComment}
                       on:cancelimageupload={cancelImageUpload}
                       on:togglefold={toggleCommentFold}

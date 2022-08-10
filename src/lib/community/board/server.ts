@@ -95,7 +95,7 @@ export class Board {
     if (page <= 0) {
       throw new Error('page must be lt 0')
     }
-    console.log(requireLikes)
+    // console.log(requireLikes)
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc

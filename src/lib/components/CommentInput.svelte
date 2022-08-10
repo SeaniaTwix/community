@@ -13,14 +13,19 @@
   import type {IUser} from '$lib/types/user';
   import Checkbox from './Checkbox.svelte';
   import ky from 'ky-universal';
-  import {commentInput, commentMobileCursorPosition, imageSrc} from '$lib/community/comment/client';
+  import {
+    commentInput,
+    commentMobileCursorPosition,
+    currentReply,
+    imageSrc,
+  } from '$lib/community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
 
   const dispatch = createEventDispatcher();
 
   export let commenting = false;
   export let commentFolding = false;
-  export let selectedComment: IComment;
+  export let selectedComment: IComment | undefined;
   export let commentImageUploadSrc: string;
   export let smallImage: boolean;
   export let users: Record<string, IUser>;
@@ -36,6 +41,7 @@
 
   let imgSrcUnsub: () => void;
   onMount(() => {
+
     if (mobileTextInput) {
       mobileTextInput.focus();
       mobileTextInput.selectionStart = $commentMobileCursorPosition;
@@ -131,6 +137,10 @@
     // favoriteImageMode = false;
   }
 
+  function closeReply() {
+    selectedComment = undefined;
+  }
+
 </script>
 
 {#if commenting}
@@ -176,7 +186,7 @@
             <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">
               <Goto />
             </a>
-            <button class="hover:text-red-500 dark:hover::text-red-600" on:click={() => (selectedComment = undefined)}>
+            <button class="hover:text-red-500 dark:hover::text-red-600" on:click={closeReply}>
               <Close />
             </button>
           </span>

@@ -51,7 +51,7 @@
     }
   }
 
-  let animating: number = null;
+  let animating: number | null = null;
   export function whenFailed() {
     if (animating) {
       clearTimeout(animating);
