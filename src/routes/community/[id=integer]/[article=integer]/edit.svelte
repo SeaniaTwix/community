@@ -11,7 +11,7 @@
     try {
       const editableRequest = await fetch(`/community/${id}/${article}/api/edit`);
       const {edit} = await editableRequest.json() as T;
-      const {title, content, source, tags} = edit;
+      const {title, content, source, tags, tagCounts} = edit;
       const nr = await fetch(`/community/${id}/api/info`);
       const {name} = await nr.json();
       // console.log(edit);
@@ -23,6 +23,7 @@
           article,
           name,
           title,
+          tagCounts,
           source: source ?? '',
           content,
           tags: Object.values(tags).map(v => v.name),
@@ -43,6 +44,7 @@
   export let source = '';
   export let content = '';
   export let tags: string[] = [];
+  export let tagCounts = tags.length;
 
   export let editorKey: string;
   export let article: string;
@@ -57,7 +59,7 @@
 </svelte:head>
 
 <div class="__mobile-bottom-fix mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
-  <FullEditor {editorKey} {board} {usedTags} {title} {source} {content} {tags} {article} isEditMode="{true}" />
+  <FullEditor {editorKey} {board} {usedTags} {title} {source} {content} {tags} {article} {tagCounts} isEditMode="{true}" />
 </div>
 
 <style lang="scss">

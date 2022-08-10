@@ -27,22 +27,40 @@
   import ky from 'ky-universal';
   import HttpStatus from 'http-status-codes';
   import Novel from './Novel.svelte';
+  import {afterUpdate} from 'svelte';
+  import {isEmpty} from 'lodash-es';
 
   export let article: IArticle<Record<string, Record<string, ITag>>, IUser>;
   export let users: Record<string, IUser>;
   export let contents: string;
   export let isAdult = false;
 
+  $: tags = Object.keys(article.tags).filter(tag => !tag.startsWith('_'));
+
+  let tagInputMode = false;
+  let tagInput: HTMLInputElement;
+  let tagText = '';
+
+  // user added in client
+  let addedTags: string[] = [];
+
+  $: leftTagCount = Math.max(0, 20 - tags.length);
+
+  afterUpdate(() => {
+    if (tagInput) {
+      tagInput.focus();
+    }
+  });
+
   // noinspection TypeScriptUnresolvedFunction
-  let liked = article?.myTags?.includes('_like');
+  let liked = (<string[]>article?.myTags)?.includes('_like');
   // noinspection TypeScriptUnresolvedFunction
-  let disliked = article?.myTags?.includes('_dislike');
+  let disliked = (<string[]>article?.myTags)?.includes('_dislike');
   $: likeCount = article?.tags?._like ?? 0;
   $: dislikeCount = article?.tags?._dislike ?? 0;
 
   TimeAgo.addLocale(ko as any);
   const timeAgo = new TimeAgo('ko-KR');
-
 
   function timeFullFormat(time: Date | number) {
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
@@ -66,12 +84,19 @@
   function isMyTag(tagName: string): boolean {
     // console.log(tagName, article.myTags)
     // noinspection TypeScriptUnresolvedFunction
-    return article.myTags?.includes(tagName)
+    return (<string[]>article.myTags)?.includes(tagName) || addedTags.includes(tagName);
   }
 
-  async function addTag(tags: string) {
-    const t = tags.includes(',')
-      ? tags.split(',').map(v => v.trim()).join(',') : tags.trim();
+  function fineTags(tagsLiteral: string) {
+    return tagsLiteral.includes(',')
+      ? tagsLiteral.split(',').map(v => v.trim()).join(',') : tagsLiteral.trim();
+  }
+
+  async function addTag(tagsLiteral: string) {
+    if (isEmpty(tagsLiteral)) {
+      return;
+    }
+    const t = fineTags(tagsLiteral);
     return await ky
       .put(`/community/${article.board}/${article._key}/api/tag/add?name=${t}`)
       .json();
@@ -120,6 +145,62 @@
     const res = await ky.delete(`/community/${article.board}/${article._key}/api/delete`);
     if (res.status === HttpStatus.ACCEPTED) {
       goto(`/community/${article.board}${location.search}`).then();
+    }
+  }
+
+  function enableTagInput() {
+    if (!$session.user) {
+      return;
+    }
+
+    if (article.author._key === $session.user.uid) {
+      if (Object.keys(article.tags).length >= 30) {
+        // todo: error message
+        return;
+      }
+    } else {
+      if (Object.keys(article.tags).length >= 20) {
+        // todo: error message
+        return;
+      }
+    }
+
+    tagInputMode = true;
+  }
+
+  function detectEnterInTagInput(event: KeyboardEvent) {
+    if (event.isComposing || event.keyCode === 229) {
+      return;
+    }
+    if (event.key === 'Enter') {
+      const myTags: string[] = (<string[]>article.myTags);
+      const t = fineTags(tagText);
+      const todoAdd = t.split(',').filter(current => !myTags.includes(current));
+
+      const expectedTagCount = Object.keys(article.tags).length + todoAdd.length;
+
+      if (article.author._key === $session.user.uid) {
+        if (expectedTagCount >= 30) {
+          // todo: error message
+          return;
+        }
+      } else {
+        if (expectedTagCount >= 20) {
+          // todo: error message
+          return;
+        }
+      }
+
+      addedTags = [...addedTags, ...todoAdd];
+
+      addTag(tagText)
+        .then(() => {
+          tagText = '';
+        })
+        .catch(() => {
+          // todo: add show failed tag and retry
+          addedTags = addedTags.filter(tag => !todoAdd.includes(tag));
+        });
     }
   }
 
@@ -242,22 +323,31 @@
           </Tag>
         </li>
       {/if}
-      {#each Object.keys(article.tags) as tagName}
-        {#if !tagName.startsWith('_')}
-          <li class="inline-block mb-2 cursor-pointer">
-            <Tag count="{article.tags[tagName]}">{tagName}
-              {#if isMyTag(tagName)}<span class="text-gray-600 dark:text-gray-400 leading-none __icon-fix"><RemoveTag
-                size="1rem"/></span>{/if}
-            </Tag>
-          </li>
-        {/if}
+      {#each tags as tagName}
+        <li class="inline-block mb-2 cursor-pointer">
+          <Tag count="{article.tags[tagName]}">{tagName}
+            {#if isMyTag(tagName)}<span class="text-gray-600 dark:text-gray-400 leading-none __icon-fix"><RemoveTag
+              size="1rem"/></span>{/if}
+          </Tag>
+        </li>
       {/each}
 
       {#if $session.user}
-        <li class="inline-block mb-2 cursor-pointer">
+        <li class="inline-block mb-2 cursor-pointer relative w-fit">
           <Tag>
-            <Plus size="1rem"/>
-            <span>새 태그 추가</span>
+            {#if tagInputMode}
+              <input bind:this={tagInput}
+                     bind:value={tagText}
+                     on:keydown={detectEnterInTagInput}
+                     type="text"
+                     class="bg-transparent outline-none min-w-[12rem]"
+                     placeholder="최대 {leftTagCount}개의 태그 등록 가능"/>
+            {:else}
+              <span on:click={enableTagInput}>
+                <Plus size="1rem"/>
+                <span>새 태그 추가 ({leftTagCount})</span>
+              </span>
+            {/if}
           </Tag>
         </li>
       {/if}

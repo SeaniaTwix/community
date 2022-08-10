@@ -7,6 +7,7 @@ export interface IArticle<TagType = Record<string, Record<string, ITag>>, Author
   board: string; // board id
   locked: boolean;
   pub: boolean;
+  // todo: typing to string[] for in clients.
   myTags: ITag[];
   author: AuthorType;
 }

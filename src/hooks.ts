@@ -8,6 +8,7 @@ import {atob, btoa} from 'js-base64';
 import {User} from '$lib/auth/user/server';
 import {dayjs} from 'dayjs';
 import type {JwtUser} from '$lib/types/user';
+import type {AllowedExtensions} from './app';
 
 global.atob = atob;
 global.btoa = btoa;
@@ -147,10 +148,32 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 
 /** @type {import('@sveltejs/kit').GetSession} */
 export function getSession(event: RequestEvent) {
-  return {
+  const session: App.Session = {
     user: event.locals.user,
     ui: event.locals.ui,
+    settings: {
+      imageOrder: ['jxl', 'avif', 'webp', 'png'],
+    },
   };
+
+  const cookie = event.request.headers.get('cookie') ?? '';
+  const parsed = CookieParser.parse(cookie);
+
+  if (parsed['image-order']) {
+    try {
+      const imageOrder = parsed['image-order']
+        .split(',')
+        .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext)) as AllowedExtensions[];
+      session.settings = {
+        imageOrder,
+      }
+
+    } catch {
+      // do nothing
+    }
+  }
+
+  return session;
 }
 
 interface HandleParameter {

@@ -21,27 +21,16 @@ const reserved = {
   '어그로': '03',
 };
 
-export async function PUT({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
-  if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
-  }
-
-  const names = url.searchParams.get('name');
-
-  if (!names || isEmpty(names)) {
-    return invalidTagNameError;
-  }
-
-  const tagList = uniq(names.split(',').map(t => t.trim()));
-  const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@:]+$/g;
-  // 연재물 태그는 최소 한 글자 이상이어야 합니다.
-  const serialValidator = /^연재:.+$/g;
-  const {id, article} = params;
+/**
+ *
+ * @param id 게시판 id
+ * @param article 게시글 id, 새 글 쓰기 중일 땐 null
+ * @param locals App.Locals
+ * @param tagList 태그 이름 배열
+ * @return 에러가 있다면 에러<RequestHandlerOutput>를, 없다면 undefined를 반환합니다.
+ */
+export async function getTagErrors(id: string, article: string | null, locals: App.Locals, tagList: string[]): Promise<RequestHandlerOutput | undefined> {
+  const serialValidator = /^연재:(.+)$/g;
 
   for (const name of tagList) {
     /**
@@ -51,9 +40,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
      */
     if (name.startsWith('_') || Object.keys(reserved).includes(name)) {
       if (Object.values(reserved).includes(name.slice(1))) {
-        const addTag = new AddTagRequest(article, [name]);
+        const addTag = article ? new AddTagRequest(article, [name]) : null;
 
-        if (await addTag.isMyArticle(locals.user.uid)) {
+        if (!addTag || await addTag.isMyArticle(locals.user.uid)) {
           return {
             status: HttpStatus.NOT_ACCEPTABLE,
             body: {
@@ -62,8 +51,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
           };
         }
 
+
         if (name === '_like' || name === '_dislike') {
-          if (await addTag.isVoteAlready(locals.user.uid)) {
+          if (!addTag || await addTag.isVoteAlready(locals.user.uid)) {
             return {
               status: HttpStatus.NOT_ACCEPTABLE,
               body: {
@@ -74,7 +64,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
         }
 
         try {
-          await addTag.addAll(locals.user.uid);
+          if (addTag) {
+            await addTag.addAll(locals.user.uid);
+          }
         } catch (e: any) {
           return {
             status: HttpStatus.BAD_GATEWAY,
@@ -101,13 +93,48 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
 
     // console.log(`${name}:`, tagNameValidator.test(name), tagNameValidator.exec(name));
 
+    const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@:]+$/g;
     if (!tagNameValidator.test(name)) {
+      // console.log('test default:', name);
       return unacceptableTagNameError(name);
     }
 
-    if (name.startsWith('연재:') && !serialValidator.test(name)) {
+    const serialTagCheck = serialValidator.exec(name)
+    if (name.startsWith('연재:')) {
+      // console.log('test serials:', name);
+      if (!serialTagCheck || !tagNameValidator.test(serialTagCheck[1])) {
+        return unacceptableTagNameError(name);
+      }
       return unacceptableSerialNameError;
     }
+  }
+}
+
+export async function PUT({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+  if (!locals.user) {
+    return {
+      status: HttpStatus.UNAUTHORIZED,
+      body: {
+        reason: 'please login and try again',
+      },
+    };
+  }
+
+  const names = url.searchParams.get('name');
+
+  if (!names || isEmpty(names)) {
+    return invalidTagNameError;
+  }
+
+  // 연재물 태그는 최소 한 글자 이상이어야 합니다.
+  const {id, article} = params;
+
+  const tagList = uniq(names.split(',').map(t => t.trim()));
+
+  const tagError = await getTagErrors(id, article, locals, tagList);
+
+  if (tagError) {
+    return tagError;
   }
 
   // transform to reserved tag name
@@ -134,7 +161,7 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
   try {
-    Pusher.notify('tag', `${article}@${id}`, locals.user.uid, {
+    Pusher.notify('tag', `${article}@${id}`, '0', {
       tag: uniqTagList,
       type: 'add',
     }).then();
@@ -157,11 +184,25 @@ class AddTagRequest {
 
   async addAll(userId: string) {
     if (!await this.article.exists) {
-      return;
+      throw new Error('article is not exists');
     }
     const user = await User.findByUniqueId(userId);
     if (!user || !await user.isAdult()) {
       this.tags = this.tags.filter(tag => tag !== '성인');
+    }
+    const isSelf = await this.isMyArticle(userId);
+    const tags: string[] = Object.keys(await this.article.getAllTagsCounted());
+    if (isSelf) {
+      if (!isEmpty(this.tags.filter(tag => tag.startsWith('_')))) {
+        throw new Error('you can\'t vote yourself.');
+      }
+      if (tags.length >= 30) {
+        throw new Error('tag limit (author: 30)');
+      }
+    } else {
+      if (tags.length >= 20) {
+        throw new Error('tag limit (not author: 20)');
+      }
     }
     return await this.article.addTags(userId, uniq(this.tags));
   }
@@ -194,12 +235,15 @@ const succeed: RequestHandlerOutput = {
   status: HttpStatus.ACCEPTED,
 };
 
-const unacceptableTagNameError: (tag: string) => RequestHandlerOutput = (tag) => ({
-  status: HttpStatus.NOT_ACCEPTABLE,
-  body: {
-    reason: `'${tag}' is unacceptable`,
-  },
-});
+const unacceptableTagNameError: (tag: string) => RequestHandlerOutput = (tag) => {
+  console.trace(tag);
+  return {
+    status: HttpStatus.NOT_ACCEPTABLE,
+    body: {
+      reason: `'${tag}' is unacceptable`,
+    },
+  }
+};
 
 const unacceptableSerialNameError: RequestHandlerOutput = {
   status: HttpStatus.NOT_ACCEPTABLE,

@@ -12,6 +12,7 @@ import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import {isEmpty} from 'lodash-es';
+import {getTagErrors} from './tag/add';
 
 /**
  * 편집 전용 게시글 내용 소스 가져오기
@@ -96,6 +97,12 @@ export async function POST({params, locals, request}: RequestEvent): Promise<Req
       }
     }
 
+    const tagError = await getTagErrors(id, article, locals, data.tags);
+
+    if (tagError) {
+      return tagError;
+    }
+
     await edit.update(locals.user.uid, data);
 
     edit.updateSearchEngine(id, data)
@@ -133,7 +140,12 @@ class EditArticleRequest {
       throw new Error('your not author');
     }
     const userTags = await this.article.getAllMyTags(userId);
-    return {title, content, tags: userTags, source};
+    const allTags = await this.article.getAllTagsCounted();
+    let tagCounts = 0;
+    for (const tag of Object.values(allTags)) {
+      tagCounts += tag;
+    }
+    return {title, content, tags: userTags, source, tagCounts};
   }
 
   async getImage(newContent: string): Promise<string> {

@@ -26,7 +26,7 @@
   export let content = '';
   export let source = '';
   let tag = '';
-  export let tags = [];
+  export let tags: string[] = [];
   let editorLoaded = false;
   let registeredAutoTag: string | undefined;
   let adultTagError = false;
@@ -44,12 +44,15 @@
   export let article: string;
   export let usedTags: string[] = [];
   export let isEditMode = false;
+  export let tagCounts = 0;
 
   $: dark = $theme.mode === 'dark';
   $: appendableTags = usedTags.filter(tag => !tags.find(t => t === tag));
 
   let detectedExternalLinks = false;
   let detectedExternalLinksCount = 0;
+
+  $: leftTagCount = 30 - tags.length - tagCounts;
 
   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
 
@@ -438,7 +441,7 @@
         {#if registeredAutoTag}
           자동 태그가 활성화 되었습니다. 자동 태그를 포함해
         {/if}
-        태그는 최대 20개까지 등록할 수 있습니다.
+        태그는 최대 30개까지 등록할 수 있습니다.
         {#if tags.includes('성인')}
           <span class="text-red-600">성인 태그가 활성화되었습니다.</span>
         {:else if adultTagError}
@@ -451,7 +454,7 @@
         <span class="text-red-600">성인 태그는 성인인증을 한 사람만 추가 할 수 있습니다.</span>
       {/if}
     {/if}
-    <ul id="__tags" class="inline-block flex flex-wrap space-x-2">
+    <ul id="__tags" class="inline-block flex flex-row flex-wrap gap-2">
       {#each tags as tag}
         <li class="inline-block">
           <Tag>
@@ -463,16 +466,19 @@
 
         </li>
       {/each}
-      <li class="inline-block" on:click={addTagClicked}>
+      <li class="inline-block flex flex-row items-center gap-1" on:click={addTagClicked}>
         <Tag>
           {#if addMode}
             <input bind:this={tagInput} bind:value={tag} type="text" placeholder="태그를 입력하세요... (띄어쓰기로 구분)"
                    on:keydown={detectEnter} class="bg-transparent w-fit min-w-[14rem] focus:outline-none"/>
           {:else}
             <Plus size="1rem"/>
-            새 태그 추가
+            새 태그 추가 ({leftTagCount})
           {/if}
         </Tag>
+        {#if addMode}
+          <span>({leftTagCount}) 개의 태그 등록 가능</span>
+        {/if}
       </li>
     </ul>
     {#if !isEmpty(appendableTags)}

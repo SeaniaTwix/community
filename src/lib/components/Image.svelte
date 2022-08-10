@@ -145,8 +145,7 @@
     forceShow = false;
   }
 
-  // todo: user defined load order
-  const order = ['jxl', 'avif', 'webp', 'png'];
+  const order = $session.settings.imageOrder;
 
   function sortSources(images: (typeof sources)) {
     return images.sort(({srcset: a}, {srcset: b}) => {

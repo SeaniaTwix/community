@@ -14,6 +14,7 @@ import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
+import {getTagErrors} from '../[article=integer]/api/tag/add';
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!user) {
@@ -86,6 +87,12 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
         reason: write.error,
       },
     };
+  }
+
+  const tagError = await getTagErrors(params.id, null, locals, write.tags);
+
+  if (tagError) {
+    return tagError;
   }
 
   let result;

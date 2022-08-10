@@ -9,6 +9,15 @@ export class CookieParser {
       });
   }
 
+  static parse(cookie: string): Record<string, string | undefined> {
+    try {
+      return (new CookieParser(cookie!)).get();
+    } catch (e) {
+      console.trace(e);
+      return {};
+    }
+  }
+
   private readonly cookies: Rec<string | undefined> = {};
 
   static new(cookie: string): CookieParser {

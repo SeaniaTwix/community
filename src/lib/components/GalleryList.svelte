@@ -9,7 +9,8 @@
   import View from 'svelte-material-icons/Eye.svelte';
   import Comment from 'svelte-material-icons/Comment.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
-  import {toSources} from '$lib/file/image/shared.js';
+  import {toSources} from '$lib/file/image/shared';
+  import {session} from '$app/stores';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -27,6 +28,18 @@
     }
     const type = last(avatar.split('.')).toLowerCase();
     return {src: avatar, type: `image/${type}`};
+  }
+
+  const order = $session.settings.imageOrder;
+
+  function sortSources(images: {srcset: string, type: string}[]) {
+    return images.sort(({srcset: a}, {srcset: b}) => {
+      const baseA: string = last(a.split('/'));
+      const baseB: string = last(b.split('/'));
+      const extA = last(baseA.split('.'));
+      const extB = last(baseB.split('.'));
+      return order.indexOf(extA) - order.indexOf(extB);
+    });
   }
 
 </script>
@@ -61,7 +74,7 @@
                      src="{gallery.images}" alt="main image of {gallery.title}" />
               {:else}
                 <picture>
-                  {#each toSources(gallery.convertedImages) as source}
+                  {#each sortSources(toSources(gallery.convertedImages)) as source}
                     <source srcset="{source.srcset}" type="{source.type}" />
                   {/each}
                   <img class:blur-xl={isToHide(gallery)} class="w-full h-full object-cover bg-white group-hover:bg-zinc-200 dark:bg-gray-400/50 dark:group-hover:bg-gray-500/50 transition-colors" loading="lazy"

@@ -24,6 +24,8 @@ declare global {
         adult: boolean;
       };
       ui: UI,
+      // client only
+      settings: Settings
     }
 
     // interface Stuff {}
@@ -35,3 +37,9 @@ export interface UI {
   buttonAlign: 'left' | 'right';
   listType: 'list' | 'gallery';
 }
+
+export interface Settings {
+  imageOrder: AllowedExtensions[];
+}
+
+declare type AllowedExtensions = 'jxl' | 'avif' | 'webp' | 'png';
