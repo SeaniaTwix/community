@@ -101,20 +101,14 @@
     }
   });
 
-  async function fullRefresh() {
+  async function getRecentList() {
     const p = $page.url.searchParams.get('page') ?? '1';
     const res = await fetch(`${$page.url.pathname}/api/list?page=${p}`);
     return await res.json() as { list: ArticleItemDto[], maxPage: number };
   }
 
-  async function toggleViewMode() {
-    buffer = [];
-
-    listType = listType === 'list' ? 'gallery' : 'list';
-
-    Cookies.set('list_type', listType);
-
-    const {list: l, maxPage: mp} = await fullRefresh();
+  async function fullRefresh() {
+    const {list: l, maxPage: mp} = await getRecentList();
 
     session.update((s) => {
       s.ui.listType = listType;
@@ -123,6 +117,16 @@
 
     articles = l;
     maxPage = mp;
+  }
+
+  function toggleViewMode() {
+    buffer = [];
+
+    listType = listType === 'list' ? 'gallery' : 'list';
+
+    Cookies.set('list_type', listType);
+
+    fullRefresh().then();
   }
 
   let buffer: INewPublishedArticle[] = [];
@@ -148,7 +152,7 @@
     }
   }
 
-  function updateList() {
+  function updateListFromBuffer() {
     const autoTagRegex = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
     const newArticles: ArticleItemDto[] = buffer.map(item => {
       const regx = autoTagRegex.exec(item.title.trim());
@@ -242,17 +246,19 @@
 
   <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)}
        class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
-    <h2 class="text-2xl">
-      {name}
+    <a href="/community/{$page.params.id}" on:click|preventDefault={fullRefresh}>
+      <h2 class="text-2xl">
+        {name}
 
-      <!--span class="inline sm:hidden">none</span>
-      <span class="hidden sm:inline md:hidden">sm</span>
-      <span class="hidden md:inline lg:hidden">md</span>
-      <span class="hidden lg:inline xl:hidden">lg</span>
-      <span class="hidden xl:inline 2xl:hidden">xl</span>
-      <span class="hidden 2xl:inline">2xl</span-->
+        <!--span class="inline sm:hidden">none</span>
+        <span class="hidden sm:inline md:hidden">sm</span>
+        <span class="hidden md:inline lg:hidden">md</span>
+        <span class="hidden lg:inline xl:hidden">lg</span>
+        <span class="hidden xl:inline 2xl:hidden">xl</span>
+        <span class="hidden 2xl:inline">2xl</span-->
 
-    </h2>
+      </h2>
+    </a>
     {#if $session.user}
       <div class="space-x-2" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
         {#if $session.user.rank >= EUserRanks.Manager}
@@ -339,7 +345,7 @@
     </button>
 
     {#if !isEmpty(buffer)}
-      <button on:click={updateList}
+      <button on:click={updateListFromBuffer}
               class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
         <Refresh/>
         새 게시물이 있습니다.
