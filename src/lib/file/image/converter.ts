@@ -16,7 +16,7 @@ export class ImageConverter {
     return url.replace(new RegExp(`${extname(url)}$`), '');
   }
 
-  static async saveAll(originalSrc: string): Promise<boolean> {
+  static async saveAll(originalSrc: string, doNotInsert: boolean): Promise<boolean> {
     //const allConverted = await ImageConverter.all(tempFilePath);
 
     if (!originalSrc.startsWith(s3Url)) {
@@ -55,18 +55,18 @@ export class ImageConverter {
       return false;
     }
 
+    try {
+      if (!doNotInsert) {
+        await db.query(aql`insert {src: ${this.getBasePath(src)}, converted: []} into images`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     const all = ImageConverter.all(src, mime);
 
     for (const ext in all) {
       await all[ext];
-    }
-
-    try {
-      db.query(aql`insert {src: ${this.getBasePath(src)}, converted: []} into images`)
-        .then()
-        .catch((e) => console.error(e));
-    } catch (e) {
-      console.error(e);
     }
 
     return true;

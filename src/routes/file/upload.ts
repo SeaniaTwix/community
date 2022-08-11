@@ -56,7 +56,7 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
           const rs = createReadStream(tmpFilePath);
           const sendData = await S3.upload(p, rs);
 
-          ImageConverter.saveAll(`https://${process.env.S3_ENDPOINT}${p}`).then(() => tmp.cleanup().then());
+          ImageConverter.saveAll(`https://${process.env.S3_ENDPOINT}${p}`, false).then(() => tmp.cleanup().then());
           resolve(sendData.Location);
         } catch (e) {
           reject(e);

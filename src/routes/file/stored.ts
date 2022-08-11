@@ -39,7 +39,9 @@ export async function POST({request, url: {searchParams}}: RequestEvent): Promis
             return link) : []
         update image with {converted: push(converted, ${to}, true)} in images`);
 
-  return {};
+  return {
+    status: HttpStatus.CREATED,
+  };
 }
 
 interface IStoredEventPayload {

@@ -41,7 +41,9 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
       filter image.src == ${basePath}
         return image.converted`);
 
-  if (cursor.hasNext && locals.user.rank <= EUserRanks.User) {
+  const imageExists = cursor.hasNext;
+
+  if (imageExists && locals.user.rank <= EUserRanks.User) {
     const converted = await cursor.next() as string[];
     if (converted.length >= 4) {
       return {
@@ -62,7 +64,7 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
     };
   }
 
-  const isRequestDone = await ImageConverter.saveAll(src);
+  const isRequestDone = await ImageConverter.saveAll(src, imageExists);
 
   return {
     status: HttpStatus.ACCEPTED,
