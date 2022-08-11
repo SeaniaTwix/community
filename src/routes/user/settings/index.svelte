@@ -59,7 +59,7 @@
     // console.log(event.detail.items);
     imageOrder = event.detail.items;
     const orders = Object.values(imageOrder).map(i => i.name);
-    Cookies.set('image-order', orders.join(','));
+    Cookies.set('image_order', orders.join(','));
 
     session.update((s) => {
       s.settings.imageOrder = orders;

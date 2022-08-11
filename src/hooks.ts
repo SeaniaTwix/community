@@ -159,11 +159,12 @@ export function getSession(event: RequestEvent) {
   const cookie = event.request.headers.get('cookie') ?? '';
   const parsed = CookieParser.parse(cookie);
 
-  if (parsed['image-order']) {
+  if (parsed['image_order']) {
     try {
-      const imageOrder = parsed['image-order']
+      const imageOrder = decodeURIComponent(parsed['image_order'])
         .split(',')
         .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext)) as AllowedExtensions[];
+      console.log(parsed['image_order'], imageOrder);
       session.settings = {
         imageOrder,
       }
