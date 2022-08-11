@@ -5,6 +5,7 @@
   export async function load({fetch, session}: LoadEvent): Promise<LoadOutput> {
     if (!session) {
       return {
+        status: HttpStatus.MOVED_TEMPORARILY,
         redirect: '/login',
       };
     }

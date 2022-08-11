@@ -6,6 +6,7 @@
   export async function load({session: {user, ui, settings}}: LoadEvent): Promise<LoadOutput> {
     if (!user) {
       return {
+        status: HttpStatus.MOVED_TEMPORARILY,
         redirect: '/',
       };
     }
