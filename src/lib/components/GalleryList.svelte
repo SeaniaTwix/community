@@ -10,11 +10,13 @@
   import Comment from 'svelte-material-icons/Comment.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
   import {toSources} from '$lib/file/image/shared';
-  import {session} from '$app/stores';
+  import {page, session} from '$app/stores';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
   export let showingUserContextMenuIndex = -1;
+  $: isBestView = last($page.url.toString().split('?')[0].split('/')) === 'best';
+  $: q = !isEmpty($page.url.search) ? `${$page.url.search}${isBestView ? '&type=best' : ''}` : isBestView ? `?type=best` : '';
 
   function isToHide(gallery: ArticleItemDto) {
     const tags = Object.keys(gallery.tags);
@@ -47,7 +49,7 @@
 <div class="w-full box-content flex flex-row flex-wrap gap-4">
   {#each list as gallery}
       <div class="__gallery-box group box-content p-2 min-h-0 bg-zinc-50 hover:bg-zinc-100 dark:bg-gray-700/40 dark:hover:bg-gray-700/75 rounded-md shadow-md transition-all space-y-3">
-        <a href="/community/{board}/{gallery._key}">
+        <a href="/community/{board}/{gallery._key}{q}">
           <div class:shadow-md={!isEmpty(gallery.images)} class="aspect-square select-none object-cover overflow-hidden rounded-md relative">
             <span class="text-sm absolute z-[1] top-1.5 right-1 bg-zinc-400/40 px-1.5 rounded-md text-zinc-100 backdrop-blur-md drop-shadow">
               <span>
