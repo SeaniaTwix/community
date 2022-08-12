@@ -65,8 +65,14 @@
     const uploadPending = event.dataTransfer.files.item(0);
     if (uploadPending.type.startsWith('image')) {
       editAvatarSrc = URL.createObjectURL(uploadPending);
-      imageType = uploadPending.type;
-      history = [...history, editAvatarSrc];
+      storeEditHistory(editAvatarSrc, file.type);
+    }
+  }
+
+  function storeEditHistory(src: string, type: string) {
+    if (type.startsWith('image')) {
+      imageType = type;
+      history = [...history, src];
     }
   }
 
@@ -96,6 +102,7 @@
   function fileSelected() {
     editedAvatar = files[0];
     editAvatarSrc = URL.createObjectURL(editedAvatar);
+    storeEditHistory(editAvatarSrc, editedAvatar.type);
   }
 
   async function saveAvatar(link: string) {
