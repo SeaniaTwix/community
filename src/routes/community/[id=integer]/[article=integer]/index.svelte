@@ -728,7 +728,7 @@
     <div bind:this={generalScrollView}
          class="mt-4 p-4 space-y-4 overflow-y-scroll flex-grow overflow-x-hidden">
 
-      {#if !article.pub}
+      {#if typeof article.pub === 'boolean' && !article.pub}
         <div>
           <p class="text-sm text-red-600 text-center">
             경고: 이 게시물은 삭제된 상태입니다.
