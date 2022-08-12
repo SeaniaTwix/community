@@ -174,10 +174,10 @@
         {/if}
         {#if Object.keys(article.tags).length > 0}
           <div class="w-full px-2">
-            <ul class="flex flex-row gap-1">
+            <ul class="flex flex-row gap-1 flex-wrap">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
-                  <li class="inline-block">
+                  <li>
                     <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
                       <Tag count="{article.tags[tagName]}">{tagName}</Tag>
                     </a>

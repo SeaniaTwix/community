@@ -186,21 +186,6 @@ export class Article {
             insert newTag 
             update { _key: sameTag[0]._key, pub: true }
           in tags`);
-
-    /*
-    return await db.query(aql`
-      for article in articles
-        filter article._key == ${this.id}
-          let userTags = has(article.tags, ${userId}) ? article.tags[${userId}] : []
-          let conflict = intersection((for t in userTags return t.name), ${newTags.map(t => t.name)})
-          let tags = (for forAdd in ${newTags}
-              filter forAdd.name not in conflict
-                return forAdd)
-          update article with {
-            tags: merge_recursive(article.tags, {
-              ${userId}: append(userTags, tags)
-            })
-          } in articles`);*/
   }
 
   /**
@@ -231,24 +216,6 @@ export class Article {
       for savedTag in tags
         filter savedTag.name in ${tags} && savedTag.target == ${this.id} && savedTag.user == ${userId}
           update savedTag with {pub: false} in tags`);
-
-
-    /*
-    const r = await db.query(aql`
-      for article in articles
-        filter article._key == ${this.id}
-          let userTags = has(article.tags, ${userId}) ? article.tags[${userId}] : []
-          let newTags = (
-            for t in userTags
-              filter t.name not in ${tags}
-                return t)
-          update article with merge_recursive(article, { 
-            tags: {
-              ${userId}: newTags,
-            }
-          }) in articles`);
-
-    console.dir(await r.next(), {depth: 3}) */
   }
 
   async addComment(userId: string, comment: CommentDto): Promise<IComment> {

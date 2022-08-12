@@ -83,7 +83,7 @@ class ArticleSearch {
   }
 
   private static transformTagExcludeCondition(tagCondition: string) {
-    // todo: exists filter is not yet ready in meliisearch.
+    // todo: exists filter is not yet ready in meilisearch.
   }
 
   async result(): Promise<ArticleItemDto[]> {
