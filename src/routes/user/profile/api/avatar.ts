@@ -4,6 +4,7 @@ import {S3} from '$lib/file/s3';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {isEmpty} from 'lodash-es';
+import {purge} from '$lib/file/cloudflare';
 
 // get link
 export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -60,6 +61,8 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
       for user in users
         filter user._key == ${locals.user.uid}
           update user with {avatar: ${link}} in users`);
+
+    purge([link]).then().catch();
   } catch (e: any) {
     return {
       status: HttpStatus.BAD_GATEWAY,
