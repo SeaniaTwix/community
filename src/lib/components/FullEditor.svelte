@@ -289,14 +289,22 @@
     }
   }
 
-  const f = writable<File | null>(null);
+  const f = writable<File[] | null>(null);
 
   function fileSelected() {
-    f.set(fileUploader.files?.[0]);
+    f.set(Array.from(fileUploader.files));
   }
 
-  function insertImage(imageUrl: string) {
-    editor.insertContent(`<img src="${imageUrl}" alt="uploaded at ${new Date}" /><p>&nbsp;</p>`);
+  function insertImage(links: string[]) {
+    const images = links
+      .map((link) => `<img src="${link}" alt="uploaded at ${new Date}" />`)
+      .join('');
+    const template = `
+      <p>
+        ${images}
+      </p>
+      <p>&nbsp;</p>`;
+    editor.insertContent(template);
   }
 
   function insertVideo(url: string, type: string) {
@@ -306,16 +314,25 @@
   let unsubs: Unsubscriber[] = [];
 
   onMount(() => {
-    unsubs.push(f.subscribe(async (file) => {
-      if (file) {
-        const link = await imageUpload(file, undefined, undefined);
-        // prevent blink when real url fetched
-        if (file.type.startsWith('video')) {
-          insertVideo(link, file.type);
-        } else if (file.type.startsWith('image')) {
-          await ky.get(link);
-          insertImage(link);
-        }
+    unsubs.push(f.subscribe(async (files) => {
+      if (Array.isArray(files)) {
+        files = files.filter(({type}) => {
+          const isTypeExists = typeof type === 'string';
+          const isImageOrVideo = type.startsWith('video') || type.startsWith('image');
+          return isTypeExists && isImageOrVideo;
+        });
+
+        // todo: video uploading
+
+        const uploads = files.map(async f => await imageUpload(f, undefined, undefined));
+        const uploaded: PromiseSettledResult<string>[] = await Promise.allSettled(uploads);
+        const fulfilled = uploaded
+          .filter(v => v.status === 'fulfilled')
+          .map((v: PromiseFulfilledResult<string>) => v.value);
+        const rejected = uploaded
+          .filter(v => v.status === 'rejected');
+        insertImage(fulfilled);
+        console.error(rejected);
       }
     }));
   });
@@ -336,6 +353,7 @@
 
       const $ = load(content);
 
+      // @ts-ignore
       const imgs = $('img');
 
       const reqs = imgs.toArray()
@@ -351,6 +369,7 @@
 
       await Promise.all(reqs);
 
+      // @ts-ignore
       content = $('body').html() ?? '';
       // editor.insertContent('<p>&nbsp;</p>')
     } finally {
