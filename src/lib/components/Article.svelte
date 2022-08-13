@@ -63,7 +63,9 @@
   const timeAgo = new TimeAgo('ko-KR');
 
   function timeFullFormat(time: Date | number) {
-    return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 m분');
+    const day = dayjs(new Date(time));
+    const a = day.format('a') === 'am' ? '오전' : '오후';
+    return day.format(`YYYY년 M월 D일 ${a} hh시 m분`);
   }
 
   function toImageSource(uid: string): IImage {
@@ -247,16 +249,12 @@
       <div class="flex flex-col md:flex-col">
         <span class="w-max"><View size="1rem"/> {article.views ?? 1}</span>
 
-        <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
-          <time class="text-zinc-500 dark:text-zinc-300 text-sm">
-            {timeAgo.format(new Date(article.createdAt))}
-          </time>
-        </button>
-
-        <div id="tooltip-time-specific" role="tooltip"
-             class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
-          작성 시간: {timeFullFormat(article.createdAt)}
-          <div class="tooltip-arrow" data-popper-arrow></div>
+        <div class="__time-tooltip" time="작성 시간: {timeFullFormat(article.createdAt)}">
+          <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
+            <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+              {timeAgo.format(new Date(article.createdAt))}
+            </time>
+          </button>
         </div>
       </div>
     </div>
@@ -362,5 +360,33 @@
       border-radius: 50%;
       aspect-ratio: 1/1;
     }
+  }
+
+  .__time-tooltip {
+    position: relative;
+  }
+
+  .__time-tooltip::before {
+    content: "\2003" attr(time);
+    text-indent: -1rem;
+    display: inline-block;
+    position: absolute;
+    bottom: 50%;
+    background: #222F3E;
+    color: #FFFFFF;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    opacity: 0;
+    transition: 0.3s;
+    overflow: hidden;
+    max-width: 50%;
+    pointer-events: none;
+    min-width: max-content;
+    right: calc(100% - 3rem);
+  }
+
+  .__time-tooltip:hover::before {
+    opacity: 1;
+    bottom: 100%;
   }
 </style>
