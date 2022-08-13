@@ -371,7 +371,11 @@
 </script>
 
 <div class="hidden">
-  <input type="file" bind:this={fileUploader} on:change={fileSelected}/>
+  <input type="file"
+         multiple
+         accept="{defaultEditorSettings.images_file_types.split(',').map(v => `.${v}`).join(',')}"
+         bind:this={fileUploader}
+         on:change={fileSelected}/>
 </div>
 
 {#if uploading || uploadingExternalLinks}
