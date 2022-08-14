@@ -5,6 +5,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {isEmpty} from 'lodash-es';
 import {purge} from '$lib/file/cloudflare';
+import {nanoid} from 'nanoid';
 
 // get link
 export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -60,7 +61,7 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
     await db.query(aql`
       for user in users
         filter user._key == ${locals.user.uid}
-          update user with {avatar: ${link}} in users`);
+          update user with {avatar: ${link + '?v=' + nanoid(4)}} in users`);
 
     purge([link]).then().catch();
   } catch (e: any) {
