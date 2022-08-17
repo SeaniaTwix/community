@@ -86,7 +86,7 @@
         <a href="/community/{board}/{article._key}{q}">
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
-            <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0">
+            <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0 md:items-center">
               <div class="flex justify-between min-w-0">
                 <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
                   <div class="truncate">
@@ -95,7 +95,7 @@
                     {/if}<span>{typeof article.autoTag === 'string' ? unwrapAutotag(article.title) : article.title}</span>
                   </div>
                   {#if Object.keys(article.tags??{}).includes('성인')}
-                    <span class="after:ml-1 after:inline-block __warning-adult-content after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center"></span>
+                    <span class="after:ml-1 after:inline-block __warning-adult-content after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs after:flex items-center"></span>
                   {/if}
                 </div>
                 <!-- (mobile only) i have no idea to make no duplicated elements... -->
@@ -111,37 +111,33 @@
                 <!-- (mobile only end) -->
               </div>
               <div class="flex flex-grow flex-shrink-0 justify-between leading-zero -mt-px">
-                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300 items-center flex flex-row">
+                <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300 items-center flex flex-row items-center">
                   <span class="inline-block md:hidden lg:hidden text-zinc-400 select-none">
                     {article._key}
                   </span>
-                  {#if article.images}
-                    <span>
+                  <span class="h-full flex items-center space-x-1 gap-0.5">
+                    {#if article.images}
                       <span class="mr-0.5"><Image size="1rem"/></span>
-                    </span>
-                  {/if}
-                  {#if article?.comments}
-                    <span>
-                      <span class="mr-0.5"><Comment size="1rem"/></span>{article.comments}
-                    </span>
-                  {/if}
-                  <span>
+                    {/if}
                     <span class="mr-0.5"><View size="1rem"/></span>{article.views ?? 0}
+                    {#if article?.comments}
+                      <span class="mr-0.5"><Comment size="1rem"/></span>{article.comments}
+                    {/if}
+
+                    {#if Object.keys(article.tags).includes('_like')}
+                      <span class="text-sky-400 group-hover:text-sky-600 dark:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                        <span class="mr-0.5"><Like size="1rem"/></span>{article.tags._like}
+                      </span>
+                    {/if}
+
+                    {#if Object.keys(article.tags).includes('_dislike')}
+                      <span class="text-red-400 group-hover:text-red-600 dark:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                        <span class="mr-0.5"><Dislike size="1rem"/></span>{article.tags._dislike}
+                      </span>
+                    {/if}
                   </span>
-                  {#if Object.keys(article.tags).includes('_like')}
-                    <span
-                      class="text-sky-400 group-hover:text-sky-600 dark:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                      <span class="mr-0.5"><Like size="1rem"/></span>{article.tags._like}
-                    </span>
-                  {/if}
-                  {#if Object.keys(article.tags).includes('_dislike')}
-                    <span
-                      class="text-red-400 group-hover:text-red-600 dark:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                      <span class="mr-0.5"><Dislike size="1rem"/></span>{article.tags._dislike}
-                    </span>
-                  {/if}
                 </div>
-                <div class="inline-block flex w-max">
+                <div class="inline-block flex w-max items-center">
                   <div on:click={() => toggleUserMenu(i)} class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
                     <div class="w-6 max-h-6 inline-block mt-[-1px]">
                       <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
@@ -173,7 +169,7 @@
           </div>
         {/if}
         {#if Object.keys(article.tags).length > 0}
-          <div class="w-full px-2">
+          <div class="w-full px-2 pt-2">
             <ul class="flex flex-row gap-1 flex-wrap">
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
