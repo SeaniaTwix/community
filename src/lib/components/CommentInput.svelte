@@ -6,7 +6,7 @@
   import Goto from 'svelte-material-icons/ArrowRightBold.svelte';
 
   import {fade} from 'svelte/transition';
-  import {page, session} from '$app/stores';
+  import {page} from '$app/stores';
   import type {IComment} from '$lib/types/comment';
   import {isEmpty} from 'lodash-es';
   import {createEventDispatcher, onMount, onDestroy} from 'svelte';
@@ -14,9 +14,7 @@
   import Checkbox from './Checkbox.svelte';
   import ky from 'ky-universal';
   import {
-    commentInput,
     commentMobileCursorPosition,
-    currentReply,
     imageSrc,
   } from '$lib/community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
@@ -141,6 +139,16 @@
     selectedComment = undefined;
   }
 
+  function onPaste(event: ClipboardEvent) {
+    const images = Array.from(event.clipboardData.items)
+      .filter(v => v.kind === 'file' && v.type.startsWith('image'))
+      .map(v => v.getAsFile());
+    // todo: show select image prompt if pasted images is multiple
+    if (!isEmpty(images)) {
+      commentImageUploadSrc = URL.createObjectURL(images[0]);
+    }
+  }
+
 </script>
 
 {#if commenting}
@@ -225,6 +233,7 @@
                     bind:this={textInput}
                     bind:value={content}
                     on:blur={onBlur}
+                    on:paste={onPaste}
                     placeholder="댓글을 입력하세요..."></textarea>
             <div id="__textarea-mobile"
                  on:click={enableMobileInput} on:dblclick|preventDefault
@@ -249,6 +258,7 @@
                     bind:value={content}
                     bind:this={mobileTextInput}
                     on:blur={onBlur}
+                    on:paste={onPaste}
                     placeholder="댓글을 입력하세요..."></textarea>
 
           {/if}
