@@ -179,8 +179,8 @@
         if (commentImageUploadSrc.startsWith('https://s3.ru.hn')) {
           commentData.image = commentImageUploadSrc;
         } else {
-          const data = editedImage ? editedImage : commentImageUploadFileInfo;
-          const type = editedImage ? 'image/png' : commentImageUploadFileInfo.type;
+          const data = editedImage ? editedImage : commentImageUploadFileInfo ?? (await ky.get(commentImageUploadSrc).blob());
+          const type = commentImageUploadFileInfo?.type ?? 'image/png';
           const name = 'UZ-is-Kawaii.png';
           commentData.image = await upload(data, type, name);
         }
