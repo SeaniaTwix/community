@@ -163,12 +163,6 @@ class EditArticleRequest {
 
     const sanitizedContent = await Article.Sanitize(content);
 
-    /*
-    const newTags: ITag[] = tags.map(tag => ({
-      target: this.id, user:author, name: tag, createdAt: new Date, pub: true
-    })); // */
-
-
     const edited = {
       title,
       editedAt: new Date,

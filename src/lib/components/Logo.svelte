@@ -5,7 +5,7 @@
     const now = dayjs();
     const m = now.get('month') + 1;
     const d = now.get('date');
-    console.log(now)
+    // console.log(now)
     return m === 8 && d === 15;
   }
 </script>
