@@ -146,6 +146,7 @@
     // todo: show select image prompt if pasted images is multiple
     if (!isEmpty(images)) {
       commentImageUploadSrc = URL.createObjectURL(images[0]);
+      event.preventDefault();
     }
   }
 
