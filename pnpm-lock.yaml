@@ -18,6 +18,7 @@ specifiers:
   '@types/secure-random': ^1.1.0
   '@types/sharp': ^0.30.4
   '@types/tinymce': ^4.6.5
+  '@types/uuid': ^8.3.4
   '@typescript-eslint/eslint-plugin': ^5.27.0
   '@typescript-eslint/parser': ^5.27.0
   algoliasearch: ^4.13.1
@@ -89,6 +90,7 @@ specifiers:
   tslib: ^2.3.1
   typescript: ^4.7.4
   unified: ^10.1.2
+  uuid: ^8.3.2
   vite: ^3.0.0
   wysiwyg-editor-node-sdk: ^4.0.12
   youtube-player: ^5.5.2
@@ -155,6 +157,7 @@ dependencies:
   temp-file: 3.4.0
   tlds: 1.231.0
   unified: 10.1.2
+  uuid: 8.3.2
   wysiwyg-editor-node-sdk: 4.0.12
   youtube-player: 5.5.2
 
@@ -168,6 +171,7 @@ devDependencies:
   '@types/secure-random': 1.1.0
   '@types/sharp': 0.30.4
   '@types/tinymce': 4.6.5
+  '@types/uuid': 8.3.4
   '@typescript-eslint/eslint-plugin': 5.30.0_5mtqsiui4sk53pmkx7i7ue45wm
   '@typescript-eslint/parser': 5.30.0_b5e7v2qnwxfo6hmiq56u52mz3e
   autoprefixer: 10.4.7_postcss@8.4.14
@@ -183,7 +187,7 @@ devDependencies:
   svelte-check: 2.8.0_5vbzsb2fpgnp7jvfquxwswgl7e
   svelte-loading-spinners: 0.1.7
   svelte-preprocess: 4.10.7_cig3o6vabpikisguie6gbyfaty
-  tailwindcss: 3.1.4
+  tailwindcss: 3.1.4_postcss@8.4.14
   tslib: 2.4.0
   typescript: 4.7.4
   vite: 3.0.0_sass@1.53.0
@@ -1665,6 +1669,10 @@ packages:
   /@types/unist/2.0.6:
     resolution: {integrity: sha512-PBjIUxZHOuj0R15/xuwJYjFi+KZdNFrehocChv4g5hu6aFroHue8m0lBP0POdK2nKzbw0cgV1mws8+V/JAcEkQ==}
     dev: false
+
+  /@types/uuid/8.3.4:
+    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
+    dev: true
 
   /@typescript-eslint/eslint-plugin/5.30.0_5mtqsiui4sk53pmkx7i7ue45wm:
     resolution: {integrity: sha512-lvhRJ2pGe2V9MEU46ELTdiHgiAFZPKtLhiU5wlnaYpMc2+c1R8fh8i80ZAa665drvjHKUJyRRGg3gEm1If54ow==}
@@ -6231,10 +6239,12 @@ packages:
       stable: 0.1.8
     dev: false
 
-  /tailwindcss/3.1.4:
+  /tailwindcss/3.1.4_postcss@8.4.14:
     resolution: {integrity: sha512-NrxbFV4tYsga/hpWbRyUfIaBrNMXDxx5BsHgBS4v5tlyjf+sDsgBg5m9OxjrXIqAS/uR9kicxLKP+bEHI7BSeQ==}
     engines: {node: '>=12.13.0'}
     hasBin: true
+    peerDependencies:
+      postcss: ^8.0.9
     dependencies:
       arg: 5.0.2
       chokidar: 3.5.3

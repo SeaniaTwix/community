@@ -12,6 +12,7 @@ declare global {
     interface Locals {
       user: JwtUser & { adult: boolean };
       ui: UI,
+      sessionId: string;
     }
 
     // interface Platform {}

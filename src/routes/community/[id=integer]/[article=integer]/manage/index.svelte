@@ -21,7 +21,6 @@
     </button>
   </div>
 
-
   <a href="/community/{$page.params.id}/{$page.params.article}/manage/tags"
      class="bg-zinc-100 dark:bg-gray-500 rounded-md w-full py-2 block text-center shadow-md">
     태그 관리하기

@@ -22,6 +22,7 @@ export default class DefaultDatabase {
     'notifications',
     'favorites',
     'images',
+    'views',
   ];
   private static readonly requireEdgeCollections = [
     'reply',
@@ -40,10 +41,16 @@ export default class DefaultDatabase {
         type: 'persistent',
         unique: true,
       }
+    ],
+    views: [
+      {
+        fields: ['article'],
+        type: 'persistent',
+      }
     ]
   };
   private static readonly fulltextRequires: Record<string, EnsureFulltextIndexOptions[]> = {
-    'articles': [
+    articles: [
       {
         fields: ['title'],
         inBackground: false,

@@ -6,6 +6,7 @@ import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {Pusher} from '$lib/pusher/server';
 import {User} from '$lib/auth/user/server';
+import {EUserRanks} from '$lib/types/user-ranks';
 
 /**
  * 예약된 태그들입니다.
@@ -30,7 +31,11 @@ const reserved = {
  * @return 에러가 있다면 에러<RequestHandlerOutput>를, 없다면 undefined를 반환합니다.
  */
 export async function getTagErrors(id: string, article: string | null, locals: App.Locals, tagList: string[]): Promise<RequestHandlerOutput | undefined> {
-  const serialValidator = /^연재:(.+)$/g;
+  const validatorDefault = '[a-zA-Zㄱ-ㅎ가-힣@:-]+$';
+  const validatorSub = '[a-zA-Zㄱ-ㅎ가-힣@-]+$';
+  const tagNameValidator = new RegExp(`^(${validatorDefault})`, 'g');
+  const serialValidator = new RegExp(`^연재:(${validatorSub})`);
+  const preventValidator = new RegExp(`^방지:(${validatorSub})`);
 
   for (const name of tagList) {
     /**
@@ -93,19 +98,36 @@ export async function getTagErrors(id: string, article: string | null, locals: A
 
     // console.log(`${name}:`, tagNameValidator.test(name), tagNameValidator.exec(name));
 
-    const tagNameValidator = /^[a-zA-Zㄱ-ㅎ가-힣-@:]+$/g;
+    if (name === '공지' && (!locals.user || locals.user.rank <= EUserRanks.User)) {
+      return unacceptableTagNameError(name, 'you have no permission');
+    }
+
     if (!tagNameValidator.test(name)) {
       // console.log('test default:', name);
       return unacceptableTagNameError(name);
     }
 
-    const serialTagCheck = serialValidator.exec(name)
+    const serialTagCheck = serialValidator.exec(name);
     if (name.startsWith('연재:')) {
       // console.log('test serials:', name);
       if (!serialTagCheck || !tagNameValidator.test(serialTagCheck[1])) {
         return unacceptableTagNameError(name);
       }
-      return unacceptableSerialNameError;
+      // return unacceptableSerialNameError;
+    }
+
+    const preventCheck = preventValidator.exec(name);
+    /** todo
+     * 방지 태그는 다음과 같은 기능을 지원합니다.
+     * 방지:베스트 - 베스트에 포함되지 않도록 강제합니다.
+     * 방지:미리보기 - 메타 임베딩 및 갤러리 모드에서 미리보기를 방지합니다.
+     * 방지:미인증-보기 - 본인인증된 사용자만 보기 가능
+     * 방지:미인증-댓글 - 본인인증된 사용자만 댓글 가능 (보기는 모두 허용)
+     */
+    if (name.startsWith('방지:')) {
+      if (!preventCheck || !tagNameValidator.test(preventCheck[1])) {
+        return unacceptableTagNameError(name);
+      }
     }
   }
 }
@@ -235,14 +257,14 @@ const succeed: RequestHandlerOutput = {
   status: HttpStatus.ACCEPTED,
 };
 
-const unacceptableTagNameError: (tag: string) => RequestHandlerOutput = (tag) => {
+const unacceptableTagNameError: (tag: string, reason?: string) => RequestHandlerOutput = (tag, reason) => {
   console.trace(tag);
   return {
     status: HttpStatus.NOT_ACCEPTABLE,
     body: {
-      reason: `'${tag}' is unacceptable`,
+      reason: reason ? reason : `'${tag}' is unacceptable`,
     },
-  }
+  };
 };
 
 const unacceptableSerialNameError: RequestHandlerOutput = {

@@ -104,84 +104,9 @@ class ArticleSearch {
       .search(this.plains.join(' '), {
         filter,
         limit: this.max,
-      })
+      });
 
     return d as any;
-
-
-    /*
-    const cursor = await db.query(aql`
-      for article in articles
-        let savedTags = (
-          for tag in tags
-            filter tag.target == article._key && tag.pub
-              return tag)
-        let tagNames = (for tag in savedTags collect names = tag.name return names)
-        let cTags = ${this.tags}
-        let exTags = ${this.exclTags}
-        let bCheckTags = length(cTags) > 0
-        let bCheckExTags = length(exTags) > 0
-        let bSkip = !bCheckTags && !bCheckExTags
-        filter bSkip || (cTags any in tagNames && exTags none in tagNames)
-        let titleExCheck = (
-          for t in ${this.exclTitles}
-            filter find_first(article.title, t) > 0
-              return t)
-        filter length(titleExCheck) <= 0
-        let titleIncCheck = (
-          for t in ${this.titles}
-            filter find_first(article.title, t) > 0
-              return t)
-        filter length(titleIncCheck) >= 0
-        let contentCheck = (
-          for c in ${this.plains}
-            filter find_first(article.content, c) > 0
-              return c)
-        filter length(contentCheck) > 0
-          return article`);
-    return await cursor.all(); // */
-
-    /*
-    let keys: string[] = [];
-    if (!isEmpty(this.tags)) {
-      const cursor = await db.query(aql`
-        for article in articles
-          let savedTags = (
-            for tag in tags
-             filter tag.target == article._key && tag.pub
-             return tag)
-          let tagNames = (for tag in savedTags collect names = tag.name return names)
-          filter ${this.tags} any in tagNames && ${this.exclTags} none in tagNames
-          return article._key`)
-      keys = await cursor.all();
-    }
-    if (!isEmpty(this.titles) || !isEmpty(this.exclTitles)) {
-      const q = [
-        this.titles.join(','),
-        this.exclTitles.map(t => `-${t}`).join(','),
-      ].join(',');
-      console.log(q)
-      const cursor = await db.query(aql`
-      for article in fulltext(articles, "title", ${q})
-        filter ${isEmpty(keys)} || article._key in ${keys}
-        return article._key`);
-      keys = await cursor.all();
-    }
-
-    if (!isEmpty(this.plains)) {
-      const q = this.plains.join(',');
-      const cursor = await db.query(aql`
-        for article in fulltext(articles, "content", ${q})
-          filter ${isEmpty(keys)} || article._key in ${keys}
-          return article._key`);
-      keys = await cursor.all();
-    }
-
-
-    return [];
- // isEmpty(keys) ? result.hits : result.hits.filter(hit => keys.includes(hit.document.id));
-
-    // */
   }
 
 }

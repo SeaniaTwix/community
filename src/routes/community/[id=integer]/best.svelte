@@ -5,7 +5,7 @@
 
   function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
     const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-    const regx = autoTag.exec(articleItem.title.trim());
+    const regx = autoTag.exec(articleItem.title?.trim() ?? '');
     // console.log(item.title, regx);
     if (regx) {
       articleItem.autoTag = regx[1];
@@ -249,7 +249,7 @@
     margin-bottom: env(safe-area-inset-bottom);
   }
 
-  #__best-list {
+  #__top-list {
     &::-webkit-scrollbar {
       display: none;
     }

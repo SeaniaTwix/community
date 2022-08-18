@@ -2,7 +2,12 @@ import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 
-export async function PUT({params}: RequestEvent): Promise<RequestHandlerOutput> {
+/*
+  DEPRECATED!
+ */
+
+export async function PUT(): Promise<RequestHandlerOutput> {
+  /*
   const viewCount = new AddViewCountRequest(params.article);
 
   if (!await viewCount.isArticleExists()) {
@@ -14,14 +19,14 @@ export async function PUT({params}: RequestEvent): Promise<RequestHandlerOutput>
     }
   }
 
-  await viewCount.add();
+  await viewCount.add(user ? user.uid : sessionId); */
 
   return {
     status: HttpStatus.ACCEPTED,
   }
 }
 
-class AddViewCountRequest {
+export class AddViewCountRequest {
   private article: Article
   constructor(private readonly articleId: string) {
     this.article = new Article(this.articleId);
@@ -31,7 +36,10 @@ class AddViewCountRequest {
     return this.article.exists;
   }
 
-  add() {
-    return this.article.addViewCount();
+  async read(reader: string) {
+    if (!await this.article.isAlreadyRead(reader)) {
+      await this.article.addViewCount(reader);
+    }
+    await this.article.updateViewInfo(reader);
   }
 }

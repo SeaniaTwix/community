@@ -5,14 +5,11 @@ import {EditDto} from '$lib/types/dto/edit.dto';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {load as loadHtml} from 'cheerio';
-import {unified} from 'unified';
-import rehypeParse from 'rehype-parse';
-import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import {isEmpty} from 'lodash-es';
 import {getTagErrors} from './tag/add';
+import {create} from 'node:domain';
 
 /**
  * 편집 전용 게시글 내용 소스 가져오기
@@ -178,17 +175,33 @@ class EditArticleRequest {
     await this.article.updateTags(author, tags);
   }
 
-  async updateSearchEngine(board: string, data: EditDto) {
-    await client.index('articles')
-      .updateDocuments([
-        {
-          board,
-          id: this.id,
-          title: data.title,
-          source: data.source,
-          content: striptags(data.content ?? '').replace(/&nbsp;/, ''),
-          tags: await this.article.getAllTagsCounted(),
+  updateSearchEngine(board: string, data: EditDto) {
+    return new Promise<void>(async (resolve) => {
+      await domain.run(async () => {
+        try {
+          await client.index('articles')
+            .updateDocuments([
+              {
+                board,
+                id: this.id,
+                title: data.title,
+                source: data.source,
+                content: striptags(data.content ?? '')
+                  .replace(/&nbsp;/, '')
+                  .slice(0, 500),
+                tags: await this.article.getAllTagsCounted(),
+              }
+            ]);
+        } finally {
+          resolve();
         }
-      ])
+      })
+    });
   }
 }
+
+const domain = create();
+
+domain.on('error', () => {
+  //
+});

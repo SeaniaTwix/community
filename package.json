@@ -23,6 +23,7 @@
 		"@types/secure-random": "^1.1.0",
 		"@types/sharp": "^0.30.4",
 		"@types/tinymce": "^4.6.5",
+		"@types/uuid": "^8.3.4",
 		"@typescript-eslint/eslint-plugin": "^5.27.0",
 		"@typescript-eslint/parser": "^5.27.0",
 		"autoprefixer": "^10.4.7",
@@ -106,6 +107,7 @@
 		"temp-file": "^3.4.0",
 		"tlds": "^1.231.0",
 		"unified": "^10.1.2",
+		"uuid": "^8.3.2",
 		"wysiwyg-editor-node-sdk": "^4.0.12",
 		"youtube-player": "^5.5.2"
 	}

@@ -9,40 +9,48 @@ import {User} from '$lib/auth/user/server';
 import {dayjs} from 'dayjs';
 import type {JwtUser} from '$lib/types/user';
 import type {AllowedExtensions} from './app';
+import { sequence } from '@sveltejs/kit/hooks';
+import {
+  v5 as uuid,
+  validate as validateUuid,
+  version as versionUuid,
+} from 'uuid';
 
 global.atob = atob;
 global.btoa = btoa;
 
-// noinspection JSUnusedLocalSymbols
+export const handle = sequence(auth, setSessionId);
+
 /** @type {import('@sveltejs/kit').Handle} */
-export async function handle({event, resolve}: HandleParameter): Promise<Response> {
+async function auth({event, resolve}: HandleParameter): Promise<Response> {
   let result: GetUserReturn | undefined;
   let newRefresh: njwt.Jwt | undefined;
 
   const cookie = event.request.headers.get('cookie') ?? '';
-  const {comment_folding, button_align, list_type} = (new CookieParser(cookie!)).get();
+  const {
+    token,
+    refresh,
+    comment_folding,
+    button_align,
+    list_type,
+  } = CookieParser.parse(cookie);
+
   event.locals.ui = {
     commentFolding: (comment_folding ?? 'false') === 'true',
     buttonAlign: button_align === 'left' ? 'left' : 'right',
     listType: (list_type ?? 'list') === 'list' ? 'list' : 'gallery',
   };
   try {
-    const cookie = event.request.headers.get('cookie');
-    if (!_.isEmpty(cookie)) {
-      const {token, refresh} = (new CookieParser(cookie!)).get();
-
+    if (!_.isEmpty(token) || !_.isEmpty(refresh)) {
       // token이 유효할 때 혹은 token이 만료 되었지만 리프레시 토큰이 유효할 때
       // 유저 값을 반환합니다.
       result = await getUser(token, refresh);
-      // extends refresh
       try {
         if (refresh) {
           const r = njwt.verify(refresh, key);
           if (r) {
-            // console.log(r)
             const exp = r.body.toJSON().exp as number * 1000;
             const now = Date.now();
-            // console.log('limit:', exp - 18000000, ' now: ', now, exp - 18000000 <= now, (exp - 18000000 - now) / 1000 / 60 / 60);
             if (exp - 18000000 <= now) {
               const body = r.body.toJSON();
               const user = await User.findByUniqueId(body.uid as string);
@@ -56,8 +64,8 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
         //
       }
     }
-  } catch (e) {
-    // console.error('[hooks]', event.request.headers.get('cookie'), e);
+  } catch {
+    //
   }
 
   if (result?.newToken) {
@@ -90,6 +98,27 @@ export async function handle({event, resolve}: HandleParameter): Promise<Respons
     console.trace('error');
   }
 
+  return response;
+}
+
+const newUuid = () => uuid('https://ru.hn', uuid.URL);
+const validate = (uuid: string) => validateUuid(uuid) && versionUuid(uuid) === 5;
+
+/** @type {import('@sveltejs/kit').Handle} */
+async function setSessionId({event, resolve}: HandleParameter): Promise<Response> {
+  const cookie = event.request.headers.get('cookie') ?? '';
+  const {session_id,} = CookieParser.parse(cookie);
+  event.locals.sessionId = session_id ?? newUuid();
+  const response = await resolve(event);
+  // console.log(event.locals.sessionId, !validateUuid(event.locals.sessionId))
+  const isSessionUuid = validate(event.locals.sessionId);
+  if (!session_id || !isSessionUuid) {
+    if (!isSessionUuid) {
+      event.locals.sessionId = newUuid();
+    }
+    const expire = dayjs().add(999, 'y').toDate().toUTCString();
+    response.headers.append('set-cookie', `session_id=${event.locals.sessionId}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
+  }
   return response;
 }
 

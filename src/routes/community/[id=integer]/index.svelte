@@ -5,7 +5,7 @@
 
   function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
     const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-    const regx = autoTag.exec(articleItem.title.trim());
+    const regx = autoTag.exec(articleItem.title?.trim() ?? '');
     // console.log(item.title, regx);
     if (regx) {
       articleItem.autoTag = regx[1];
@@ -34,16 +34,9 @@
     const id = params.id;
     const bestR = await fetch(`${url.pathname}/api/best`);
     const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
-    /*
-    const authors = list.map(a => a.author).join(',');
-    const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
-    const users = {};
-    if (authorsInfoRequests.ok) {
-      const authorInfos = await authorsInfoRequests.json() as {users: IUser[]};
-      for (const user of authorInfos.users) {
-        users[user._key] = user;
-      }
-    }*/
+
+    const annoR = await fetch(`${url.pathname}/api/announcements`);
+    const {announcements} = await annoR.json() as { announcements: ArticleItemDto[], };
 
     return {
       status: 200,
@@ -56,6 +49,7 @@
         currentPage: parseInt(page),
         maxPage,
         bests,
+        announcements,
         ui: session.ui,
       },
     };
@@ -69,17 +63,18 @@
   import List from 'svelte-material-icons/ViewList.svelte';
   import Gallery from 'svelte-material-icons/ViewGallery.svelte';
 
-  import {afterNavigate} from '$app/navigation';
+  import {afterNavigate, goto} from '$app/navigation';
   import {session, page} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
-  import {onDestroy, afterUpdate, tick} from 'svelte';
+  import {onDestroy} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
   import type {UI} from '../../../app';
 
   export let articles: ArticleItemDto[];
+  export let announcements: ArticleItemDto[];
   export let bests: ArticleItemDto[];
   export let params;
   export let id: string = params.id;
@@ -88,6 +83,7 @@
   export let maxPage: number;
   export let ui: UI;
   let listType = ui?.listType ?? 'list';
+  let showBest = isEmpty(announcements);
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
@@ -206,6 +202,18 @@
     }
   });
 
+  function forceShowBest() {
+    showBest = true;
+  }
+
+  function forceShowAnnouncements() {
+    if (!isEmpty(announcements)) {
+      showBest = false;
+    } else {
+      goto('/community/search?q=' + encodeURIComponent('#공지'));
+    }
+  }
+
   // console.log(id, params);
 </script>
 
@@ -283,30 +291,34 @@
   {#if !isEmpty(bests)}
     <div class="rounded-md shadow-md px-4 py-2 bg-zinc-50 dark:bg-gray-500/50">
       <div class="flex justify-between text-sm mb-2">
-        <span class="text-zinc-600 dark:text-zinc-200">베스트 목록</span>
+        <span class:flex-row-reverse={!isEmpty(announcements)}
+              class="text-zinc-600 dark:text-zinc-200 flex flex-row gap-2 items-center">
+          <button on:click={forceShowBest}
+                  class:text-zinc-400={!showBest}
+                  class="{showBest ? 'bg-zinc-400/25' : ''} hover:bg-zinc-300/25 px-1 rounded-md transition-all">
+            베스트 목록
+          </button>
+          <span class="text-xs">/</span>
+          <button on:click={forceShowAnnouncements}
+                  class:text-red-500={!showBest}
+                  class:dark:text-red-400={!showBest}
+                  class="{!showBest ? 'bg-zinc-400/25' : ''} {!isEmpty(announcements) ? 'hover:bg-zinc-300/25' : '' } px-1 rounded-md transition-all">
+            공지사항
+            {#if isEmpty(announcements)}
+              (모두 읽음)
+            {/if}
+          </button>
+        </span>
         <a class="underline decoration-sky-400" href="/community/{params.id}/best">전체 보기</a>
       </div>
-      <div id="__best-list" on:scroll={checkPage}
+
+      <div id="__top-list" on:scroll={checkPage}
            class="overflow-x-scroll snap-mandatory snap-x relative inline-block flex flex-row gap-4">
 
         <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink truncate min-w-0">
           <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
-            {#each bests.slice(0, 5) as best}
-              <li>
-                <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
-                  <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
-                    <p class="truncate text-sm">{best.title}</p>
-                  </div>
-                </a>
-              </li>
-            {/each}
-          </ol>
-        </div>
-
-        {#if bests.length > 5}
-          <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink truncate">
-            <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
-              {#each bests.slice(5) as best}
+            {#if showBest}
+              {#each bests.slice(0, 5) as best}
                 <li>
                   <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
                     <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
@@ -315,11 +327,50 @@
                   </a>
                 </li>
               {/each}
+            {:else}
+              {#each announcements.slice(0, 5) as anno}
+                <li>
+                  <a class="block mt-1 px-1" href="/community/{params.id}/{anno._key}?page={currentPage}">
+                    <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                      <p class="truncate text-sm">{anno.title}</p>
+                    </div>
+                  </a>
+                </li>
+              {/each}
+            {/if}
+          </ol>
+        </div>
+
+        {#if bests.length > 5 || announcements.length > 5}
+          <div class="snap-center w-full flex-grow flex-shrink-0 sm:flex-shrink truncate">
+            <ol class="w-full inline-block divide-y divide-zinc-200 dark:divide-zinc-400 space-y-1">
+              {#if showBest}
+                {#each bests.slice(5) as best}
+                  <li>
+                    <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                      <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                        <p class="truncate text-sm">{best.title}</p>
+                      </div>
+                    </a>
+                  </li>
+                {/each}
+              {:else}
+                {#each announcements.slice(5) as anno}
+                  <li>
+                    <a class="block mt-1 px-1" href="/community/{params.id}/{anno._key}?page={currentPage}">
+                      <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
+                        <p class="truncate text-sm">{anno.title}</p>
+                      </div>
+                    </a>
+                  </li>
+                {/each}
+              {/if}
             </ol>
           </div>
         {/if}
 
       </div>
+
       <div class="block sm:hidden flex justify-center text-zinc-300 dark:text-zinc-400 space-x-1">
         <span class="transition-colors" class:text-zinc-500={bestScrollPage <= 1}
               class:dark:text-zinc-100={bestScrollPage <= 1}>
@@ -388,7 +439,7 @@
     margin-bottom: env(safe-area-inset-bottom);
   }
 
-  #__best-list {
+  #__top-list {
     &::-webkit-scrollbar {
       display: none;
     }

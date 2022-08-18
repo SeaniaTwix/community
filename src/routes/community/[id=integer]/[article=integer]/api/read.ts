@@ -12,12 +12,13 @@ import {load} from 'cheerio';
 import type {Element} from 'cheerio/lib'
 import * as process from 'process';
 import {extname} from 'node:path';
+import {AddViewCountRequest} from './viewcount';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
 
   try {
-    const uid = locals?.user?.uid;
+    const uid: string | undefined = locals?.user?.uid;
     const force = uid ? locals.user.rank > EUserRanks.User : false;
     const article = await read.get(uid, force);
 
@@ -47,6 +48,14 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
     if (reader) {
       await reader.readAllNotifications(params.article);
     }
+
+    const view = new AddViewCountRequest(params.article);
+
+    await view.read(locals.user ? locals.user.uid : locals.sessionId);
+
+    const articleInstance = new Article(params.article);
+
+    article.views = await articleInstance.getViewCount();
 
     return {
       status: 200,

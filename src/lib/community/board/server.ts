@@ -34,9 +34,30 @@ export class Board {
     return await cursor.next();
   }
 
+  async getAnnouncements(page: number, reader: string) {
+    if (page <= 0) {
+      throw new Error('page must be gt 0')
+    }
+    const cursor = await db.query(aql`
+      let reader = ${reader}
+      for article in articles
+        sort article.createdAt desc
+        let savedTags = (
+          for savedTag in tags
+            filter savedTag.target == article._key && savedTag.pub
+              return savedTag.name)
+        let revs = (
+          for view in views
+            filter view.reader == ${reader} && view.article._key == article._key
+              return view.article._rev)
+        filter "공지" in savedTags && (is_string(reader) ? article._rev not in revs : true)
+          return keep(article, "_key", "_rev", "title", "createdAt", "board")`);
+    return await cursor.all();
+  }
+
   async getBests(page: number, reader: string | null, max = 5, minLikes = 3) {
     if (page <= 0) {
-      throw new Error('page must be lt 0')
+      throw new Error('page must be gt 0');
     }
     const cursor = await db.query(aql`
       for article in articles
@@ -137,7 +158,11 @@ export class Board {
           filter article.author not in blockedUsers
             limit ${(page - 1) * amount}, ${amount}
             let authorData = keep(first(for u in users filter u._key == article.author return u), "_key", "id", "avatar", "rank")
-            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, convertedImages: convertedImages, author: authorData})`)
+            let viewCount = length(
+              for view in views
+                filter view.article._key == article._key
+                  return view)
+            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, convertedImages: convertedImages, author: authorData, views: viewCount})`)
 
     return await cursor.all();
   }

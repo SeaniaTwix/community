@@ -500,7 +500,7 @@
     window.addEventListener('unload', clearSubscribes);
 
     try {
-      ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
+      // ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
 
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);

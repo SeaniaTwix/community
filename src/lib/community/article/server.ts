@@ -12,6 +12,7 @@ import rehypeStringify from 'rehype-stringify';
 import {load} from 'cheerio'
 import type {Element as CheerioElement} from 'cheerio/lib'
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
+// import {validate as validateUuid, version as versionUuid} from 'uuid';
 
 export class Article {
 
@@ -115,12 +116,47 @@ export class Article {
     return await cursor.all();
   }
 
-  addViewCount() {
+  async isAlreadyRead(reader: string) {
+    const cursor = await db.query(aql`
+      for view in views
+        filter view.article._key == ${this.id} && view.reader == ${reader}
+          return view`);
+    return cursor.hasNext;
+  }
+
+  /**
+   *
+   * @param reader user의 _key 혹은 uuid 값입니다.
+   */
+  async addViewCount(reader: string) {
+    const key = `articles/${this.id}`;
     return db.query(aql`
-      for article in articles
-        filter article._key == ${this.id}
-        let v = article.views != null ? article.views + 1 : 1
-        update article with { views: v } in articles`);
+      let article = document(${key})
+      insert {
+        reader: ${reader},
+        article: keep(article, "_key", "_rev", "_id"),
+        createdAt: date_now()
+      } into views`);
+  }
+
+  async updateViewInfo(reader: string) {
+    const key = `articles/${this.id}`;
+    return db.query(aql`
+      let article = document(${key})
+      for view in views
+        filter view.article._key == article._key && view.reader == ${reader}
+          update view with { article: keep(article, "_key", "_rev", "_id") } in views`);
+  }
+
+  async getViewCount(): Promise<number> {
+    const key = `articles/${this.id}`;
+    const cursor = await db.query(aql`
+      let article = document(${key})
+      return length(
+        for view in views
+          filter view.article._key == article._key
+            return view)`);
+    return await cursor.next();
   }
 
   /**
