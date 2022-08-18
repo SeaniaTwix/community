@@ -63,15 +63,39 @@
   :global {
     article {
       h1 {
-        font-size: xx-large;
+        font-size: 2rem;
+        margin-block-start: 0.67em;
+        margin-block-end: 0.67em;
       }
 
       h2 {
-        font-size: larger;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-block-start: 0.83em;
+        margin-block-end: 0.83em;
       }
 
       h3 {
-        font-size: large;
+        font-size: 1.17em;
+        margin-block-start: 1em;
+        margin-block-end: 1em;
+      }
+
+      h4 {
+        margin-block-start: 1.33em;
+        margin-block-end: 1.33em;
+      }
+
+      h5 {
+        font-size: 0.83em;
+        margin-block-start: 1.67em;
+        margin-block-end: 1.67em;
+      }
+
+      h6 {
+        font-size: 0.67em;
+        margin-block-start: 2.33em;
+        margin-block-end: 2.33em;
       }
 
       b, strong {
@@ -91,6 +115,16 @@
         &:hover {
 
         }
+      }
+
+      ol {
+        list-style-type: decimal;
+        padding-inline-start: 40px;
+      }
+
+      ul {
+        list-style-type: disc;
+        padding-inline-start: 40px;
       }
 
       // maybe youtube only...?
