@@ -1,6 +1,9 @@
 <script lang="ts">
   import Back from 'svelte-material-icons/ArrowLeftBold.svelte'
   import {page} from '$app/stores';
+  import ky from 'ky-universal';
+
+  let cacheResult: 'ok' | 'failed' | undefined;
 
   let minLikeForBest = 1;
 
@@ -10,6 +13,15 @@
 
   function truncateBoard() {
 
+  }
+
+  async function cacheAllSearch() {
+    try {
+      await ky.post('/community/api/cache-all')
+      cacheResult = 'ok';
+    } catch {
+      cacheResult = 'failed';
+    }
   }
 </script>
 
@@ -29,6 +41,16 @@
   </button>
   <button on:click={truncateBoard} class="text-white bg-red-600 dark:bg-red-700 rounded-md w-full py-2 block text-center shadow-md">
     이 게시판의 게시글 전부 (영구적) 삭제
+  </button>
+
+  <button on:click={cacheAllSearch} class="text-white bg-sky-400 dark:bg-sky-700 rounded-md w-full py-2 block text-center shadow-md">
+    {#if cacheResult === undefined}
+      강제로 검색 엔진에 캐시
+    {:else if cacheResult === 'ok'}
+      캐시 성공
+    {:else}
+      캐시 실패
+    {/if}
   </button>
 
   <div class="space-y-2">
