@@ -13,6 +13,11 @@ p {
   margin: 0.25rem 0 !important;
 }
 
+a {
+  color: rgb(56, 189, 248);
+  text-decoration-line: none;
+}
+
 * {
   font-family: BinggraeMelona,sans-serif;
 }
