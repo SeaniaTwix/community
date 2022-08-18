@@ -33,11 +33,11 @@ const reserved = {
 export async function getTagErrors(id: string, article: string | null, locals: App.Locals, tagList: string[]): Promise<RequestHandlerOutput | undefined> {
   const validatorDefault = '[a-zA-Zㄱ-ㅎ가-힣@:-]+$';
   const validatorSub = '[a-zA-Zㄱ-ㅎ가-힣@-]+$';
-  const tagNameValidator = new RegExp(`^(${validatorDefault})`, 'g');
-  const serialValidator = new RegExp(`^연재:(${validatorSub})`);
-  const preventValidator = new RegExp(`^방지:(${validatorSub})`);
 
   for (const name of tagList) {
+    const tagNameValidator = new RegExp(`^(${validatorDefault})`, 'g');
+    const serialValidator = new RegExp(`^연재:(${validatorSub})`);
+    const preventValidator = new RegExp(`^방지:(${validatorSub})`);
     /**
      * 여기 예약 태그들은 한 번에 등록할 수 없습니다.
      * 추천과 비추천을 한 번에 누르지 못하게 하기 위함입니다.
@@ -55,7 +55,6 @@ export async function getTagErrors(id: string, article: string | null, locals: A
             },
           };
         }
-
 
         if (name === '_like' || name === '_dislike') {
           if (!addTag || await addTag.isVoteAlready(locals.user.uid)) {
@@ -101,7 +100,6 @@ export async function getTagErrors(id: string, article: string | null, locals: A
     if (name === '공지' && (!locals.user || locals.user.rank <= EUserRanks.User)) {
       return unacceptableTagNameError(name, 'you have no permission');
     }
-
     if (!tagNameValidator.test(name)) {
       // console.log('test default:', name);
       return unacceptableTagNameError(name);
@@ -111,7 +109,7 @@ export async function getTagErrors(id: string, article: string | null, locals: A
     if (name.startsWith('연재:')) {
       // console.log('test serials:', name);
       if (!serialTagCheck || !tagNameValidator.test(serialTagCheck[1])) {
-        return unacceptableTagNameError(name);
+        return unacceptableTagNameError(name, `${name} is not validate series name`);
       }
       // return unacceptableSerialNameError;
     }
@@ -258,7 +256,7 @@ const succeed: RequestHandlerOutput = {
 };
 
 const unacceptableTagNameError: (tag: string, reason?: string) => RequestHandlerOutput = (tag, reason) => {
-  console.trace(tag);
+  console.trace(tag, reason);
   return {
     status: HttpStatus.NOT_ACCEPTABLE,
     body: {
