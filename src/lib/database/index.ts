@@ -22,6 +22,7 @@ export default class DefaultDatabase {
     'notifications',
     'favorites',
     'images',
+    'streams',
     'views',
   ];
   private static readonly requireEdgeCollections = [

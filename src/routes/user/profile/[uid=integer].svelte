@@ -4,4 +4,8 @@
    */
 </script>
 
-<h1>유저 프로필</h1>
+<div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto space-y-4">
+  <header class="min-h-[20rem] bg-gray-500">
+
+  </header>
+</div>
