@@ -40,16 +40,31 @@
   export let q = '';
 </script>
 
+<svelte:head>
+  <title>루헨 - {q} 검색</title>
+</svelte:head>
+
 <div class="w-11/12 md:w-4/5 lg:w-3/4 mx-auto space-y-4 transition-transform __mobile-bottom-fix mt-2">
   <ul class="space-y-4">
     {#if !isEmpty(result)}
       {#each result as hit}
         <li class="group">
           <a sveltekit:prefetch href="/community/{hit.board}/{hit.id}">
-            <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1 flex flex-row justify-between">
-              <div class="flex-grow w-full">
-                <h2 class="text-xl group-hover:text-sky-400">{hit.title}</h2>
-                <p>{hit.content}</p>
+            <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1 flex flex-col">
+
+              <div class="flex flex-row justify-between items-center">
+                <div class="flex-grow w-full">
+                  <h2 class="text-xl group-hover:text-sky-400">{hit.title}</h2>
+                </div>
+                <div class="text-right flex flex-col justify-between">
+                  <p class="w-max">작성자: {hit?.author?.name}</p>
+                  <time class="pb-2 hidden sm:block w-max" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
+                </div>
+              </div>
+
+
+              <div>
+                <p>{hit.content.slice(0, 450)}{#if hit.content.length > 450}...{/if}</p>
 
                 {#if !isEmpty(hit.tags)}
                   <div class="py-2">
@@ -65,10 +80,7 @@
                   </div>
                 {/if}
               </div>
-              <div class="text-right flex flex-col justify-between">
-                <p>작성자: {hit.author.name}</p>
-                <time class="pb-2 invisible sm:visible w-max" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
-              </div>
+
             </div>
           </a>
 
