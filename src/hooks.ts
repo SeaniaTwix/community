@@ -19,17 +19,12 @@ import {
 global.atob = atob;
 global.btoa = btoa;
 
-export const handle = sequence(auth, setSessionId);
+export const handle = sequence(ui, images, auth, setSessionId);
 
 /** @type {import('@sveltejs/kit').Handle} */
-async function auth({event, resolve}: HandleParameter): Promise<Response> {
-  let result: GetUserReturn | undefined;
-  let newRefresh: njwt.Jwt | undefined;
-
+async function ui({event, resolve}: HandleParameter): Promise<Response> {
   const cookie = event.request.headers.get('cookie') ?? '';
   const {
-    token,
-    refresh,
     comment_folding,
     button_align,
     list_type,
@@ -40,6 +35,72 @@ async function auth({event, resolve}: HandleParameter): Promise<Response> {
     buttonAlign: button_align === 'left' ? 'left' : 'right',
     listType: (list_type ?? 'list') === 'list' ? 'list' : 'gallery',
   };
+
+  if (typeof event.locals.ui !== 'object') {
+    event.locals.ui = {
+      buttonAlign: 'right',
+      commentFolding: false,
+      listType: 'list',
+    };
+  }
+
+  const expire = dayjs().add(1000, 'year').toDate();
+  const response = await resolve(event);
+
+  if (!comment_folding) {
+    response.headers.append('set-cookie', `comment_folding=false; Path=/; Expires=${expire};`);
+  }
+
+  if (!button_align) {
+    response.headers.append('set-cookie', `button_align=right; Path=/; Expires=${expire};`);
+  }
+
+  if (!list_type) {
+    response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
+  }
+
+  return response;
+}
+
+/** @type {import('@sveltejs/kit').Handle} */
+async function images({event, resolve}: HandleParameter): Promise<Response> {
+
+  const cookie = event.request.headers.get('cookie') ?? '';
+  const {image_order} = CookieParser.parse(cookie);
+
+  const expire = dayjs().add(1000, 'year').toDate();
+  const response = await resolve(event);
+  const defaultOrder = encodeURIComponent('jxl,avif,webp,png');
+
+  if (image_order) {
+    try {
+      const imageOrder = decodeURIComponent(image_order)
+        .split(',')
+        .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext))
+        .join(encodeURIComponent(','));
+
+      response.headers.append('set-cookie', `image_order=${imageOrder}; Path=/; Expires=${expire};`);
+    } catch {
+      response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+    }
+  } else {
+    response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+  }
+
+  return response;
+}
+
+/** @type {import('@sveltejs/kit').Handle} */
+async function auth({event, resolve}: HandleParameter): Promise<Response> {
+  let result: GetUserReturn | undefined;
+  let newRefresh: njwt.Jwt | undefined;
+
+  const cookie = event.request.headers.get('cookie') ?? '';
+  const {
+    token,
+    refresh,
+  } = CookieParser.parse(cookie);
+
   try {
     if (!_.isEmpty(token) || !_.isEmpty(refresh)) {
       // token이 유효할 때 혹은 token이 만료 되었지만 리프레시 토큰이 유효할 때
@@ -116,7 +177,7 @@ async function setSessionId({event, resolve}: HandleParameter): Promise<Response
     if (!isSessionUuid) {
       event.locals.sessionId = newUuid();
     }
-    const expire = dayjs().add(999, 'y').toDate().toUTCString();
+    const expire = dayjs().add(999, 'year').toDate().toUTCString();
     response.headers.append('set-cookie', `session_id=${event.locals.sessionId}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
   }
   return response;
@@ -186,14 +247,14 @@ export function getSession(event: RequestEvent) {
   };
 
   const cookie = event.request.headers.get('cookie') ?? '';
-  const parsed = CookieParser.parse(cookie);
+  const {image_order} = CookieParser.parse(cookie);
 
-  if (parsed['image_order']) {
+  if (image_order) {
     try {
-      const imageOrder = decodeURIComponent(parsed['image_order'])
+      const imageOrder = decodeURIComponent(image_order)
         .split(',')
         .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext)) as AllowedExtensions[];
-      console.log(parsed['image_order'], imageOrder);
+      console.log(image_order, imageOrder);
       session.settings = {
         imageOrder,
       }
