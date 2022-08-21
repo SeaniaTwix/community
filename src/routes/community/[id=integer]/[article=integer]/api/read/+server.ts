@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -12,7 +13,7 @@ import {load} from 'cheerio';
 import type {Element} from 'cheerio/lib'
 import * as process from 'process';
 import {extname} from 'node:path';
-import {AddViewCountRequest} from './viewcount';
+import {AddViewCountRequest} from '../viewcount';
 
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const read = new ReadArticleRequest(params.id, params.article);
@@ -23,19 +24,16 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
     const article = await read.get(uid, force);
 
     if (!article) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-      }
+      return new Response(undefined, { status: HttpStatus.NOT_FOUND })
     }
 
     if (article && Object.keys(article.tags ?? {}).includes('성인')) {
       if (locals?.user?.adult !== true) {
-        return {
-          status: HttpStatus.NOT_ACCEPTABLE,
-          body: {
-            reason: 'you are not adult account',
-          },
-        };
+        return json({
+  reason: 'you are not adult account',
+}, {
+          status: HttpStatus.NOT_ACCEPTABLE
+        });
       }
     }
 
@@ -57,6 +55,11 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
 
     article.views = await articleInstance.getViewCount();
 
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+    // Suggestion (check for correctness before using):
+    // return new Response({
+  article,
+} as any);
     return {
       status: 200,
       body: {
@@ -64,12 +67,11 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
       } as any,
     };
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'article invalid:' + e.toString(),
-      },
-    };
+    return json({
+  reason: 'article invalid:' + e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 }
 

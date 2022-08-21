@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
@@ -8,7 +9,7 @@ import {load as loadHtml} from 'cheerio';
 import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import {isEmpty} from 'lodash-es';
-import {getTagErrors} from './tag/add';
+import {getTagErrors} from '../tag/add';
 import {create} from 'node:domain';
 
 /**
@@ -16,12 +17,11 @@ import {create} from 'node:domain';
  */
 export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json$1({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const {id, article} = params;
@@ -29,38 +29,34 @@ export async function GET({params, locals}: RequestEvent): Promise<RequestHandle
 
   try {
     if (!await edit.exists) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        body: {
-          reason: 'article not exists',
-        },
-      };
+      return json$1({
+  reason: 'article not exists',
+}, {
+        status: HttpStatus.NOT_FOUND
+      });
     }
 
-    return {
-      status: HttpStatus.OK,
-      body: {
-        edit: await edit.getEditable(locals.user.uid) as any,
-      },
-    };
+    return json$1({
+  edit: await edit.getEditable(locals.user.uid) as any,
+}, {
+      status: HttpStatus.OK
+    });
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 }
 
 export async function POST({params, locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json$1({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const {id, article} = params;
@@ -68,35 +64,33 @@ export async function POST({params, locals, request}: RequestEvent): Promise<Req
 
   try {
     if (!await edit.exists) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        body: {
-          reason: 'article not exists',
-        },
-      };
+      return json$1({
+  reason: 'article not exists',
+}, {
+        status: HttpStatus.NOT_FOUND
+      });
     }
 
     const data = new EditDto(await request.json());
 
     if (isEmpty(data.title)) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'title is too short',
-        }
-      }
+      return json$1({
+  reason: 'title is too short',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      })
     } else if (data.title!.length > 48) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'title is too long',
-        }
-      }
+      return json$1({
+  reason: 'title is too long',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      })
     }
 
     const tagError = await getTagErrors(id, article, locals, data.tags);
 
     if (tagError) {
+      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
       return tagError;
     }
 
@@ -106,17 +100,14 @@ export async function POST({params, locals, request}: RequestEvent): Promise<Req
       .then()
       .catch()
 
-    return {
-      status: HttpStatus.CREATED,
-    };
+    return new Response(undefined, { status: HttpStatus.CREATED });
 
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 }
 

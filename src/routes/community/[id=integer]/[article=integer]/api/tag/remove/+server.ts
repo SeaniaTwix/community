@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
@@ -6,12 +7,11 @@ import {Pusher} from '$lib/pusher/server';
 
 export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const {id, article} = params;
@@ -19,6 +19,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   const names = url.searchParams.get('name');
 
   if (!names || isEmpty(names)) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidTagNameError;
   }
 
@@ -29,12 +30,11 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   try {
     await remover.removeAll(locals.user.uid);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString()
-      }
-    }
+    return json({
+  reason: e.toString()
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    })
   }
 
   const uniqTagList: string[] = uniq(tagList);
@@ -44,9 +44,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     type: 'remove',
   });
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 const invalidTagNameError: RequestHandlerOutput = {

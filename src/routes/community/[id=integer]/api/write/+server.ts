@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import _, {isEmpty} from 'lodash-es';
 import HttpStatus from 'http-status-codes';
@@ -14,13 +15,11 @@ import {client} from '$lib/database/search';
 import {striptags} from 'striptags';
 import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
-import {getTagErrors} from '../[article=integer]/api/tag/add';
+import {getTagErrors} from '../../[article=integer]/api/tag/add';
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   const {id} = params;
@@ -28,25 +27,20 @@ export async function GET({params, locals: {user}}: RequestEvent): Promise<Reque
   const board = new Board(id);
 
   if (!await board.exists) {
-    return {
-      status: HttpStatus.NOT_FOUND,
-    };
+    return new Response(undefined, { status: HttpStatus.NOT_FOUND });
   }
 
   const u = await User.findByUniqueId(user.uid);
 
   if (!u) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-    };
+    return new Response(undefined, { status: HttpStatus.BAD_GATEWAY });
   }
 
-  return {
-    status: HttpStatus.OK,
-    body: {
-      tags: await u.getUsersTags(),
-    },
-  };
+  return json$1({
+  tags: await u.getUsersTags(),
+}, {
+    status: HttpStatus.OK
+  });
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -56,42 +50,39 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
   const write = new WriteRequest(article);
 
   if (isEmpty(write.title)) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: 'title is too short',
-      },
-    };
+    return json$1({
+  reason: 'title is too short',
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    });
   } else if (write.title!.length > 48) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: 'title is too long',
-      },
-    };
+    return json$1({
+  reason: 'title is too long',
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    });
   }
 
   if (params.id !== write.boardId) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'board id invalid',
-      },
-    };
+    return json$1({
+  reason: 'board id invalid',
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   if (write.error) {
-    return {
-      status: HttpStatus.FORBIDDEN,
-      body: {
-        reason: write.error,
-      },
-    };
+    return json$1({
+  reason: write.error,
+}, {
+      status: HttpStatus.FORBIDDEN
+    });
   }
 
   const tagError = await getTagErrors(params.id, null, locals, write.tags);
 
   if (tagError) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return tagError;
   }
 
@@ -99,12 +90,11 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
   try {
     result = await write.saveToDB(locals.user.uid);
   } catch (e: any) {
-    return {
-      status: HttpStatus.FORBIDDEN,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.FORBIDDEN
+    });
   }
 
   try {
@@ -131,12 +121,11 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Req
     // it's ok
   }
 
-  return {
-    status: write.status,
-    body: {
-      id: write.id,
-    },
-  };
+  return json$1({
+  id: write.id,
+}, {
+    status: write.status
+  });
 }
 
 class WriteRequest {

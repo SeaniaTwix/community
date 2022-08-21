@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import db from '$lib/database/instance';
@@ -11,24 +12,21 @@ import {isEmpty} from 'lodash-es';
 export async function POST({request, url: {searchParams}}: RequestEvent): Promise<RequestHandlerOutput> {
   const {key, from, to} = await request.json() as IStoredEventPayload;
   if (key !== process.env.EICO_KEY) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   if (isEmpty(from) || isEmpty(to)) {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-      body: {
-        from,
-        to,
-      },
-    };
+    return json$1({
+  from,
+  to,
+}, {
+      status: HttpStatus.BAD_REQUEST
+    });
   }
 
   if (searchParams.get('failed') === 'yes') {
     // todo: request again
-    return {};
+    return new Response(undefined);
   }
 
   await db.query(aql`
@@ -39,9 +37,7 @@ export async function POST({request, url: {searchParams}}: RequestEvent): Promis
             return link) : []
         update image with {converted: push(converted, ${to}, true)} in images`);
 
-  return {
-    status: HttpStatus.CREATED,
-  };
+  return new Response(undefined, { status: HttpStatus.CREATED });
 }
 
 interface IStoredEventPayload {

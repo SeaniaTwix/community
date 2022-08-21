@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
@@ -6,19 +7,18 @@ import {User} from '$lib/auth/user/server';
 export async function GET({url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const code = url.searchParams.get('code');
   if (!code) {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-      body: {reason: 'code is required'},
-    };
+    return json({reason: 'code is required'}, {
+      status: HttpStatus.BAD_REQUEST
+    });
   }
 
   if (!locals.user) {
-    return {
+    return new Response(undefined, {
       status: HttpStatus.MOVED_TEMPORARILY,
       headers: {
         Locations: `/login&back=${encodeURIComponent(`/verify?code=${code}`)}`,
-      },
-    };
+      }
+    });
   }
 
   const {BBATON_CLIENT_ID, BBATON_SECRET_KEY} = process.env;
@@ -55,29 +55,29 @@ export async function GET({url, locals}: RequestEvent): Promise<RequestHandlerOu
       if (user && !await user.isSameAssignExists('bbaton', user_id)) {
         await user.assignAdult('bbaton', adult_flag === 'Y', user_id);
 
-        return {
+        return new Response(undefined, {
           status: HttpStatus.MOVED_TEMPORARILY,
           headers: {
             Location: '/verified?result=succeed',
-          },
-        };
+          }
+        });
       } else {
-        return {
+        return new Response(undefined, {
           status: HttpStatus.MOVED_TEMPORARILY,
           headers: {
             Location: '/verified?result=failed&reason=already_assigned',
-          },
-        };
+          }
+        });
       }
     }
   }
 
-  return {
+  return new Response(undefined, {
     status: HttpStatus.MOVED_TEMPORARILY,
     headers: {
       Location: '/verified?result=failed&reason=unknown',
-    },
-  };
+    }
+  });
 }
 
 interface IResponseBBaton {

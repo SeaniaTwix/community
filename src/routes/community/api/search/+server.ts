@@ -8,9 +8,7 @@ export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOu
   const q = url.searchParams.get('q') ?? '';
   console.log('q:', q);
   if (isEmpty(q)) {
-    return {
-      status: HttpStatus.NO_CONTENT,
-    };
+    return new Response(undefined, { status: HttpStatus.NO_CONTENT });
   }
 
   const {id} = params;
@@ -18,6 +16,11 @@ export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOu
 
     const search = new ArticleSearch(id, q);
 
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+    // Suggestion (check for correctness before using):
+    // return new Response({
+  result: await search.result(),
+} as any, { status: HttpStatus.OK });
     return {
       status: HttpStatus.OK,
       body: {
@@ -25,6 +28,11 @@ export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOu
       } as any,
     };
   } catch (e: any) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+    // Suggestion (check for correctness before using):
+    // return new Response({
+  reason: e.toString(),
+} as any, { status: HttpStatus.BAD_GATEWAY });
     return {
       status: HttpStatus.BAD_GATEWAY,
       body: {

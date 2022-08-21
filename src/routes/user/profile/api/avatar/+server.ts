@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {S3} from '$lib/file/s3';
@@ -10,14 +11,18 @@ import {nanoid} from 'nanoid';
 // get link
 export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json$1({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
+  throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+  // Suggestion (check for correctness before using):
+  // return new Response({
+  // ...S3.newAvatarUploadLink(locals.user.uid),
+} as any, { status: HttpStatus.CREATED });
   return {
     status: HttpStatus.CREATED,
     body: {
@@ -29,33 +34,30 @@ export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput>
 // save uploaded url
 export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json$1({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   try {
     const {link} = await request.json() as { link: string };
 
     if (isEmpty(link)) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'link is required',
-        },
-      };
+      return json$1({
+  reason: 'link is required',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      });
     }
 
     if (!(new RegExp(`^https://s3.ru.hn/avatar/${locals.user.uid}.`)).test(link)) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'avatar url seems to be invalid',
-        },
-      };
+      return json$1({
+  reason: 'avatar url seems to be invalid',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      });
     }
 
     await db.query(aql`
@@ -65,15 +67,12 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
 
     purge([link]).then().catch();
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  }
+  return new Response(undefined, { status: HttpStatus.ACCEPTED })
 }

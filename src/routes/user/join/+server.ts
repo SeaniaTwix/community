@@ -1,6 +1,7 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
-import {newLoginHeaders} from './login';
+import {newLoginHeaders} from '../login';
 import HttpStatus from 'http-status-codes';
 
 export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -9,32 +10,29 @@ export async function POST({request}: RequestEvent): Promise<RequestHandlerOutpu
   try {
     login = new RegisterRequest(await request.json());
   } catch (e: any) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    });
   }
 
   try {
     await login.register();
   } catch (error) {
-    return {
-      status: HttpStatus.CONFLICT,
-      body: {
-        reason: (<any>error).toString(),
-      },
-    };
+    return json$1({
+  reason: (<any>error).toString(),
+}, {
+      status: HttpStatus.CONFLICT
+    });
   }
 
   const {token, headers} = await newLoginHeaders(login.user);
 
-  return {
+  return json$1({token: token.compact(),}, {
     status: login.status,
-    headers,
-    body: {token: token.compact(),},
-  };
+    headers: headers
+  });
 }
 
 class RegisterRequest {

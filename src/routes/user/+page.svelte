@@ -1,7 +1,3 @@
-<script lang="ts" context="module">
-  // todo: check session
-
-</script>
 <script lang="ts">
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';

@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
@@ -11,29 +12,25 @@ export async function POST({request}: RequestEvent): Promise<RequestHandlerOutpu
   const login = new LoginRequest(await request.json() as LoginDto);
 
   if (!inRange(login.id.length, 3, 16)) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-    }
+    return new Response(undefined, { status: HttpStatus.NOT_ACCEPTABLE })
   }
 
   const user = new User(login.id);
 
   if (!await user.verify(login.password)) {
-    return {
-      status: HttpStatus.NOT_FOUND,
-      body: {
-        error: 'user not found',
-      },
-    };
+    return json$1({
+  error: 'user not found',
+}, {
+      status: HttpStatus.NOT_FOUND
+    });
   }
 
   const {token, headers} = await newLoginHeaders(user);
 
-  return {
+  return json$1({token: token.compact()}, {
     status: login.status,
-    headers,
-    body: {token: token.compact()},
-  };
+    headers: headers
+  });
 }
 
 export async function newLoginHeaders(user: User) {

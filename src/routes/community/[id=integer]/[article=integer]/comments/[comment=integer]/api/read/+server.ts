@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {Comment} from '$lib/community/comment/server';
 import HttpStatus from 'http-status-codes';
@@ -9,17 +10,14 @@ export async function GET({params, request, locals}: RequestEvent): Promise<Requ
   console.log(res);
 
   if (!await res.exists()) {
-    return {
-      status: HttpStatus.NOT_FOUND,
-    };
+    return new Response(undefined, { status: HttpStatus.NOT_FOUND });
   }
 
-  return {
-    status: HttpStatus.OK,
-    body: {
-      content: await res.content(),
-    },
-  };
+  return json({
+  content: await res.content(),
+}, {
+    status: HttpStatus.OK
+  });
 }
 
 class CommentSpecificRequest {

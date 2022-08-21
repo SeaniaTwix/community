@@ -21,9 +21,7 @@ export async function PUT(): Promise<RequestHandlerOutput> {
 
   await viewCount.add(user ? user.uid : sessionId); */
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  }
+  return new Response(undefined, { status: HttpStatus.ACCEPTED })
 }
 
 export class AddViewCountRequest {

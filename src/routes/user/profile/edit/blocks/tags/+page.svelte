@@ -1,28 +1,32 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({fetch, session}: LoadEvent): Promise<LoadOutput> {
-    if (!session) {
-      return {
-        status: HttpStatus.MOVED_TEMPORARILY,
-        redirect: '/login',
-      };
-    }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
 
-    const requestTags = await fetch('/user/profile/edit/blocks/api/tags');
-    const {blocked} = await requestTags.json();
+  // export async function load({fetch, session}: LoadEvent): Promise<LoadOutput> {
+  //   if (!session) {
+  //     return {
+  //       status: HttpStatus.MOVED_TEMPORARILY,
+  //       redirect: '/login',
+  //     };
+  //   }
 
-    return {
-      status: HttpStatus.OK,
-      props: {
-        blocked,
-      },
-    };
+  //   const requestTags = await fetch('/user/profile/edit/blocks/api/tags');
+  //   const {blocked} = await requestTags.json();
 
-  }
+  //   return {
+  //     status: HttpStatus.OK,
+  //     props: {
+  //       blocked,
+  //     },
+  //   };
+
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import ky from 'ky-universal';
   import {isEmpty} from 'lodash-es';
   import Delete from 'svelte-material-icons/Close.svelte';

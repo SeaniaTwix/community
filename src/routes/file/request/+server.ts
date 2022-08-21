@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {nanoid} from 'nanoid';
@@ -6,26 +7,32 @@ import {S3} from '$lib/file/s3';
 export async function POST({locals, url}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type');
   if (!type) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'type is require',
-      },
-    };
+    return json({
+  reason: 'type is require',
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const randomId = nanoid(32);
   const prefix = `uu/${locals.user.uid}/${randomId}/`; // .${type.split('/')[1]}`;
 
+  throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+  // Suggestion (check for correctness before using):
+  // return new Response({
+  // // uploadUrl,
+  // bucket: process.env.BUCKET_NAME,
+  // prefix,
+  // presigned: S3.newUploadLink(prefix, type),
+} as any, { status: HttpStatus.CREATED });
   return {
     status: HttpStatus.CREATED,
     body: {

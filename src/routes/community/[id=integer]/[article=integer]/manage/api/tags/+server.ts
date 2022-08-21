@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {EUserRanks} from '$lib/types/user-ranks';
@@ -11,35 +12,33 @@ const noPermissionError: RequestHandlerOutput = {
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!user || user.rank <= EUserRanks.User) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return noPermissionError;
   }
 
   const manage = new TagManageRequest(params.id, params.article);
 
   if (!await manage.exists()) {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-      body: {
-        reason: 'article not exists',
-      },
-    };
+    return json({
+  reason: 'article not exists',
+}, {
+      status: HttpStatus.BAD_REQUEST
+    });
   }
 
   try {
-    return {
-      status: HttpStatus.OK,
-      body: {
-        tags: await manage.getAllTags(),
-        author: await manage.getArticleAuthor(),
-      },
-    };
+    return json({
+  tags: await manage.getAllTags(),
+  author: await manage.getArticleAuthor(),
+}, {
+      status: HttpStatus.OK
+    });
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 }
 

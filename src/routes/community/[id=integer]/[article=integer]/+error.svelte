@@ -1,20 +1,22 @@
-<script lang="ts" context="module">/** @type {import('@sveltejs/kit').Load} */
-  import HttpStatus from 'http-status-codes';
+<script lang="ts" context="module">
+  throw new Error("@migration task: Replace error load function (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3293209)");
+/** @type {import('@sveltejs/kit').Load} */
+  // import HttpStatus from 'http-status-codes';
 
-  export function load({ error, status, session }) {
-    const isNotFound = status === HttpStatus.NOT_FOUND;
-    const isNoAdult = error.message === 'you are not adult account';
-    return {
-      props: {
-        session,
-        title: `${status}: ${error.message}`,
-        errors: {
-          isNotFound,
-          isNoAdult,
-        }
-      }
-    };
-  }
+  // export function load({ error, status, session }) {
+  //   const isNotFound = status === HttpStatus.NOT_FOUND;
+  //   const isNoAdult = error.message === 'you are not adult account';
+  //   return {
+  //     props: {
+  //       session,
+  //       title: `${status}: ${error.message}`,
+  //       errors: {
+  //         isNotFound,
+  //         isNoAdult,
+  //       }
+  //     }
+  //   };
+  // }
 </script>
 <script lang="ts">
   import {page} from '$app/stores';

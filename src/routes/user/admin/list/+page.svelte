@@ -1,19 +1,23 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({fetch}: LoadEvent): Promise<LoadOutput> {
-    const res = await fetch('/user/admin/api/list');
-    const {users} = await res.json();
-    return {
-      status: HttpStatus.OK,
-      props: {
-        users,
-      },
-    };
-  }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+
+  // export async function load({fetch}: LoadEvent): Promise<LoadOutput> {
+  //   const res = await fetch('/user/admin/api/list');
+  //   const {users} = await res.json();
+  //   return {
+  //     status: HttpStatus.OK,
+  //     props: {
+  //       users,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import type {IUser} from '$lib/types/user';
   import Profile from 'svelte-material-icons/AccountDetails.svelte';
   import Ban from 'svelte-material-icons/Handcuffs.svelte'

@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {EUserRanks} from '$lib/types/user-ranks';
@@ -5,12 +6,11 @@ import {Article} from '$lib/community/article/server';
 
 export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const {article} = params;
@@ -22,31 +22,27 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   const isAuthor = await remover.isAuthor(locals.user.uid);
   const isManager = locals.user.rank >= EUserRanks.Manager;
   if (!isExists || (!isAuthor && !isManager)) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        notExists: !isExists,
-        notAuthor: !isAuthor,
-        notManager: !isManager,
-      }
-    };
+    return json({
+  notExists: !isExists,
+  notAuthor: !isAuthor,
+  notManager: !isManager,
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   try {
     // permdel only allowed by Admin
     await remover.delete(locals.user.rank > EUserRanks.Manager && permanent);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 class ArticleDeleteRequest {

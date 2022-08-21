@@ -1,61 +1,65 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
-    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-    const regx = autoTag.exec(articleItem.title?.trim() ?? '');
-    // console.log(item.title, regx);
-    if (regx) {
-      articleItem.autoTag = regx[1];
-    }
-    return articleItem;
-  }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
-  export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-    const nr = await fetch(`/community/${params.id}/api/info`);
-    const {name} = await nr.json();
-    if (!name) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        error: '없는 게시판입니다.',
-      };
-    }
-    const page = url.searchParams.get('page') ?? '1';
-    const res = await fetch(`${url.pathname}/api/list?page=${page}`);
-    const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
-    if (parseInt(page) > maxPage) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        error: 'Not found',
-      };
-    }
-    const id = params.id;
-    const bestR = await fetch(`${url.pathname}/api/best`);
-    const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
+  // function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
+  //   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
+  //   const regx = autoTag.exec(articleItem.title?.trim() ?? '');
+  //   // console.log(item.title, regx);
+  //   if (regx) {
+  //     articleItem.autoTag = regx[1];
+  //   }
+  //   return articleItem;
+  // }
 
-    const annoR = await fetch(`${url.pathname}/api/announcements`);
-    const {announcements} = await annoR.json() as { announcements: ArticleItemDto[], };
+  // export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
+  //   const nr = await fetch(`/community/${params.id}/api/info`);
+  //   const {name} = await nr.json();
+  //   if (!name) {
+  //     return {
+  //       status: HttpStatus.NOT_FOUND,
+  //       error: '없는 게시판입니다.',
+  //     };
+  //   }
+  //   const page = url.searchParams.get('page') ?? '1';
+  //   const res = await fetch(`${url.pathname}/api/list?page=${page}`);
+  //   const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
+  //   if (parseInt(page) > maxPage) {
+  //     return {
+  //       status: HttpStatus.NOT_FOUND,
+  //       error: 'Not found',
+  //     };
+  //   }
+  //   const id = params.id;
+  //   const bestR = await fetch(`${url.pathname}/api/best`);
+  //   const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
 
-    return {
-      status: 200,
-      props: {
-        articles: list.map(initAutoTag),
-        id,
-        params,
-        name,
-        // users,
-        currentPage: parseInt(page),
-        maxPage,
-        bests,
-        announcements,
-        ui: session.ui,
-      },
-    };
-  }
+  //   const annoR = await fetch(`${url.pathname}/api/announcements`);
+  //   const {announcements} = await annoR.json() as { announcements: ArticleItemDto[], };
+
+  //   return {
+  //     status: 200,
+  //     props: {
+  //       articles: list.map(initAutoTag),
+  //       id,
+  //       params,
+  //       name,
+  //       // users,
+  //       currentPage: parseInt(page),
+  //       maxPage,
+  //       bests,
+  //       announcements,
+  //       ui: session.ui,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import Refresh from 'svelte-material-icons/Refresh.svelte';

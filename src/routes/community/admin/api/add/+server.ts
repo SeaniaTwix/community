@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {BoardDto} from '$lib/types/dto/board.dto';
 import db from '$lib/database/instance';
@@ -13,12 +14,11 @@ export async function POST({request}: RequestEvent): Promise<RequestHandlerOutpu
 
   const id = await board.create();
 
-  return {
-    status: 201,
-    body: {
-      id,
-    }
-  }
+  return json$1({
+  id,
+}, {
+    status: 201
+  })
 
 }
 

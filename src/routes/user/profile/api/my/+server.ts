@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
@@ -7,42 +8,36 @@ import {key} from '$lib/auth/user/shared';
 
 export async function GET({request, locals, url}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'no session',
-      },
-    };
+    return json({
+  reason: 'no session',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const user = new User(locals.user.sub.split('/')[1]);
 
   if (!await user.exists) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'no session',
-      },
-    };
+    return json({
+  reason: 'no session',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const cookies = (new CookieParser(request.headers.get('cookie') ?? '')).get();
   if (cookies.token) {
-    return {
-      status: HttpStatus.OK,
-      body: {
-        user: {
-          ...njwt.verify(cookies.token, key)?.body.toJSON(),
-          adult: await user.isAdult(),
-        },
-      },
-    };
+    return json({
+  user: {
+    ...njwt.verify(cookies.token, key)?.body.toJSON(),
+    adult: await user.isAdult(),
+  },
+}, {
+      status: HttpStatus.OK
+    });
   }
 
-  return {
-    status: 200,
-    body: {
-      id: user.id,
-    },
-  };
+  return json({
+  id: user.id,
+});
 }

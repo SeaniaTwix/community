@@ -1,33 +1,37 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import {isEmpty} from 'lodash-es';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
-    const q = url.searchParams.get('q') ?? '';
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import {isEmpty} from 'lodash-es';
 
-    if (isEmpty(q)) {
-      return {
-        status: 200,
-        props: {
-          result: [],
-          q,
-        },
-      };
-    }
+  // export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
+  //   const q = url.searchParams.get('q') ?? '';
 
-    const response = await fetch(`/community/api/search?q=${encodeURIComponent(q)}`);
-    const {result} = await response.json();
+  //   if (isEmpty(q)) {
+  //     return {
+  //       status: 200,
+  //       props: {
+  //         result: [],
+  //         q,
+  //       },
+  //     };
+  //   }
 
-    return {
-      status: 200,
-      props: {
-        result: result?.hits ?? [],
-        q,
-      },
-    };
-  }
+  //   const response = await fetch(`/community/api/search?q=${encodeURIComponent(q)}`);
+  //   const {result} = await response.json();
+
+  //   return {
+  //     status: 200,
+  //     props: {
+  //       result: result?.hits ?? [],
+  //       q,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import Tag from '$lib/components/Tag.svelte';
 
   import {dayjs} from 'dayjs';

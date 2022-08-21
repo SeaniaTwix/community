@@ -1,41 +1,45 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import type {IUser} from '$lib/types/user';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({fetch, session, url}: LoadEvent): Promise<LoadOutput> {
-    if (!session) {
-      return {
-        status: HttpStatus.MOVED_TEMPORARILY,
-        redirect: '/login'
-      }
-    }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import type {IUser} from '$lib/types/user';
 
-    const requestTags = await fetch('/user/profile/edit/blocks/api/users');
-    const {blocked} = await requestTags.json();
+  // export async function load({fetch, session, url}: LoadEvent): Promise<LoadOutput> {
+  //   if (!session) {
+  //     return {
+  //       status: HttpStatus.MOVED_TEMPORARILY,
+  //       redirect: '/login'
+  //     }
+  //   }
 
-    const requestUserInfos = await fetch(`/user/profile/api/detail?ids=${blocked.map(b => b.key).join(',')}`);
-    const {users: usersArray} = await requestUserInfos.json() as {users: IUser[]};
+  //   const requestTags = await fetch('/user/profile/edit/blocks/api/users');
+  //   const {blocked} = await requestTags.json();
 
-    const users = {};
-    for (const user of usersArray) {
-      users[user._key] = user;
-    }
+  //   const requestUserInfos = await fetch(`/user/profile/api/detail?ids=${blocked.map(b => b.key).join(',')}`);
+  //   const {users: usersArray} = await requestUserInfos.json() as {users: IUser[]};
 
-    // console.log(url.searchParams.get('id'))
+  //   const users = {};
+  //   for (const user of usersArray) {
+  //     users[user._key] = user;
+  //   }
 
-    return {
-      status: HttpStatus.OK,
-      props: {
-        blocked,
-        users,
-        userId: url.searchParams.get('id') ?? '',
-      }
-    }
+  //   // console.log(url.searchParams.get('id'))
 
-  }
+  //   return {
+  //     status: HttpStatus.OK,
+  //     props: {
+  //       blocked,
+  //       users,
+  //       userId: url.searchParams.get('id') ?? '',
+  //     }
+  //   }
+
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import {isEmpty} from 'lodash-es';
   import ky from 'ky-universal';
   import {EUserRanks} from '$lib/types/user-ranks';

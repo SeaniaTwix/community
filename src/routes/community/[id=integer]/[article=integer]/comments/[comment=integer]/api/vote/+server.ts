@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 // noinspection DuplicatedCode
 
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
@@ -8,9 +9,7 @@ import {Pusher} from '$lib/pusher/server';
 
 export async function GET({params, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   const {article, comment} = params;
@@ -19,19 +18,17 @@ export async function GET({params, locals, clientAddress, platform}: RequestEven
 
   try {
     const result = await commentVote.myVote(locals.user.uid);
-    return {
-      status: HttpStatus.OK,
-      body: {
-        vote: result ?? 'undefined',
-      },
-    };
+    return json({
+  vote: result ?? 'undefined',
+}, {
+      status: HttpStatus.OK
+    });
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
 }
@@ -59,10 +56,12 @@ const errorUserNotSigned = {
 export async function PUT({params, url, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return error(type);
   }
 
   if (!locals?.user?.uid) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return errorUserNotSigned;
   }
 
@@ -72,26 +71,25 @@ export async function PUT({params, url, locals, clientAddress, platform}: Reques
 
   try {
     if (!await commentVote.isCommentExists()) {
+      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
       return errorCommentNotFound;
     }
 
     if (await commentVote.isMyComment(locals.user.uid)) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'you can vote your self',
-        },
-      };
+      return json({
+  reason: 'you can vote your self',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      });
     }
 
     await commentVote.vote(locals.user.uid, type as any);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   try {
@@ -104,19 +102,18 @@ export async function PUT({params, url, locals, clientAddress, platform}: Reques
     console.error(e);
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return error(type);
   }
 
   if (!locals?.user?.uid) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return errorUserNotSigned;
   }
 
@@ -127,27 +124,26 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
 
   try {
     if (!await vote.isCommentExists()) {
+      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
       return errorCommentNotFound;
     }
 
     const mv = await vote.myVote(locals.user.uid);
     if (!mv) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'not exists vote',
-        },
-      };
+      return json({
+  reason: 'not exists vote',
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      });
     }
 
     await vote.withdrawal(locals.user.uid);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   try {
@@ -160,10 +156,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     console.error(e);
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 

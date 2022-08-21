@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 // noinspection NonAsciiCharacters
 
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
@@ -132,17 +133,17 @@ export async function getTagErrors(id: string, article: string | null, locals: A
 
 export async function PUT({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-      body: {
-        reason: 'please login and try again',
-      },
-    };
+    return json({
+  reason: 'please login and try again',
+}, {
+      status: HttpStatus.UNAUTHORIZED
+    });
   }
 
   const names = url.searchParams.get('name');
 
   if (!names || isEmpty(names)) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidTagNameError;
   }
 
@@ -154,6 +155,7 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   const tagError = await getTagErrors(id, article, locals, tagList);
 
   if (tagError) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return tagError;
   }
 
@@ -172,12 +174,11 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   try {
     await addTag.addAll(locals.user.uid);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   try {
@@ -190,9 +191,7 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 class AddTagRequest {

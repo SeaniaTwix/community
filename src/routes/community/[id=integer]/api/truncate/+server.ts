@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
@@ -7,12 +8,11 @@ import {aql} from 'arangojs';
 // noinspection JSUnusedGlobalSymbols
 export async function DELETE({request, params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: 'you\'re not manager',
-      }
-    }
+    return json({
+  reason: 'you\'re not manager',
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    })
   }
 
 
@@ -23,8 +23,6 @@ export async function DELETE({request, params, locals}: RequestEvent): Promise<R
       filter article.board == ${id}
         remove article in article`)
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  }
+  return new Response(undefined, { status: HttpStatus.ACCEPTED })
 }
 

@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {EUserRanks} from '$lib/types/user-ranks';
 import HttpStatus from 'http-status-codes';
@@ -8,9 +9,7 @@ import {toInteger} from 'lodash-es';
 
 export async function GET({locals, url: {searchParams}}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user || locals.user.rank <= EUserRanks.User) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   const paramPage = searchParams.get('page') ?? '1';
@@ -20,12 +19,11 @@ export async function GET({locals, url: {searchParams}}: RequestEvent): Promise<
     isStringInteger(paramAmount) ? toInteger(paramAmount) : 20, 20);
   const userList = new UsersListRequest(locals.user.uid);
 
-  return {
-    status: HttpStatus.OK,
-    body: {
-      users: await userList.listAll(page, amount),
-    },
-  };
+  return json({
+  users: await userList.listAll(page, amount),
+}, {
+    status: HttpStatus.OK
+  });
 
 }
 

@@ -1,43 +1,47 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import {key} from '$lib/editor-key';
-  import type {ITag} from '$lib/types/tag';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  type T = {edit: {title: string, content: string, tag: ITag[]}};
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import {key} from '$lib/editor-key';
+  // import type {ITag} from '$lib/types/tag';
 
-  export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-    const {id, article} = params;
-    try {
-      const editableRequest = await fetch(`/community/${id}/${article}/api/edit`);
-      const {edit} = await editableRequest.json() as T;
-      const {title, content, source, tags, tagCounts} = edit;
-      const nr = await fetch(`/community/${id}/api/info`);
-      const {name} = await nr.json();
-      // console.log(edit);
-      // noinspection TypeScriptUnresolvedFunction
-      return {
-        status: HttpStatus.OK,
-        props: {
-          board: params.id,
-          article,
-          name,
-          title,
-          tagCounts,
-          source: source ?? '',
-          content,
-          tags: Object.values(tags).map(v => v.name),
-          editorKey: key,
-        },
-      };
-    } catch {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-      }
-    }
-  }
+  // type T = {edit: {title: string, content: string, tag: ITag[]}};
+
+  // export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
+  //   const {id, article} = params;
+  //   try {
+  //     const editableRequest = await fetch(`/community/${id}/${article}/api/edit`);
+  //     const {edit} = await editableRequest.json() as T;
+  //     const {title, content, source, tags, tagCounts} = edit;
+  //     const nr = await fetch(`/community/${id}/api/info`);
+  //     const {name} = await nr.json();
+  //     // console.log(edit);
+  //     // noinspection TypeScriptUnresolvedFunction
+  //     return {
+  //       status: HttpStatus.OK,
+  //       props: {
+  //         board: params.id,
+  //         article,
+  //         name,
+  //         title,
+  //         tagCounts,
+  //         source: source ?? '',
+  //         content,
+  //         tags: Object.values(tags).map(v => v.name),
+  //         editorKey: key,
+  //       },
+  //     };
+  //   } catch {
+  //     return {
+  //       status: HttpStatus.NOT_ACCEPTABLE,
+  //     }
+  //   }
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import FullEditor from '$lib/components/FullEditor.svelte';
 
   export let title = '';

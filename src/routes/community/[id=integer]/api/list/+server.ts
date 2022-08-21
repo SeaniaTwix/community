@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -9,9 +10,7 @@ import {Board} from '$lib/community/board/server';
 
 export async function GET({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!isStringInteger(params.id)) {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-    };
+    return new Response(undefined, { status: HttpStatus.BAD_REQUEST });
   }
 
   const board = new ListBoardRequest(params.id);
@@ -27,25 +26,22 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
 
   // todo: find diff way for mapping tags count (in aql if available)
 
-  return {
-    status: 200,
-    body: {
-      list: list.map(article => {
-        const tags: Record<string, number> = {};
-        for (const tagName of article.tags) {
-          tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
-        }
-        article.tags = tags;
+  return json({
+  list: list.map(article => {
+    const tags: Record<string, number> = {};
+    for (const tagName of article.tags) {
+      tags[tagName] = Object.hasOwn(tags, tagName) ? tags[tagName] + 1 : 1;
+    }
+    article.tags = tags;
 
-        if (Object.keys(tags).includes('성인') && showImage && locals?.user?.adult !== true) {
-          article.images = '';
-        }
+    if (Object.keys(tags).includes('성인') && showImage && locals?.user?.adult !== true) {
+      article.images = '';
+    }
 
-        return article;
-      }),
-      maxPage: type === 'default' ? await board.getMaxPage(amount) : await board.getBestMaxPage(amount),
-    },
-  };
+    return article;
+  }),
+  maxPage: type === 'default' ? await board.getMaxPage(amount) : await board.getBestMaxPage(amount),
+});
 }
 
 class ListBoardRequest {

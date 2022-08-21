@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
@@ -12,12 +13,11 @@ export async function GET({url}: RequestEvent): Promise<RequestHandlerOutput> {
     if (ids) {
       const list = uniq(ids.split(','));
       if (isEmpty(list)) {
-        return {
-          status: HttpStatus.OK,
-          body: {
-            users: [],
-          }
-        }
+        return json({
+  users: [],
+}, {
+          status: HttpStatus.OK
+        })
       }
       const u = list.map(i => {
         if (!isStringInteger(i)) {
@@ -34,38 +34,32 @@ export async function GET({url}: RequestEvent): Promise<RequestHandlerOutput> {
         .filter(v => v.status === 'fulfilled')
         .map((v: any) => v.value)
 
-      return {
-        status: HttpStatus.OK,
-        body: {
-          users: results as any[],
-        }
-      }
+      return json({
+  users: results as any[],
+}, {
+        status: HttpStatus.OK
+      })
     }
 
-    return {
-      status: HttpStatus.OK,
-      body: {
-        users: [],
-      }
-    }
+    return json({
+  users: [],
+}, {
+      status: HttpStatus.OK
+    })
   }
 
   const user = await User.findByUniqueId(id);
   if (!user || !await user.exists) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'id invalid'
-      }
-    }
+    return json({
+  reason: 'id invalid'
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    })
   }
 
   const userData = await user.safeData;
 
-  return {
-    status: 200,
-    body: {
-      user: userData as any,
-    }
-  }
+  return json({
+  user: userData as any,
+})
 }

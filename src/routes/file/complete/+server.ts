@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
@@ -8,9 +9,7 @@ import {EUserRanks} from '$lib/types/user-ranks';
 
 export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user || locals.user.rank <= EUserRanks.Banned) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   const {src} = await request.json() as { src: string };
@@ -18,20 +17,17 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
   const s3Url = `https://${process.env.S3_ENDPOINT}`;
 
   if (!src.startsWith(s3Url)) {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-      body: {
-        reason: 'only allowed from s3 endpoint',
-      },
-    };
+    return json$1({
+  reason: 'only allowed from s3 endpoint',
+}, {
+      status: HttpStatus.BAD_REQUEST
+    });
   }
 
   const base = new RegExp(`^${s3Url}(/.+)`);
 
   if (!base.test(src)) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-    };
+    return new Response(undefined, { status: HttpStatus.BAD_GATEWAY });
   }
 
   const basePath = ImageConverter.getBasePath(src);
@@ -46,30 +42,27 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
   if (imageExists && locals.user.rank <= EUserRanks.User) {
     const converted = await cursor.next() as string[];
     if (converted.length >= 4) {
-      return {
-        status: HttpStatus.CONFLICT,
-        body: {
-          reason: `src is already registerd`,
-          src: basePath,
-        },
-      };
+      return json$1({
+  reason: `src is already registerd`,
+  src: basePath,
+}, {
+        status: HttpStatus.CONFLICT
+      });
     }
   }
 
   const info = await got.head(src);
   if (info.statusCode !== HttpStatus.OK) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {reason: `src link returns ${info.statusCode}`},
-    };
+    return json$1({reason: `src link returns ${info.statusCode}`}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   const isRequestDone = await ImageConverter.saveAll(src, imageExists);
 
-  return {
-    status: HttpStatus.ACCEPTED,
-    body: {
-      ok: isRequestDone,
-    }
-  };
+  return json$1({
+  ok: isRequestDone,
+}, {
+    status: HttpStatus.ACCEPTED
+  });
 }

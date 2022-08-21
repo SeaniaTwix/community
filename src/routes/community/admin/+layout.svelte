@@ -1,19 +1,21 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import {EUserRanks} from '$lib/types/user-ranks';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({session, }: LoadEvent): Promise<LoadOutput> {
-    // console.log(session)
-    if (!session || (session && session.user.rank < EUserRanks.Manager)) {
-      return {
-        status: 404,
-        error: 'Page not found',
-      }
-    }
-    return {
-      status: 200,
-    }
-  }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import {EUserRanks} from '$lib/types/user-ranks';
+
+  // export async function load({session, }: LoadEvent): Promise<LoadOutput> {
+  //   // console.log(session)
+  //   if (!session || (session && session.user.rank < EUserRanks.Manager)) {
+  //     return {
+  //       status: 404,
+  //       error: 'Page not found',
+  //     }
+  //   }
+  //   return {
+  //     status: 200,
+  //   }
+  // }
 </script>
 
 <slot />

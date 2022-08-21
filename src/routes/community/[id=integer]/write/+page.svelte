@@ -1,47 +1,51 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import {key} from '$lib/editor-key';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({params, session, fetch}: LoadEvent): Promise<LoadOutput> {
-    if (!params?.id) {
-      return {
-        status: HttpStatus.FORBIDDEN,
-      };
-    }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import {key} from '$lib/editor-key';
 
-    if (!session.user) {
-      try {
-        sessionStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
-      } catch {
-        //
-      }
+  // export async function load({params, session, fetch}: LoadEvent): Promise<LoadOutput> {
+  //   if (!params?.id) {
+  //     return {
+  //       status: HttpStatus.FORBIDDEN,
+  //     };
+  //   }
 
-      return {
-        status: HttpStatus.MOVED_TEMPORARILY,
-        redirect: '/login',
-      };
-    }
+  //   if (!session.user) {
+  //     try {
+  //       sessionStorage.setItem('ru.hn:back', `/community/${params.id}/write`);
+  //     } catch {
+  //       //
+  //     }
 
-    const nr = await fetch(`/community/${params.id}/api/info`);
-    const {name} = await nr.json();
+  //     return {
+  //       status: HttpStatus.MOVED_TEMPORARILY,
+  //       redirect: '/login',
+  //     };
+  //   }
 
-    const tagRes = await fetch(`/community/${params.id}/api/write`);
-    const {tags} = await tagRes.json();
+  //   const nr = await fetch(`/community/${params.id}/api/info`);
+  //   const {name} = await nr.json();
+
+  //   const tagRes = await fetch(`/community/${params.id}/api/write`);
+  //   const {tags} = await tagRes.json();
 
 
-    return {
-      status: 200,
-      props: {
-        board: params.id,
-        editorKey: key,
-        name,
-        usedTags: tags,
-      },
-    };
-  }
+  //   return {
+  //     status: 200,
+  //     props: {
+  //       board: params.id,
+  //       editorKey: key,
+  //       name,
+  //       usedTags: tags,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import FullEditor from '$lib/components/FullEditor.svelte';
 
   export let editorKey: string;

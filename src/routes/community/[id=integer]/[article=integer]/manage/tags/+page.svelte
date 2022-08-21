@@ -1,27 +1,31 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import {EUserRanks} from '$lib/types/user-ranks';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({params: {id, article}, fetch, session: {user}}: LoadEvent): Promise<LoadOutput> {
-    if (!user || user.rank <= EUserRanks.User) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        error: '권한이 없습니다',
-      };
-    }
-    const r = await fetch(`/community/${id}/${article}/manage/api/tags`);
-    const {tags, author} = await r.json();
-    return {
-      status: HttpStatus.OK,
-      props: {
-        tags,
-        author,
-      },
-    };
-  }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import {EUserRanks} from '$lib/types/user-ranks';
+
+  // export async function load({params: {id, article}, fetch, session: {user}}: LoadEvent): Promise<LoadOutput> {
+  //   if (!user || user.rank <= EUserRanks.User) {
+  //     return {
+  //       status: HttpStatus.NOT_ACCEPTABLE,
+  //       error: '권한이 없습니다',
+  //     };
+  //   }
+  //   const r = await fetch(`/community/${id}/${article}/manage/api/tags`);
+  //   const {tags, author} = await r.json();
+  //   return {
+  //     status: HttpStatus.OK,
+  //     props: {
+  //       tags,
+  //       author,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import type {ITag} from '$lib/types/tag';
   import {isEmpty} from 'lodash-es';
   import {page} from '$app/stores';

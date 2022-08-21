@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
@@ -11,9 +12,7 @@ import {ImageConverter} from '$lib/file/image/converter';
 
 export async function POST({request, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!user) {
-    return {
-      status: HttpStatus.UNAUTHORIZED,
-    };
+    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
   }
 
   const {src} = await request.json() as { src: string };
@@ -21,25 +20,20 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   const head = await got.head(src);
 
   if (head.statusCode !== 200) {
-    return {
-      status: head.statusCode,
-    };
+    return new Response(undefined, { status: head.statusCode });
   }
 
   if (head.headers['content-length'] && isStringInteger(head.headers['content-length'])) {
     const contentLength = parseInt(head.headers['content-length']);
     if (contentLength > 10485760) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'content-length must be less than 10485760'
-        }
-      }
+      return json$1({
+  reason: 'content-length must be less than 10485760'
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      })
     }
   } else {
-    return {
-      status: HttpStatus.BAD_REQUEST,
-    }
+    return new Response(undefined, { status: HttpStatus.BAD_REQUEST })
   }
 
   const uploadedLink = await new Promise<string>(async (resolve, reject) => {
@@ -70,10 +64,9 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
     got.stream(src).pipe(fileWrite);
   });
 
-  return {
-    status: 201,
-    body: {
-      uploadedLink,
-    }
-  };
+  return json$1({
+  uploadedLink,
+}, {
+    status: 201
+  });
 }

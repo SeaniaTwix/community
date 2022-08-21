@@ -1,67 +1,71 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
-  import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
-    const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-    const regx = autoTag.exec(articleItem.title?.trim() ?? '');
-    // console.log(item.title, regx);
-    if (regx) {
-      articleItem.autoTag = regx[1];
-    }
-    return articleItem;
-  }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
+  // import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
-  export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-    const nr = await fetch(`/community/${params.id}/api/info`);
-    const {name} = await nr.json();
-    if (!name) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        error: '없는 게시판입니다.',
-      };
-    }
-    const page = url.searchParams.get('page') ?? '1';
-    const res = await fetch(`/community/${params.id}/api/list?type=best&page=${page}`);
-    const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
-    if (parseInt(page) > maxPage) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        error: 'Not found',
-      };
-    }
-    const id = params.id;
-    // const bestR = await fetch(`${url.pathname}/api/best`);
-    // const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
-    /*
-    const authors = list.map(a => a.author).join(',');
-    const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
-    const users = {};
-    if (authorsInfoRequests.ok) {
-      const authorInfos = await authorsInfoRequests.json() as {users: IUser[]};
-      for (const user of authorInfos.users) {
-        users[user._key] = user;
-      }
-    }*/
+  // function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
+  //   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
+  //   const regx = autoTag.exec(articleItem.title?.trim() ?? '');
+  //   // console.log(item.title, regx);
+  //   if (regx) {
+  //     articleItem.autoTag = regx[1];
+  //   }
+  //   return articleItem;
+  // }
 
-    return {
-      status: 200,
-      props: {
-        articles: list.map(initAutoTag),
-        id,
-        params,
-        name,
-        // users,
-        currentPage: parseInt(page),
-        maxPage,
-        // bests,
-        ui: session.ui,
-      },
-    };
-  }
+  // export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
+  //   const nr = await fetch(`/community/${params.id}/api/info`);
+  //   const {name} = await nr.json();
+  //   if (!name) {
+  //     return {
+  //       status: HttpStatus.NOT_FOUND,
+  //       error: '없는 게시판입니다.',
+  //     };
+  //   }
+  //   const page = url.searchParams.get('page') ?? '1';
+  //   const res = await fetch(`/community/${params.id}/api/list?type=best&page=${page}`);
+  //   const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
+  //   if (parseInt(page) > maxPage) {
+  //     return {
+  //       status: HttpStatus.NOT_FOUND,
+  //       error: 'Not found',
+  //     };
+  //   }
+  //   const id = params.id;
+  //   // const bestR = await fetch(`${url.pathname}/api/best`);
+  //   // const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
+  //   /*
+  //   const authors = list.map(a => a.author).join(',');
+  //   const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
+  //   const users = {};
+  //   if (authorsInfoRequests.ok) {
+  //     const authorInfos = await authorsInfoRequests.json() as {users: IUser[]};
+  //     for (const user of authorInfos.users) {
+  //       users[user._key] = user;
+  //     }
+  //   }*/
+
+  //   return {
+  //     status: 200,
+  //     props: {
+  //       articles: list.map(initAutoTag),
+  //       id,
+  //       params,
+  //       name,
+  //       // users,
+  //       currentPage: parseInt(page),
+  //       maxPage,
+  //       // bests,
+  //       ui: session.ui,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import List from 'svelte-material-icons/ViewList.svelte';
@@ -72,7 +76,7 @@
   import {EUserRanks} from '$lib/types/user-ranks';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
-  import type {UI} from '../../../app';
+  import type {UI} from '../../../../app';
 
   export let articles: ArticleItemDto[];
   export let bests: ArticleItemDto[];

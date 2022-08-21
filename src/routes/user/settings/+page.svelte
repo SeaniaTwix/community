@@ -1,26 +1,30 @@
 <script lang="ts" context="module">
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import HttpStatus from 'http-status-codes';
 
-  export async function load({session: {user, ui, settings}}: LoadEvent): Promise<LoadOutput> {
-    if (!user) {
-      return {
-        status: HttpStatus.MOVED_TEMPORARILY,
-        redirect: '/',
-      };
-    }
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import HttpStatus from 'http-status-codes';
 
-    return {
-      status: HttpStatus.OK,
-      props: {
-        leftAlign: ui.buttonAlign === 'left',
-        settings,
-      },
-    };
-  }
+  // export async function load({session: {user, ui, settings}}: LoadEvent): Promise<LoadOutput> {
+  //   if (!user) {
+  //     return {
+  //       status: HttpStatus.MOVED_TEMPORARILY,
+  //       redirect: '/',
+  //     };
+  //   }
+
+  //   return {
+  //     status: HttpStatus.OK,
+  //     props: {
+  //       leftAlign: ui.buttonAlign === 'left',
+  //       settings,
+  //     },
+  //   };
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import Checkbox from '$lib/components/Checkbox.svelte';
   import Cookies from 'js-cookie';
   import {session} from '$app/stores';

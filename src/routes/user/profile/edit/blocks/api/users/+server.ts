@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 // noinspection DuplicatedCode
 
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
@@ -24,58 +25,60 @@ const invalidUserIdError: RequestHandlerOutput = {
 // get blocked list
 export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
   const tag = new UserBlockRequest(user);
 
-  return {
-    status: HttpStatus.OK,
-    body: {
-      blocked: await tag.getAll(),
-    },
-  };
+  return json$1({
+  blocked: await tag.getAll(),
+}, {
+    status: HttpStatus.OK
+  });
 }
 
 // add tag blocks
 export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
   const {user: userId, reason} = await request.json() as { user: string, reason: string };
 
   if (!isStringInteger(userId)) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserIdError;
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
   const target = await User.findByUniqueId(userId.trim());
   if (!target) {
-    return {
-      status: HttpStatus.NOT_FOUND,
-      body: {
-        reason: 'target is not found',
-      },
-    };
+    return json$1({
+  reason: 'target is not found',
+}, {
+      status: HttpStatus.NOT_FOUND
+    });
   }
 
   if (await target.rank >= EUserRanks.Manager) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: 'you cannot block manager and admin',
-      },
-    };
+    return json$1({
+  reason: 'you cannot block manager and admin',
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    });
   }
 
   const block = new UserBlockRequest(user);
@@ -83,33 +86,33 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
   try {
     await block.add(await target.uid, reason);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 // remove tag blocks
 export async function DELETE({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
   const {userIds} = await request.json() as { userIds: string[] };
 
   if (!isArray(userIds) || (isArray(userIds) && isEmpty(userIds))) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserIdError;
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return invalidUserError;
   }
 
@@ -118,17 +121,14 @@ export async function DELETE({locals, request}: RequestEvent): Promise<RequestHa
   try {
     await block.remove(userIds.map(tag => tag.trim()).filter(tag => isString(tag) && !isEmpty(tag)));
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 class UserBlockRequest {

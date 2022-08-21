@@ -1,14 +1,12 @@
+import { json } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
 export async function GET(_: RequestEvent): Promise<RequestHandlerOutput> {
-  return {
-    status: 200,
-    body: {
-      boards: await AllBoardRequest.get(),
-    }
-  }
+  return json({
+  boards: await AllBoardRequest.get(),
+})
 }
 
 class AllBoardRequest {

@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -19,12 +20,11 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
   const {article} = params;
   const comment = new CommentRequest(article);
   if (!await comment.article.exists) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'article is not exists',
-      },
-    };
+    return json$1({
+  reason: 'article is not exists',
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
   const paramPage = url.searchParams.get('page') ?? '1';
   const page = isStringInteger(paramPage) ? toInteger(paramPage) : 1;
@@ -34,43 +34,42 @@ export async function GET({params, url, locals}: RequestEvent): Promise<RequestH
   const reader = locals.user ? locals.user.uid : null;
   const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.list(amount, page, reader) ?? [];
 
-  return {
-    status: HttpStatus.OK,
-    body: {
-      comments: await Promise.all(comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
-        const pubVoteResult = {like: 0, dislike: 0};
-        if (!Object.hasOwn(comment, 'votes')) {
-          (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
-          comment.myVote = {like: false, dislike: false};
-          return comment;
-        }
-        for (const vote of Object.values(comment.votes)) {
-          if (vote) {
-            // @ts-ignore
-            pubVoteResult[vote.type] += 1;
-          }
-        }
-        (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
-        try {
-          if (locals.user?.uid) {
-            const cursor = await db.query(aql`
+  return json$1({
+  comments: await Promise.all(comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
+    const pubVoteResult = {like: 0, dislike: 0};
+    if (!Object.hasOwn(comment, 'votes')) {
+      (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
+      comment.myVote = {like: false, dislike: false};
+      return comment;
+    }
+    for (const vote of Object.values(comment.votes)) {
+      if (vote) {
+        // @ts-ignore
+        pubVoteResult[vote.type] += 1;
+      }
+    }
+    (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
+    try {
+      if (locals.user?.uid) {
+        const cursor = await db.query(aql`
             for comment in comments
               filter comment._key == ${comment._key}
                 return comment.votes[${locals.user.uid}].type`);
-            const type = await cursor.next() as 'like' | 'dislike';
-            comment.myVote = {like: false, dislike: false};
-            if (type) {
-              comment.myVote[type] = true;
-            }
-          }
-        } catch (e) {
-          console.log('comment.ts:', e);
+        const type = await cursor.next() as 'like' | 'dislike';
+        comment.myVote = {like: false, dislike: false};
+        if (type) {
+          comment.myVote[type] = true;
         }
+      }
+    } catch (e) {
+      console.log('comment.ts:', e);
+    }
 
-        return comment;
-      }) as any[]),
-    },
-  };
+    return comment;
+  }) as any[]),
+}, {
+    status: HttpStatus.OK
+  });
 }
 
 export async function POST({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
@@ -81,20 +80,18 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
   try {
     const articleData = await comment.article.get();
     if (!articleData || articleData.board !== id) {
-      return {
-        status: HttpStatus.BAD_GATEWAY,
-        body: {
-          reason: 'article is not exists',
-        },
-      };
+      return json$1({
+  reason: 'article is not exists',
+}, {
+        status: HttpStatus.BAD_GATEWAY
+      });
     }
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   const articleObj = new Article(article);
@@ -108,21 +105,19 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     commentData = new CommentDto(data);
 
     if (isEmpty(commentData.content) && isEmpty(commentData.image)) {
-      return {
-        status: HttpStatus.NOT_ACCEPTABLE,
-        body: {
-          reason: 'content is require'
-        }
-      }
+      return json$1({
+  reason: 'content is require'
+}, {
+        status: HttpStatus.NOT_ACCEPTABLE
+      })
     }
 
   } catch (e) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e as any,
-      },
-    };
+    return json$1({
+  reason: e as any,
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
   // console.log(commentData);
 
@@ -152,23 +147,21 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     }
 
     if (isEmpty(content) && !cd.image) {
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        body: {
-          reason: 'you have to write more than one character or upload image',
-        },
-      };
+      return json$1({
+  reason: 'you have to write more than one character or upload image',
+}, {
+        status: HttpStatus.BAD_REQUEST
+      });
     }
 
     if (commentData.relative) {
       const replyTarget = new Comment(commentData.relative);
       if (!await replyTarget.exists()) {
-        return {
-          status: HttpStatus.NOT_FOUND,
-          body: {
-            reason: 'relative target not found',
-          }
-        }
+        return json$1({
+  reason: 'relative target not found',
+}, {
+          status: HttpStatus.NOT_FOUND
+        })
       }
 
       cd.relative = commentData.relative;
@@ -177,12 +170,11 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     savedComment = await comment.add(locals.user.uid, cd);
 
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
   try {
@@ -231,13 +223,12 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Req
     console.error(e);
   }
 
-  return {
-    status: HttpStatus.CREATED,
-    body: {
-      author: locals.user.uid,
-      added: cd as any,
-    },
-  };
+  return json$1({
+  author: locals.user.uid,
+  added: cd as any,
+}, {
+    status: HttpStatus.CREATED
+  });
 }
 
 

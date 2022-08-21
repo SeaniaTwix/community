@@ -1,48 +1,52 @@
 <script lang="ts" context="module">
-  import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
-  import HttpStatus from 'http-status-codes';
+  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
 
-  export async function load({url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-    try {
-      const response = await fetch(`${url.origin}/community/api/all`);
-      const {boards} = await response.json<{ boards: BoardItemDto[] }>();
+  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
+  // import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
+  // import HttpStatus from 'http-status-codes';
 
-      if (session.user) {
-        const notiRes = await fetch('/notifications/api/unread');
-        const {unread} = await notiRes.json();
-      }
+  // export async function load({url, fetch, session}: LoadEvent): Promise<LoadOutput> {
+  //   try {
+  //     const response = await fetch(`${url.origin}/community/api/all`);
+  //     const {boards} = await response.json<{ boards: BoardItemDto[] }>();
 
-      /*
-      let user: IUser;
+  //     if (session.user) {
+  //       const notiRes = await fetch('/notifications/api/unread');
+  //       const {unread} = await notiRes.json();
+  //     }
 
-      try {
-        if (uid) {
-          const ur = await fetch(`/user/profile/api/detail?id=${uid}`);
-          const result = await ur.json<{ user: IUser }>();
-          user = result.user;
+  //     /*
+  //     let user: IUser;
 
-        }
-      } catch {
-        // user not found;
-      } */
+  //     try {
+  //       if (uid) {
+  //         const ur = await fetch(`/user/profile/api/detail?id=${uid}`);
+  //         const result = await ur.json<{ user: IUser }>();
+  //         user = result.user;
 
-      return {
-        status: 200,
-        props: {
-          boards,
-        },
-      };
-    } catch (e) {
-      return {
-        status: HttpStatus.BAD_GATEWAY,
-        error: e.toString(),
-      };
-    }
+  //       }
+  //     } catch {
+  //       // user not found;
+  //     } */
 
-  }
+  //     return {
+  //       status: 200,
+  //       props: {
+  //         boards,
+  //       },
+  //     };
+  //   } catch (e) {
+  //     return {
+  //       status: HttpStatus.BAD_GATEWAY,
+  //       error: e.toString(),
+  //     };
+  //   }
+
+  // }
 </script>
 <script lang="ts">
+  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+
   import 'material-icons/iconfont/material-icons.css';
   import '../styles/tailwind.css';
   import '../styles/global.css';

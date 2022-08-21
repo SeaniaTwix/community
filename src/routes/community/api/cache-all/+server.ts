@@ -6,14 +6,10 @@ import {EUserRanks} from '$lib/types/user-ranks';
 export async function POST({locals}: RequestEvent): Promise<RequestHandlerOutput> {
   const {user} = locals;
   if (!user || user.rank <= EUserRanks.User) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-    }
+    return new Response(undefined, { status: HttpStatus.NOT_ACCEPTABLE })
   }
 
   await storeAllArticles();
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  }
+  return new Response(undefined, { status: HttpStatus.ACCEPTED })
 }

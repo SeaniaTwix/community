@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Comment} from '$lib/community/comment/server';
@@ -14,6 +15,7 @@ const noPermisionError: RequestHandlerOutput = {
 
 export async function PATCH({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return noPermisionError;
   }
 
@@ -22,12 +24,11 @@ export async function PATCH({params, request, locals}: RequestEvent): Promise<Re
   const manage = new ManageCommentRequest(comment);
 
   if (!await manage.isAuthor(locals.user.uid)) {
-    return {
-      status: HttpStatus.NOT_ACCEPTABLE,
-      body: {
-        reason: 'you are not author',
-      },
-    };
+    return json$1({
+  reason: 'you are not author',
+}, {
+      status: HttpStatus.NOT_ACCEPTABLE
+    });
   }
 
   let newContent: string;
@@ -36,24 +37,23 @@ export async function PATCH({params, request, locals}: RequestEvent): Promise<Re
 
     newContent = await manage.edit(content);
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-    body: {
-      newContent,
-    },
-  };
+  return json$1({
+  newContent,
+}, {
+    status: HttpStatus.ACCEPTED
+  });
 }
 
 export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
   if (!locals.user) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return noPermisionError;
   }
 
@@ -67,6 +67,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   const isAdmin = rank >= EUserRanks.Manager;
 
   if (permanantly && !isAdmin) {
+    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
     return noPermisionError;
   }
 
@@ -74,16 +75,16 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
 
   try {
     if (!await manage.exists()) {
-      return {
-        status: HttpStatus.NOT_FOUND,
-        body: {
-          reason: 'comment not exists',
-        },
-      };
+      return json$1({
+  reason: 'comment not exists',
+}, {
+        status: HttpStatus.NOT_FOUND
+      });
     }
 
     const isAuthorsRequest = await manage.isAuthor(uid);
     if (!isAuthorsRequest && !isAdmin) {
+      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
       return noPermisionError;
     }
 
@@ -99,17 +100,14 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     }).then();
 
   } catch (e: any) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      },
-    };
+    return json$1({
+  reason: e.toString(),
+}, {
+      status: HttpStatus.BAD_GATEWAY
+    });
   }
 
-  return {
-    status: HttpStatus.ACCEPTED,
-  };
+  return new Response(undefined, { status: HttpStatus.ACCEPTED });
 }
 
 class ManageCommentRequest {
