@@ -12,7 +12,6 @@
   import RemoveTag from 'svelte-material-icons/Close.svelte';
   import AdultBg from 'svelte-material-icons/Circle.svelte';
 
-  import {session} from '$app/stores';
   import {goto} from '$app/navigation';
   import TimeAgo from 'javascript-time-ago';
   import {dayjs} from 'dayjs';

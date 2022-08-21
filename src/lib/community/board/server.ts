@@ -7,6 +7,14 @@ export class Board {
   constructor(private readonly id: string) {
   }
 
+  static async listAll() {
+    const cursor = await db.query(aql`
+      for board in boards
+        filter board.pub
+          return unset(board, "_id", "_rev")`);
+    return await cursor.all();
+  }
+
   async create(title: string, pub: boolean) {
     const cursor = await db.query(aql`
       insert ${{title, pub}} into boards return NEW`);

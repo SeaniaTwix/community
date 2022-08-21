@@ -5,7 +5,7 @@ export class CookieParser {
       .map(v => v.trim())
       .map(v => v.split('='))
       .forEach((value) => {
-        this.cookies[value[0]] = value[1] ?? undefined;
+        this.cookies[value[0]] = decodeURIComponent(value[1]) ?? undefined;
       });
   }
 

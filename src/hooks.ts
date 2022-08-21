@@ -236,7 +236,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
   return { user: jwt.body.toJSON() as any };
 }
 
-/** @type {import('@sveltejs/kit').GetSession} */
+/*
 export function getSession(event: RequestEvent) {
   const session: App.Session = {
     user: event.locals.user,
@@ -265,7 +265,7 @@ export function getSession(event: RequestEvent) {
   }
 
   return session;
-}
+} */
 
 interface HandleParameter {
   event: RequestEvent,

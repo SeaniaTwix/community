@@ -10,20 +10,14 @@ import type {IUser, JwtUser} from '$lib/types/user';
 declare global {
   namespace App {
     interface Locals {
-      user: JwtUser & { adult: boolean };
+      user: IUserSession;
       ui: UI,
       sessionId: string;
     }
 
     // interface Platform {}
     interface Session {
-      user: {
-        uid: string;
-        rank: EUserRanks;
-        sub: string;
-        exp: number;
-        adult: boolean;
-      };
+      user: IUserSession | undefined;
       ui: UI,
       // client only
       settings: Settings
@@ -32,6 +26,8 @@ declare global {
     // interface Stuff {}
   }
 }
+
+export type IUserSession = JwtUser & { adult: boolean };
 
 export interface UI {
   commentFolding: boolean;
