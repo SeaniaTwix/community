@@ -2,6 +2,7 @@ import {Subject, Subscription} from 'rxjs';
 import type {Observable} from 'rxjs';
 import type {PushAbout} from './shared';
 import ky from 'ky-universal';
+import {isEmpty} from 'lodash-es';
 
 try {
   if (!Object.hasOwn) {
@@ -62,11 +63,15 @@ export class Pusher {
   }
 
   async getToken(): Promise<string> {
-    if (!Pusher.token) {
-      const {token} = await ky.get('/user/wst').json<{ token: string }>();
-      Pusher.token = token;
+    try {
+      if (!Pusher.token) {
+        const {token} = await ky.get('/user/wst').json<{ token: string }>();
+        Pusher.token = token;
+      }
+      return Pusher.token;
+    } catch {
+      return '';
     }
-    return Pusher.token;
   }
 
   clearConnection(url: string | URL) {
@@ -107,7 +112,10 @@ export class Pusher {
     const subject = new Subject<{ body: any, socket: WebSocket }>();
 
     ws.onopen = async () => {
-      ws.send(`command:auth:${await this.getToken()}`);
+      const token = await this.getToken();
+      if (!isEmpty(token)) {
+        ws.send(`command:auth:${token}`);
+      }
     };
 
     this.subjects[url.toString()] = subject;
@@ -134,7 +142,7 @@ export class Pusher {
     };
 
     ws.onclose = () => {
-
+      //
     };
 
     return subject;
