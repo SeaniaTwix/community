@@ -28,6 +28,10 @@
   import Novel from './Novel.svelte';
   import {afterUpdate} from 'svelte';
   import {isEmpty} from 'lodash-es';
+  import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
+  import {client} from '$lib/auth/user/client';
+
+  export let data: PageData;
 
   export let article: IArticle<Record<string, Record<string, ITag>>, IUser>;
   export let users: Record<string, IUser>;
@@ -69,7 +73,7 @@
 
   function toImageSource(uid: string): IImage {
     // @ts-ignore
-    let avatar = users[uid]?.avatar;
+    let avatar = users?.[uid]?.avatar;
     if (!avatar) {
       // @ts-ignore
       avatar = article.author?.avatar;
@@ -122,7 +126,7 @@
         await removeTag('_dislike');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if ($session?.user?.uid !== article.author._key) {
+      if ($client?.user?.uid !== article.author._key) {
         liked = true;
         return await addTag('_like');
       }
@@ -135,7 +139,7 @@
         await removeTag('_like');
       }
       // noinspection TypeScriptUnresolvedVariable
-      if ($session?.user?.uid !== article.author._key) {
+      if ($client?.user?.uid !== article.author._key) {
         disliked = true;
         return await addTag('_dislike');
       }
@@ -150,11 +154,11 @@
   }
 
   function enableTagInput() {
-    if (!$session.user) {
+    if (!$client.user) {
       return;
     }
 
-    if (article.author._key === $session.user.uid) {
+    if (article.author._key === $client.user.uid) {
       if (Object.keys(article.tags).length >= 30) {
         // todo: error message
         return;
@@ -180,7 +184,7 @@
 
       const expectedTagCount = Object.keys(article.tags).length + todoAdd.length;
 
-      if (article.author._key === $session.user.uid) {
+      if (article.author._key === $client.user.uid) {
         if (expectedTagCount >= 30) {
           // todo: error message
           return;
@@ -218,25 +222,25 @@
           {article.title}
         </h2>
         <div class="inline-block flex space-x-2 pr-4">
-          {#if $session.user}
+          {#if $client?.user}
             <div class="w-max py-2 md:py-0.5">
-              {#if $session.user.uid !== article.author._key}
+              {#if $client.user.uid !== article.author._key}
                     <span class="mt-0.5 cursor-pointer hover:text-red-600">
                       <Report size="1rem"/>
                     </span>
               {/if}
-              {#if article.author._key === $session.user.uid}
+              {#if article.author._key === $client.user.uid}
                 <a href="/community/{article.board}/{article._key}/edit"
                    class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
                   <Edit size="1rem"/>
                 </a>
               {/if}
-              {#if article.author._key === $session.user.uid || $session.user.rank >= EUserRanks.Manager}
+              {#if article.author._key === $client.user.uid || $client.user.rank >= EUserRanks.Manager}
                 <span on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Delete size="1rem"/>
                 </span>
               {/if}
-              {#if $session.user.rank >= EUserRanks.Manager}
+              {#if $client.user.rank >= EUserRanks.Manager}
                 <a href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Admin size="1rem"/>
                 </a>
@@ -281,10 +285,10 @@
   </article>
   <div class="pt-3">
     <ul class="space-x-2 flex flex-wrap">
-      {#if $session.user}
+      {#if $client?.user}
         <li on:click={() => vote('like')}
-            class:cursor-not-allowed={$session.user.uid === article.author._key}
-            class:cursor-pointer={$session.user.uid !== article.author._key}
+            class:cursor-not-allowed={$client.user.uid === article.author._key}
+            class:cursor-pointer={$client.user.uid !== article.author._key}
             class="inline-block text-sky-400 hover:text-sky-600 mb-2" reserved>
           <Tag>
             {#if liked}
@@ -296,8 +300,8 @@
           </Tag>
         </li>
         <li on:click={() => vote('dislike')}
-            class:cursor-not-allowed={$session.user.uid === article.author._key}
-            class:cursor-pointer={$session.user.uid !== article.author._key}
+            class:cursor-not-allowed={$client.user.uid === article.author._key}
+            class:cursor-pointer={$client.user.uid !== article.author._key}
             class="inline-block text-red-400 hover:text-red-600 mb-2" reserved>
           <Tag>
             {#if disliked}
@@ -329,7 +333,7 @@
         </li>
       {/each}
 
-      {#if $session.user}
+      {#if $client?.user}
         <li class="inline-block mb-2 cursor-pointer relative w-fit">
           <Tag>
             {#if tagInputMode}

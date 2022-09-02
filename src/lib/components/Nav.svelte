@@ -16,7 +16,7 @@
   import {unread} from '$lib/notifications/client';
   import Logo from '$lib/components/Logo.svelte';
 
-  import type {PageData} from '../../routes/$types';
+  import type {PageData} from '@root/routes/$types';
   export let data: PageData;
 
   export let boards = data.boards;
@@ -96,7 +96,6 @@
     // todo: prevent going scroll top on same page if you clicked nav menu
   }
 
-  console.log('nav:', data);
 </script>
 <div class="fixed bg-white/50 backdrop-blur-lg z-50">
   {#if showSideMenu}
@@ -118,7 +117,7 @@
             {#each boards as board}
               <li>
                 <a class="block px-4 py-2 w-full bg-zinc-100 dark:bg-gray-500 hover:bg-zinc-200 rounded-md
-                      transition-colors dark:hover:bg-gray-500" sveltekit:prefetch
+                      transition-colors dark:hover:bg-gray-500" data-sveltekit-prefetch
                    href="/community/{board._key}" on:click={closeSideMenu}>{board.name}</a>
               </li>
             {/each}
@@ -155,7 +154,7 @@
             <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md
                   transition-colors dark:hover:bg-gray-500"
                on:click={(e) => checkBoardLink(e, `/community/${board._key}`)}
-               href="/community/{board._key}" sveltekit:prefetch>
+               href="/community/{board._key}" data-sveltekit-prefetch>
               {board.name}
             </a>
           </li>
@@ -195,7 +194,7 @@
       {#if data?.user}
         <li>
           <span class="relative">
-            <a sveltekit:prefetch aria-label="내 프로필" href="/user"
+            <a data-sveltekit-prefetch aria-label="내 프로필" href="/user"
                class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
                     dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
               {data.user.sub?.split('/')?.[1] ?? '알 수 없음'}
@@ -209,7 +208,7 @@
         </li>
       {:else}
         <li>
-          <a sveltekit:prefetch aria-label="로그인 버튼" on:click={gotoLogin}
+          <a data-sveltekit-prefetch aria-label="로그인 버튼" on:click={gotoLogin}
              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
              href="/login">

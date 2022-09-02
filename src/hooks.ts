@@ -36,14 +36,6 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
     listType: (list_type ?? 'list') === 'list' ? 'list' : 'gallery',
   };
 
-  if (typeof event.locals.ui !== 'object') {
-    event.locals.ui = {
-      buttonAlign: 'right',
-      commentFolding: false,
-      listType: 'list',
-    };
-  }
-
   const expire = dayjs().add(1000, 'year').toDate();
   const response = await resolve(event);
 
@@ -58,7 +50,6 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
   if (!list_type) {
     response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
   }
-
   return response;
 }
 

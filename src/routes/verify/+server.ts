@@ -1,10 +1,10 @@
 import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
 import {User} from '$lib/auth/user/server';
 
-export async function GET({url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({url, locals}: RequestEvent): Promise<Rec<any>> {
   const code = url.searchParams.get('code');
   if (!code) {
     return json({reason: 'code is required'}, {

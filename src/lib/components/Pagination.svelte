@@ -1,7 +1,11 @@
-<script>
+<script lang="ts">
   function range(start, end) {
     const n = end - start
     return Array.from([...Array(n + 1).keys()], i => i + start)
+  }
+
+  function clicked() {
+    
   }
 
   export let base = '/';

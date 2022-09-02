@@ -1,65 +1,4 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-  // import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
-
-  // function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
-  //   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-  //   const regx = autoTag.exec(articleItem.title?.trim() ?? '');
-  //   // console.log(item.title, regx);
-  //   if (regx) {
-  //     articleItem.autoTag = regx[1];
-  //   }
-  //   return articleItem;
-  // }
-
-  // export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-  //   const nr = await fetch(`/community/${params.id}/api/info`);
-  //   const {name} = await nr.json();
-  //   if (!name) {
-  //     return {
-  //       status: HttpStatus.NOT_FOUND,
-  //       error: '없는 게시판입니다.',
-  //     };
-  //   }
-  //   const page = url.searchParams.get('page') ?? '1';
-  //   const res = await fetch(`${url.pathname}/api/list?page=${page}`);
-  //   const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
-  //   if (parseInt(page) > maxPage) {
-  //     return {
-  //       status: HttpStatus.NOT_FOUND,
-  //       error: 'Not found',
-  //     };
-  //   }
-  //   const id = params.id;
-  //   const bestR = await fetch(`${url.pathname}/api/best`);
-  //   const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
-
-  //   const annoR = await fetch(`${url.pathname}/api/announcements`);
-  //   const {announcements} = await annoR.json() as { announcements: ArticleItemDto[], };
-
-  //   return {
-  //     status: 200,
-  //     props: {
-  //       articles: list.map(initAutoTag),
-  //       id,
-  //       params,
-  //       name,
-  //       // users,
-  //       currentPage: parseInt(page),
-  //       maxPage,
-  //       bests,
-  //       announcements,
-  //       ui: session.ui,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import Refresh from 'svelte-material-icons/Refresh.svelte';
@@ -68,25 +7,28 @@
   import Gallery from 'svelte-material-icons/ViewGallery.svelte';
 
   import {afterNavigate, goto} from '$app/navigation';
-  import {session, page} from '$app/stores';
+  import {page} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {onDestroy} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
-  import type {UI} from '../../../app';
+  import type {UI} from '@root/app';
+  import type {PageData} from './$types';
+  import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 
-  export let articles: ArticleItemDto[];
-  export let announcements: ArticleItemDto[];
-  export let bests: ArticleItemDto[];
-  export let params;
-  export let id: string = params.id;
-  export let name: string;
-  export let currentPage: number;
-  export let maxPage: number;
-  export let ui: UI;
-  let listType = ui?.listType ?? 'list';
+  export let data: PageData;
+
+  let articles = data.articles;
+  console.log(articles);
+  let announcements = data.announcements;
+  let bests = data.bests;
+  let id: string = $page.params.id;
+  let name = data.name;
+  let currentPage = data.currentPage;
+  let maxPage = data.maxPage;
+  let listType = data.session?.ui?.listType ?? 'list';
   let showBest = isEmpty(announcements);
 
   afterNavigate(({from, to}) => {
@@ -96,7 +38,7 @@
         pusher.destory();
       }
 
-      pusher = new Pusher(`@${params.id}`);
+      pusher = new Pusher(`@${$page.params.id}`);
       pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
     }
   });
@@ -110,10 +52,7 @@
   async function fullRefresh() {
     const {list: l, maxPage: mp} = await getRecentList();
 
-    session.update((s) => {
-      s.ui.listType = listType;
-      return s;
-    });
+    data.session.ui.listType = listType;
 
     articles = l;
     maxPage = mp;
@@ -257,7 +196,7 @@
   </nav>
 
   <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)}
-       class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
+       class:flex-row-reverse={data?.ui?.buttonAlign === 'left'}>
     <a href="/community/{$page.params.id}" on:click|preventDefault={fullRefresh}>
       <h2 class="text-2xl">
         {name}
@@ -271,10 +210,10 @@
 
       </h2>
     </a>
-    {#if $session.user}
-      <div class="space-x-2" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
-        {#if $session.user.rank >= EUserRanks.Manager}
-          <a href="/community/{params.id}/manage"
+    {#if data.session?.user}
+      <div class="space-x-2" class:flex-row-reverse={data.session?.ui.buttonAlign === 'left'}>
+        {#if data.session.user.rank >= EUserRanks.Manager}
+          <a href="/community/{$page.params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700
          dark:ring-0 dark:hover:bg-red-600">
@@ -282,7 +221,7 @@
           </a>
         {/if}
 
-        <a href="/community/{params.id}/write"
+        <a href="/community/{$page.params.id}/write"
            class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
@@ -313,7 +252,7 @@
             {/if}
           </button>
         </span>
-        <a class="underline decoration-sky-400" href="/community/{params.id}/best">전체 보기</a>
+        <a class="underline decoration-sky-400" href="/community/{$page.params.id}/best">전체 보기</a>
       </div>
 
       <div id="__top-list" on:scroll={checkPage}
@@ -324,7 +263,7 @@
             {#if showBest}
               {#each bests.slice(0, 5) as best}
                 <li>
-                  <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                  <a class="block mt-1 px-1" href="/community/{$page.params.id}/{best._key}?page={currentPage}">
                     <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                       <p class="truncate text-sm">{best.title}</p>
                     </div>
@@ -334,7 +273,7 @@
             {:else}
               {#each announcements.slice(0, 5) as anno}
                 <li>
-                  <a class="block mt-1 px-1" href="/community/{params.id}/{anno._key}?page={currentPage}">
+                  <a class="block mt-1 px-1" href="/community/{$page.params.id}/{anno._key}?page={currentPage}">
                     <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                       <p class="truncate text-sm">{anno.title}</p>
                     </div>
@@ -351,7 +290,7 @@
               {#if showBest}
                 {#each bests.slice(5) as best}
                   <li>
-                    <a class="block mt-1 px-1" href="/community/{params.id}/{best._key}?page={currentPage}">
+                    <a class="block mt-1 px-1" href="/community/{$page.params.id}/{best._key}?page={currentPage}">
                       <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                         <p class="truncate text-sm">{best.title}</p>
                       </div>
@@ -361,7 +300,7 @@
               {:else}
                 {#each announcements.slice(5) as anno}
                   <li>
-                    <a class="block mt-1 px-1" href="/community/{params.id}/{anno._key}?page={currentPage}">
+                    <a class="block mt-1 px-1" href="/community/{$page.params.id}/{anno._key}?page={currentPage}">
                       <div class="px-3 py-1.5 sm:px-2 md:py-1 hover:bg-zinc-200/70 dark:hover:bg-gray-600 rounded-md transition-colors min-w-0">
                         <p class="truncate text-sm">{anno.title}</p>
                       </div>
@@ -408,18 +347,17 @@
     {/if}
   </div>
 
-
   {#if listType === 'list'}
-    <ArticleList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <ArticleList user="{data.session.user}" board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else if listType === 'gallery'}
     <GalleryList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else}
     <p>정의되지 않음.</p>
   {/if}
 
-  {#if $session.user}
-    <div class="flex flex-row justify-end" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
-      <a href="/community/{params.id}/write"
+  {#if data.session.user}
+    <div class="flex flex-row justify-end" class:flex-row-reverse={data.session?.ui.buttonAlign === 'left'}>
+      <a href="/community/{$page.params.id}/write"
          class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
@@ -429,7 +367,7 @@
   {/if}
 
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
+    <Pagination base="/community/{$page.params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
   </div>
 </div>
 

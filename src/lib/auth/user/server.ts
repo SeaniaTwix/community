@@ -323,5 +323,43 @@ export class User {
   }
 }
 
+export class RegisterRequest {
+  user: User;
+
+  constructor(private body: Rec<string>) {
+    if (/\s/.test(this.id)) {
+      throw new Error('whitespace not allow in id');
+    }
+    if (this.id.length < 3) {
+      throw new Error('id is too short');
+    }
+    if (this.id.length > 16) {
+      throw new Error('id is too long');
+    }
+    if (this.password.length < 6) {
+      throw new Error('pw is too short');
+    }
+    if (this.password.length > 128) {
+      throw new Error('pw is too long');
+    }
+    if (!/^[a-zA-Z가-힣\d_]+$/.test(this.id)) {
+      throw new Error('some character is not allowed');
+    }
+    this.user = new User(this.id);
+  }
+
+  get id(): string {
+    return this.body.id;
+  }
+
+  get password(): string {
+    return this.body.password;
+  }
+
+  register() {
+    return this.user.register(this.password);
+  }
+}
+
 type Size = {x: number, y: number};
 type Favorite = IArangoDocumentIdentifier & {type: 'image', src: string, name: string, size: Size };

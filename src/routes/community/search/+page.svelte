@@ -53,7 +53,7 @@
     {#if !isEmpty(result)}
       {#each result as hit}
         <li class="group">
-          <a sveltekit:prefetch href="/community/{hit.board}/{hit.id}">
+          <a data-sveltekit-prefetch href="/community/{hit.board}/{hit.id}">
             <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1 flex flex-col">
 
               <div class="flex flex-row justify-between items-center">

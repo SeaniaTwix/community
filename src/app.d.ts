@@ -10,19 +10,14 @@ import type {IUser, JwtUser} from '$lib/types/user';
 declare global {
   namespace App {
     interface Locals {
-      user: IUserSession;
-      ui: UI,
-      sessionId: string;
+      user?: IUserSession;
+      ui: UI;
+      settings: Settings;
+      sessionId?: string;
     }
 
     // interface Platform {}
-    interface Session {
-      user: IUserSession | undefined;
-      ui: UI,
-      // client only
-      settings: Settings
-    }
-
+    // interface Session {}
     // interface Stuff {}
   }
 }

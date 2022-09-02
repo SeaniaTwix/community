@@ -1,4 +1,4 @@
-import { json } from '@sveltejs/kit';
+import { json } from '$lib/kit';
 import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {nanoid} from 'nanoid';
@@ -25,15 +25,14 @@ export async function POST({locals, url}: RequestEvent): Promise<RequestHandlerO
   const randomId = nanoid(32);
   const prefix = `uu/${locals.user.uid}/${randomId}/`; // .${type.split('/')[1]}`;
 
-  throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
+  // throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
   // Suggestion (check for correctness before using):
   // return new Response({
   // // uploadUrl,
   // bucket: process.env.BUCKET_NAME,
   // prefix,
   // presigned: S3.newUploadLink(prefix, type),
-} as any, { status: HttpStatus.CREATED });
-  return {
+  return json({
     status: HttpStatus.CREATED,
     body: {
       // uploadUrl,
@@ -41,6 +40,6 @@ export async function POST({locals, url}: RequestEvent): Promise<RequestHandlerO
       prefix,
       presigned: S3.newUploadLink(prefix, type),
     } as any,
-  };
+  });
 }
 

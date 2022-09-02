@@ -44,7 +44,7 @@
       </a>
     </div>
   {:else}
-    <a sveltekit:prefetch
+    <a data-sveltekit-prefetch
        class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md"
        href="/user">
       동의하지 않음

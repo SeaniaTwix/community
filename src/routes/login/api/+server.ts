@@ -1,7 +1,6 @@
 import type {
   RequestEvent,
   RequestHandler,
-  RequestHandlerOutput,
 } from "@sveltejs/kit";
 import type {LoginDto} from '$lib/types/dto/login.dto';
 import {inRange} from 'lodash-es';
@@ -11,7 +10,7 @@ import {error as HttpError, json} from '$lib/kit';
 import {dayjs} from 'dayjs';
 
 // noinspection JSUnusedGlobalSymbols
-export const POST: RequestHandler = async ({request}: RequestEvent): Promise<RequestHandlerOutput> => {
+export const POST: RequestHandler = async ({request}: RequestEvent): Promise<Response> => {
   const login = new LoginRequest(await request.json() as LoginDto);
 
   if (!inRange(login.id.length, 3, 16)) {
@@ -32,7 +31,7 @@ export const POST: RequestHandler = async ({request}: RequestEvent): Promise<Req
   });
 };
 
-export const DELETE: RequestHandler = async ({request}: RequestEvent): Promise<RequestHandlerOutput> => {
+export const DELETE: RequestHandler = async ({request}: RequestEvent): Promise<Response> => {
   return new Response(undefined, {status: HttpStatus.ACCEPTED, headers: newLogoutHeader()});
 }
 

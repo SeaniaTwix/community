@@ -1,9 +1,10 @@
 import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
 import HttpStatus from 'http-status-codes';
 // @ts-ignore
-import {error as Error, ServerLoadEvent} from '@sveltejs/kit';
+import {ServerLoadEvent} from '@sveltejs/kit';
 import type {LayoutOutput} from './$types';
 import {Board} from '$lib/community/board/server';
+import {error} from '$lib/kit';
 
 export async function load({request, locals}: ServerLoadEvent): Promise<LayoutOutput> {
   try {
@@ -33,7 +34,7 @@ export async function load({request, locals}: ServerLoadEvent): Promise<LayoutOu
       boards
     }
   } catch (e: any) {
-    throw new Error(HttpStatus.BAD_GATEWAY, e.toString());
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
 }

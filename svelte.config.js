@@ -15,6 +15,8 @@ const config = {
       out: './build',
     }),
     alias: {
+      '@root': path.resolve('./src'),
+      '@routes': path.resolve('./src/routes'),
       '@static': path.resolve('./static'),
     },
   },

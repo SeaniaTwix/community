@@ -11,11 +11,12 @@
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import Image from 'svelte-material-icons/Image.svelte';
-  import {session} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {page} from '$app/stores';
   import {createEventDispatcher} from 'svelte';
+  import type {IUser} from '$lib/types/user';
 
+  export let user: IUser;
   export let board: string;
   export let list: ArticleItemDto[] = [];
   export let showingUserContextMenuIndex = -1;
@@ -155,13 +156,13 @@
         </a>
         {#if showingUserContextMenuIndex === i}
           <div class="flex justify-end space-x-2 items-center overflow-x-scroll whitespace-nowrap">
-            {#if $session && article.author.rank >= EUserRanks.Manager}
+            {#if user && article.author.rank >= EUserRanks.Manager}
               <span>관리자이므로 차단할 수 없습니다.</span>
             {/if}
             <a href="/user/profile/{article.author._key}" class="bg-sky-400 hover:bg-sky-600 dark:bg-sky-800 dark:hover:bg-sky-600 text-white px-2 py-1 rounded-md text-center transition-colors">
               프로필 보기
             </a>
-            {#if $session && $session.uid !== article.author && article.author.rank <= EUserRanks.User}
+            {#if user && user.uid !== article.author && article.author.rank <= EUserRanks.User}
               <a href="/user/profile/edit/blocks/users?id={article.author._key}" class="text-center bg-red-400 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-500 text-white px-2 py-1 rounded-md">
                 이 유저를 차단
               </a>

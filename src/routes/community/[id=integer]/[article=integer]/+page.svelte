@@ -1,82 +1,4 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import type {IComment} from '$lib/types/comment';
-  // import type {IUser} from '$lib/types/user';
-  // import {isEmpty, uniq} from 'lodash-es';
-  // import * as cheerio from 'cheerio';
-  // import {ArticleDto} from '$lib/types/dto/article.dto';
-  // import HttpStatus from 'http-status-codes';
-
-  // export async function load({params, fetch}: LoadEvent): Promise<LoadOutput> {
-  //   const nr = await fetch(`/community/${params.id}/api/info`);
-  //   const {name} = await nr.json();
-  //   const res = await fetch(`/community/${params.id}/${params.article}/api/read`);
-  //   if (res.status !== HttpStatus.OK) {
-  //     const {reason} = await res.json() as {reason: string};
-  //     return {
-  //       status: res.status,
-  //       error: reason,
-  //     }
-  //   }
-  //   const {article} = await res.json() as ArticleDto;
-  //   if (!article) {
-  //     return {
-  //       status: HttpStatus.NOT_FOUND,
-  //       error: '게시글을 찾을 수 없습니다.'
-  //     }
-  //   }
-  //   const $ = cheerio.load(`<div class="__top">${article.content}</div>`);
-  //   // @ts-ignore
-  //   const elems = $('.__top:first > *').toArray();
-  //   const contents = [];
-  //   for (const elem of elems) {
-  //     // console.log(elem);
-  //     contents.push(cheerio.load(elem).html());
-  //   }
-  //   // const ar = await fetch(`/user/profile/api/detail?id=${article.author}`);
-  //   // const {user} = await ar.json();
-  //   const cr = await fetch(`/community/${params.id}/${params.article}/api/comment`);
-  //   const {comments} = await cr.json() as { comments: IComment[] };
-  //   const userInfo = {};
-
-  //   if (!isEmpty(comments)) {
-  //     const commentAuthorIds = uniq(comments.map(c => c.author)).join(',');
-  //     const car = await fetch(`/user/profile/api/detail?ids=${commentAuthorIds}`);
-  //     if (car.ok) {
-  //       const {users} = await car.json() as { users: IUser[] };
-  //       // console.log(users);
-  //       for (const user of users.filter(user => !!user)) {
-  //         userInfo[user._key] = user;
-  //       }
-  //     }
-  //   }
-
-  //   const findImages = cheerio.load(article.content)('img').toArray();
-  //   let mainImage: string;
-  //   if (findImages.length > 0) {
-  //     mainImage = findImages[0].attribs['src'];
-  //   }
-
-  //   return {
-  //     status: 200,
-  //     props: {
-  //       article,
-  //       contents,
-  //       boardName: name,
-  //       // author: user,
-  //       comments,
-  //       users: userInfo,
-  //       mainImage,
-  //     },
-  //   };
-  // }
-</script>
-<!--suppress TypeScriptValidateTypes -->
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
   import Up from 'svelte-material-icons/ArrowUp.svelte';
   import Down from 'svelte-material-icons/ArrowDown.svelte';
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
@@ -92,28 +14,34 @@
   import EditImage from '$lib/components/EditImage.svelte';
   import {upload} from '$lib/file/uploader';
   import {striptags} from 'striptags';
-  import {page, session} from '$app/stores';
+  import {page} from '$app/stores';
   import Cookies from 'js-cookie';
   import {commentInput, commentMobileCursorPosition, currentReply, highlighed} from '$lib/community/comment/client';
   import Article from '$lib/components/Article.svelte';
   import {deletedComment} from '$lib/community/comment/client';
   import CommentInput from '$lib/components/CommentInput.svelte';
+  import type {IUser} from '$lib/types/user';
+  import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
+  import {client} from '$lib/auth/user/client';
+  import {isEmpty} from 'lodash-es';
+  import type {IComment} from '$lib/types/comment';
 
   /**
    * 게시글 보기
    */
 
-  interface TagType {
-    [tagName: string]: number;
-  }
+  type TagType = Rec<number>
 
-  export let article: IArticle<TagType, IUser> = undefined;
-  export let contents: string[] = [];
-  export let boardName: string;
+  export let data: PageData;
+  console.log(data);
+
+  let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
+  let contents: string[] = data?.content?.split('\n');
+  let boardName: string = data!.boardName;
   // eslint-disable-next-line no-undef
   // export let author: IUser;
   export let users: Record<string, IUser>;
-  export let comments: IComment[];
+  export let comments = [];
   $: noRelativeComments = comments.filter(comment => !comment.relative);
   const bestComments = comments
     .filter(comment => comment.votes.like - comment.votes.dislike >= 1)
@@ -137,7 +65,7 @@
   // eslint-disable-next-line no-redeclare
   declare var commentFolding: boolean;
   // noinspection TypeScriptUnresolvedVariable
-  $: commentFolding = $session.ui.commentFolding;
+  $: commentFolding = $client?.ui?.commentFolding === true;
 
   let commentTextInput: HTMLTextAreaElement;
   let commentContent = '';
@@ -154,8 +82,8 @@
   let commentImage1: HTMLImageElement;
   let commentImage2: HTMLImageElement;
   let commentImageUploadSrc = '';
-  let commentImageUploadFileInfo: File;
-  let editedImage: Blob;
+  let commentImageUploadFileInfo: File | undefined;
+  let editedImage: Blob | undefined;
   let image100x100 = false;
   let imageSize = {
     x: -1,
@@ -163,14 +91,14 @@
   }
 
   async function addComment() {
-    if (!$session.user && !commenting) {
+    if (!$client.user && !commenting) {
       return;
     }
 
     commenting = true;
 
     try {
-      const commentData: IComment = {
+      const commentData: Partial<IComment> = {
         article: article._key,
         content: commentContent,
       };
@@ -199,8 +127,9 @@
           const img = new Image();
           img.addEventListener('load', () => {
             resolve({x: img.naturalWidth, y: img.naturalHeight});
-          })
-          img.src = commentData.image;
+          });
+          // todo: type check?
+          img.src = commentData.image!;
         });
         commentData.imageSize = await getNaturalSize;
       }
@@ -266,7 +195,7 @@
   }
 
   function fileSelected() {
-    fileChangeListener.set(fileUploader.files[0]);
+    fileChangeListener.set(fileUploader.files![0]);
   }
 
   function blockMobileScroll(event: Event) {
@@ -337,7 +266,7 @@
     closeImageEditor();
   }
 
-  async function deleteComment(comment: IComment) {
+  async function deleteComment(comment: Partial<IComment>) {
     try {
       await ky.delete(
         `/community/${article.board}/${article._key}/comments/${comment._key}/api/manage`)
@@ -350,7 +279,7 @@
     const folding = Cookies.get('comment_folding') === 'true';
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
-    session.update((s) => {
+    client.update((s) => {
       s.ui.commentFolding = !folding;
       return s;
     });
@@ -436,18 +365,18 @@
             if (type === 'add') {
               // noinspection TypeScriptUnresolvedFunction
               if (Object.hasOwn(article.tags, tag)) {
-                article.tags[tag] += 1;
+                article.tags![tag] += 1;
               } else {
-                article.tags[tag] = 1;
+                article.tags![tag] = 1;
               }
             } else { // remove
-              if (article.tags[tag] <= 1) {
+              if (article.tags![tag] <= 1) {
                 // svelte don't recognize when property deleted
                 const newTags = {...article.tags};
                 delete newTags[tag];
                 article.tags = newTags;
               } else {
-                article.tags[tag] -= 1;
+                article.tags![tag] -= 1;
               }
             }
           }
@@ -484,7 +413,7 @@
   })
 
   let fileUploader: HTMLInputElement;
-  const fileChangeListener = writable<File>(null);
+  const fileChangeListener = writable<File | null>(null);
   let unsubscribers: Unsubscriber[] = [];
   let pusher: Pusher;
   onMount(async () => {
@@ -528,7 +457,9 @@
         if (typeof deleteCommentId !== 'string') {
           return;
         }
-        deleteComment({_key: deleteCommentId}).then(() => $deletedComment = undefined);
+        deleteComment({_key: deleteCommentId}).then(() => {
+          $deletedComment = undefined;
+        });
       });
 
       unsubscribers.push(fileChangeUnsub, replyUnsub, commentDeleteUnsub);
@@ -582,14 +513,14 @@
     fileDragging = false;
     const uploadPending = event.dataTransfer.files.item(0);
     if (uploadPending.type.startsWith('image')) {
-      commentImageUploadSrc = URL.createObjectURL(uploadPending);
+      commentImageUploadSrc = URL.createObjectURL(uploadPending!);
       commentImageUploadFileInfo = uploadPending;
     }
   }
 
   let selectedComment: IComment | undefined;
   function commentReplyClicked(id) {
-    if (!$session.user) {
+    if (!$client.user) {
       return;
     }
     saveLastScroll();
@@ -871,7 +802,7 @@
   {/if}
   {#if !mobileInputMode}
     <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
-      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {$session.user ? '9' : '2'}rem;">
+      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {$client?.user ? '9' : '2'}rem;">
         <ul class="space-y-2">
           <li>
             <!-- todo: add page parameter -->
@@ -896,7 +827,7 @@
         </ul>
       </div>
 
-      {#if $session.user}
+      {#if $client?.user}
         <CommentInput {commenting} {users}
                       bind:commentFolding={commentFolding}
                       bind:selectedComment={selectedComment}

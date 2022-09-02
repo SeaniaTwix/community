@@ -13,9 +13,31 @@
   import {NotificationsClient, unread} from '$lib/notifications/client';
 
   import type {PageData} from './$types';
+  import {client} from '$lib/auth/user/client';
+  import {afterNavigate} from '$app/navigation';
   export let data: PageData;
 
   console.log('+layout:', data);
+
+  afterNavigate(() => {
+    client.update((session) => {
+      if (!session) {
+        session = {
+          user: data.user,
+          settings: {
+            imageOrder: ['jxl', 'avif', 'webp', 'png'],
+          },
+          ui: {
+            commentFolding: false,
+            buttonAlign: 'right',
+            listType: 'list',
+          },
+        };
+      }
+      return session;
+    });
+    console.log(data, $client);
+  });
 
   onMount(() => {
     const cookies = (new CookieParser(document.cookie)).get();

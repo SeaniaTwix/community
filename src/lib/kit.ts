@@ -5,13 +5,12 @@ import {
   error as err,
   // @ts-ignore
   redirect as Redirect,
-  type RequestHandlerOutput,
+  type RequestHandler,
 } from '@sveltejs/kit';
-import type HttpStatus from 'http-status-codes';
 
-export const json = Json as (data: any, init?: ResponseInit) => RequestHandlerOutput;
+export const json = Json;
 /**
  * @throws {Error}
  */
-export const error = ((s, m) => new err(s, m)) as (status: number, message?: string | undefined) => ErrorConstructor;
-export const redirect = Redirect as (status: typeof HttpStatus.TEMPORARY_REDIRECT | typeof HttpStatus.PERMANENT_REDIRECT, location: string) => RequestHandlerOutput;
+export const error = ((s, m) => new (err(s, m) as any)) as (status: number, message?: string | undefined) => ErrorConstructor;
+export const redirect = Redirect;

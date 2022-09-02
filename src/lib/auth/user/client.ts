@@ -4,7 +4,7 @@ import {decode} from 'js-base64';
 import {CookieParser} from '$lib/cookie-parser';
 import type {AllowedExtensions, IUserSession} from '../../../app';
 
-export const session = writable<App.Session>(undefined);
+export const client = writable<App.Locals>(undefined);
 
 function decodeToken(token: string): IUserSession | undefined {
   try {
@@ -27,42 +27,47 @@ export class User {
    * @return JWT token
    */
   async login(password: string, recaptcha?: string): Promise<IUserSession> {
-    const r = await ky.post('/login/api', {
-      json: {
-        id: this.id,
-        password,
-        recaptcha,
-      }
-    });
+    try {
+      const r = await ky.post('/login/api', {
+        json: {
+          id: this.id,
+          password,
+          recaptcha,
+        }
+      });
 
-    const {token} = await r.json<ILoginResponse>()
+      const {token} = await r.json<ILoginResponse>()
 
-    const user = decodeToken(token);
+      const user = decodeToken(token);
 
-    session.update((old) => {
-      if (typeof old !== 'object') {
-        const {image_order} = CookieParser.parse(document.cookie);
-        old = {
-          settings: {
-            imageOrder: image_order?.split(',')
-              .map(v => v.trim()) as AllowedExtensions[],
-          },
-          user: undefined,
-          ui: {
-            listType: 'list',
-            buttonAlign: 'right',
-            commentFolding: true,
-          }
-        };
-      }
+      client.update((old) => {
+        if (typeof old !== 'object') {
+          const {image_order} = CookieParser.parse(document.cookie);
+          old = {
+            settings: {
+              imageOrder: image_order?.split(',')
+                .map(v => v.trim()) as AllowedExtensions[],
+            },
+            user: undefined,
+            ui: {
+              listType: 'list',
+              buttonAlign: 'right',
+              commentFolding: true,
+            }
+          };
+        }
 
-      old.user = user;
+        old.user = user;
 
-      return old;
+        return old;
 
-    });
+      });
 
-    return user;
+      return user as any;
+    } catch {
+      // return undefined;
+      throw new Error('login failed');
+    }
   }
 
   /**

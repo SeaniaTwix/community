@@ -1,5 +1,5 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {User} from '$lib/auth/user/server';
@@ -10,69 +10,58 @@ import {Article} from '$lib/community/article/server';
 import {EUserRanks} from '$lib/types/user-ranks';
 import type {IArticle} from '$lib/types/article';
 import {load} from 'cheerio';
-import type {Element} from 'cheerio/lib'
+import type {Element} from 'cheerio/lib';
 import * as process from 'process';
 import {extname} from 'node:path';
-import {AddViewCountRequest} from '../viewcount';
+import {AddViewCountRequest} from '../viewcount/+server';
+import {error} from '$lib/kit';
+import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
 
-export async function GET({params, locals}: RequestEvent): Promise<RequestHandlerOutput> {
-  const read = new ReadArticleRequest(params.id, params.article);
+export async function GET({params, locals}: RequestEvent): Promise<Response> {
+  const {id, article: articleId} = params;
 
-  try {
-    const uid: string | undefined = locals?.user?.uid;
-    const force = uid ? locals.user.rank > EUserRanks.User : false;
-    const article = await read.get(uid, force);
-
-    if (!article) {
-      return new Response(undefined, { status: HttpStatus.NOT_FOUND })
-    }
-
-    if (article && Object.keys(article.tags ?? {}).includes('성인')) {
-      if (locals?.user?.adult !== true) {
-        return json({
-  reason: 'you are not adult account',
-}, {
-          status: HttpStatus.NOT_ACCEPTABLE
-        });
-      }
-    }
-
-    if (article?.serials) {
-      const serialIds: string[] = article.serials;
-      article.serials = await read.getSerialTitles(serialIds);
-    }
-
-    const reader = await User.findByUniqueId(locals?.user?.uid);
-    if (reader) {
-      await reader.readAllNotifications(params.article);
-    }
-
-    const view = new AddViewCountRequest(params.article);
-
-    await view.read(locals.user ? locals.user.uid : locals.sessionId);
-
-    const articleInstance = new Article(params.article);
-
-    article.views = await articleInstance.getViewCount();
-
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    // Suggestion (check for correctness before using):
-    // return new Response({
-  article,
-} as any);
-    return {
-      status: 200,
-      body: {
-        article,
-      } as any,
-    };
-  } catch (e: any) {
-    return json({
-  reason: 'article invalid:' + e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+  if (!id || !articleId) {
+    throw error(HttpStatus.BAD_GATEWAY);
   }
+
+  const read = new ReadArticleRequest(id, articleId);
+
+  const uid: string | undefined = locals?.user?.uid;
+  const force = uid ? locals.user!.rank > EUserRanks.User : false;
+  const article = await read.get(uid, force);
+  console.log('_article:', article);
+
+  if (!article) {
+    return new Response(undefined, {status: HttpStatus.NOT_FOUND});
+  }
+
+  if (article && Object.keys(article.tags ?? {}).includes('성인')) {
+    if (locals?.user?.adult !== true) {
+      throw error(HttpStatus.SERVICE_UNAVAILABLE, 'you are not adult account');
+    }
+  }
+
+  if (article?.serials) {
+    const serialIds: string[] = article.serials;
+    article.serials = await read.getSerialTitles(serialIds);
+  }
+
+  const reader = await User.findByUniqueId(locals?.user?.uid);
+  if (reader) {
+    await reader.readAllNotifications(articleId);
+  }
+
+  const view = new AddViewCountRequest(articleId);
+
+  await view.read(locals?.user ? locals.user.uid : locals.sessionId!);
+
+  const articleInstance = new Article(articleId);
+
+  article.views = await articleInstance.getViewCount();
+
+  return json({
+    ...article,
+  });
 }
 
 class ReadArticleRequest {
@@ -101,19 +90,18 @@ class ReadArticleRequest {
             const sources = converted
               .map((link) => {
                 const mime = extname(link).replace(/^\./, 'image/');
-
-                return `<source srcset="${link}" type="${mime}"/>`
+                return `<source srcset="${link}" type="${mime}"/>`;
               })
               .join('');
             let attribs = '';
             if (img?.attribs) {
               attribs = Object.keys(img!.attribs)
                 .map((key) => {
-                  return `${key}="${img!.attribs[key]}"`
+                  return `${key}="${img!.attribs[key]}"`;
                 })
                 .join(' ');
             }
-            $(img).replaceWith(`<picture>${sources}<img ${attribs} alt="유즈는 귀엽다." /></picture>`)
+            $(img).replaceWith(`<picture>${sources}<img ${attribs} alt="유즈는 귀엽다." /></picture>`);
           }
         }
       }
@@ -122,7 +110,7 @@ class ReadArticleRequest {
     return $('body').html() ?? '';
   }
 
-  async get(reader?: string, force = false): Promise<Partial<IArticleGetResult> | null> {
+  async get(reader?: string, force = false): Promise<Partial<PageData> | null> {
     const cursor = await db.query(aql`
       for article in articles
         let isPub = ${force} || (is_bool(article.pub) ? article.pub : true)
@@ -175,12 +163,12 @@ class ReadArticleRequest {
     }
 
     // console.log('original:', article.content);
-    article.content = await this.toConvertedImages(article.content ?? '')
+    article.content = await this.toConvertedImages(article.content ?? '');
 
     // @ts-ignore
     const result: Partial<IArticleGetResult> = {
       ...article,
-      user: {name: user.id},
+      // user: {name: user.id},
       tags,
     };
 
@@ -206,8 +194,3 @@ class ReadArticleRequest {
 }
 
 // @ts-ignore
-interface IArticleGetResult extends Partial<IArticle<Record<string, number>>> {
-  user: { name: string };
-  tags: Record<string, number>;
-  serials?: string[];
-}

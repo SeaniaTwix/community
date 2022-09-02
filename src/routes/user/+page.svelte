@@ -23,13 +23,13 @@
 </svelte:head>
 
 <div class="w-10/12 md:w-3/5 lg:w-1/3 mx-auto space-y-4">
-  <a sveltekit:prefetch
+  <a data-sveltekit-prefetch
      class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md"
      href="/user/profile/edit">
     내 프로필 수정
   </a>
   {#if !$session.user.adult}
-    <a sveltekit:prefetch
+    <a data-sveltekit-prefetch
        class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md flex flex-row justify-center space-x-2 items-center hover:ring-2 ring-red-400 ring-offset-2 dark:ring-offset-gray-600"
        href="/user/settings/adult">
     <span class="inline-block w-4">
@@ -40,12 +40,12 @@
       <span>비바톤으로 성인인증 (본인인증)</span>
     </a>
   {/if}
-  <a sveltekit:prefetch
+  <a data-sveltekit-prefetch
      class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md"
      href="/user/settings">
     개인화 설정
   </a>
-  <a sveltekit:prefetch
+  <a data-sveltekit-prefetch
      class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md"
      href="/notifications">
     알림 목록
