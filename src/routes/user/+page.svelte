@@ -1,7 +1,10 @@
 <script lang="ts">
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
-  import {session} from '$app/stores';
+  import type {PageData} from '@routes/$types';
+  import {client} from '$lib/auth/user/client';
+
+  export let data: PageData;
 
   /**
    * 내 정보 보기
@@ -10,7 +13,7 @@
   function logout() {
     ky.post('/user/logout')
       .then(() => goto('/'))
-      .then(() => session.update((s) => {
+      .then(() => client.update((s) => {
         delete s.user;
         return s;
       }));
@@ -28,7 +31,7 @@
      href="/user/profile/edit">
     내 프로필 수정
   </a>
-  {#if !$session.user.adult}
+  {#if !$client.user.adult}
     <a data-sveltekit-prefetch
        class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md flex flex-row justify-center space-x-2 items-center hover:ring-2 ring-red-400 ring-offset-2 dark:ring-offset-gray-600"
        href="/user/settings/adult">

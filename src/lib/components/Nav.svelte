@@ -17,6 +17,7 @@
   import Logo from '$lib/components/Logo.svelte';
 
   import type {PageData} from '@root/routes/$types';
+  import {client} from '$lib/auth/user/client';
   export let data: PageData;
 
   export let boards = data.boards;
@@ -181,7 +182,7 @@
       </span>
       </li>
 
-      {#if data?.user && data.user.rank > EUserRanks.User}
+      {#if $client?.user && $client.user.rank > EUserRanks.User}
         <li>
           <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
@@ -191,13 +192,13 @@
         </li>
       {/if}
 
-      {#if data?.user}
+      {#if $client?.user}
         <li>
           <span class="relative">
             <a data-sveltekit-prefetch aria-label="내 프로필" href="/user"
                class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors mt-0.5
                     dark:hover:bg-gray-500 truncate max-w-[16rem] sm:max-w-[24rem] md:max-w-[32rem] lg:max-w-full">
-              {data.user.sub?.split('/')?.[1] ?? '알 수 없음'}
+              {$client?.user.sub?.split('/')?.[1] ?? '알 수 없음'}
             </a>
             {#if $unread === true}
               <span class="absolute mt-1 right-1 text-xs text-red-400">
