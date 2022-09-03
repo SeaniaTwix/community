@@ -1,92 +1,27 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-  // import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
-
-  // function initAutoTag(articleItem: ArticleItemDto): ArticleItemDto {
-  //   const autoTag = /^[[(]?([a-zA-Z가-힣@]+?)[\])].+/gm;
-  //   const regx = autoTag.exec(articleItem.title?.trim() ?? '');
-  //   // console.log(item.title, regx);
-  //   if (regx) {
-  //     articleItem.autoTag = regx[1];
-  //   }
-  //   return articleItem;
-  // }
-
-  // export async function load({params, url, fetch, session}: LoadEvent): Promise<LoadOutput> {
-  //   const nr = await fetch(`/community/${params.id}/api/info`);
-  //   const {name} = await nr.json();
-  //   if (!name) {
-  //     return {
-  //       status: HttpStatus.NOT_FOUND,
-  //       error: '없는 게시판입니다.',
-  //     };
-  //   }
-  //   const page = url.searchParams.get('page') ?? '1';
-  //   const res = await fetch(`/community/${params.id}/api/list?type=best&page=${page}`);
-  //   const {list, maxPage} = await res.json() as { list: ArticleItemDto[], maxPage: number };
-  //   if (parseInt(page) > maxPage) {
-  //     return {
-  //       status: HttpStatus.NOT_FOUND,
-  //       error: 'Not found',
-  //     };
-  //   }
-  //   const id = params.id;
-  //   // const bestR = await fetch(`${url.pathname}/api/best`);
-  //   // const {bests} = await bestR.json() as { bests: ArticleItemDto[], };
-  //   /*
-  //   const authors = list.map(a => a.author).join(',');
-  //   const authorsInfoRequests = await fetch(`/user/profile/api/detail?ids=${authors}`);
-  //   const users = {};
-  //   if (authorsInfoRequests.ok) {
-  //     const authorInfos = await authorsInfoRequests.json() as {users: IUser[]};
-  //     for (const user of authorInfos.users) {
-  //       users[user._key] = user;
-  //     }
-  //   }*/
-
-  //   return {
-  //     status: 200,
-  //     props: {
-  //       articles: list.map(initAutoTag),
-  //       id,
-  //       params,
-  //       name,
-  //       // users,
-  //       currentPage: parseInt(page),
-  //       maxPage,
-  //       // bests,
-  //       ui: session.ui,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
+  import {client} from '$lib/auth/user/client';
 
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import List from 'svelte-material-icons/ViewList.svelte';
   import Gallery from 'svelte-material-icons/ViewGallery.svelte';
 
-  import {session, page} from '$app/stores';
   import {isEmpty} from 'lodash-es';
   import {EUserRanks} from '$lib/types/user-ranks';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
-  import type {UI} from '../../../../app';
+  import {page} from '$app/stores';
+  import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
+  import type {PageData} from '@routes/community/[id=integer]/best/$types';
 
-  export let articles: ArticleItemDto[];
-  export let bests: ArticleItemDto[];
-  export let params;
-  export let id: string = params.id;
-  export let name: string;
-  export let currentPage: number;
-  export let maxPage: number;
-  export let ui: UI;
-  let listType = ui?.listType ?? 'list';
+  export let data: PageData;
+
+  let articles: ArticleItemDto[] = data.articles;
+  let bests: ArticleItemDto[];
+  let name: string = data.boardName;
+  let currentPage: number = data.currentPage;
+  export let maxPage: number = data.maxPage;
+  let listType = $client?.ui?.listType ?? 'list';
 
   async function fullRefresh() {
     const p = $page.url.searchParams.get('page') ?? '1';
@@ -101,7 +36,7 @@
 
     const {list: l, maxPage: mp} = await fullRefresh();
 
-    session.update((s) => {
+    client.update((s) => {
       s.ui.listType = listType;
       return s;
     });
@@ -172,7 +107,7 @@
   </nav>
 
   <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)}
-       class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
+       class:flex-row-reverse={$client?.ui?.buttonAlign === 'left'}>
     <h2 class="text-2xl">
       {name} 베스트
 
@@ -184,10 +119,10 @@
       <span class="hidden 2xl:inline">2xl</span-->
 
     </h2>
-    {#if $session.user}
-      <div class="space-x-2" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
-        {#if $session.user.rank >= EUserRanks.Manager}
-          <a href="/community/{params.id}/manage"
+    {#if $client?.user}
+      <div class="space-x-2" class:flex-row-reverse={$client?.ui?.buttonAlign === 'left'}>
+        {#if $client.user.rank >= EUserRanks.Manager}
+          <a href="/community/{$page.params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700
          dark:ring-0 dark:hover:bg-red-600">
@@ -195,7 +130,7 @@
           </a>
         {/if}
 
-        <a href="/community/{params.id}/write"
+        <a href="/community/{$page.params.id}/write"
            class="px-4 py-2 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
@@ -220,16 +155,16 @@
 
 
   {#if listType === 'list'}
-    <ArticleList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <ArticleList board={$page.params.id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else if listType === 'gallery'}
-    <GalleryList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <GalleryList board={$page.params.id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else}
     <p>정의되지 않음.</p>
   {/if}
 
-  {#if $session.user}
-    <div class="flex flex-row justify-end" class:flex-row-reverse={$session.ui.buttonAlign === 'left'}>
-      <a href="/community/{params.id}/write"
+  {#if $client?.user}
+    <div class="flex flex-row justify-end" class:flex-row-reverse={$client.ui.buttonAlign === 'left'}>
+      <a href="/community/{$page.params.id}/write"
          class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
          dark:ring-0 dark:hover:bg-sky-400">
@@ -239,7 +174,7 @@
   {/if}
 
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
+    <Pagination base="/community/{$page.params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
   </div>
 </div>
 

@@ -224,7 +224,7 @@ export class User {
   /**
    * 많이 쓴 순서대로 태그를 반환합니다.
    */
-  async getUsersTags(): Promise<string[]> {
+  async getUsersMostUsedTags(): Promise<string[]> {
     const cursor = await db.query(aql`
       for tag in tags
         filter tag.user == ${await this.uid} && !regex_test(tag.name, "^_") && tag.pub

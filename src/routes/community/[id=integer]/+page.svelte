@@ -17,11 +17,11 @@
   import type {UI} from '@root/app';
   import type {PageData} from './$types';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
+  import ky from 'ky-universal';
 
   export let data: PageData;
 
   let articles = data.articles;
-  console.log(articles);
   let announcements = data.announcements;
   let bests = data.bests;
   let id: string = $page.params.id;
@@ -31,8 +31,23 @@
   let listType = data.session?.ui?.listType ?? 'list';
   let showBest = isEmpty(announcements);
 
+  async function reload() {
+    const newData = await ky.get(`/community/${$page.params.id}/api/list`).json();
+    data = newData as any;
+    articles = data.articles;
+    announcements = data.announcements;
+    bests = data.bests;
+    id = $page.params.id;
+    name = data.name;
+    currentPage = data.currentPage;
+    maxPage = data.maxPage;
+    listType = data.session?.ui?.listType ?? 'list';
+    showBest = isEmpty(announcements);
+  }
+
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
+    console.log(from)
     if (from?.pathname !== to.pathname) {
       if (pusher) {
         pusher.destory();
@@ -40,6 +55,10 @@
 
       pusher = new Pusher(`@${$page.params.id}`);
       pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
+
+      if (from) {
+        reload();
+      }
     }
   });
 

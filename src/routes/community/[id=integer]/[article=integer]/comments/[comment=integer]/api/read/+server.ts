@@ -1,10 +1,15 @@
 import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import {Comment} from '$lib/community/comment/server';
 import HttpStatus from 'http-status-codes';
+import {error} from '$lib/kit';
 
-export async function GET({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, request, locals}: RequestEvent): Promise<Response> {
   const {comment} = params;
+
+  if (!comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
 
   const res = new CommentSpecificRequest(comment);
   console.log(res);

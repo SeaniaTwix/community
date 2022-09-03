@@ -30,14 +30,13 @@
    * 게시글 보기
    */
 
-  type TagType = Rec<number>
+  type TagType = Record<string, number>
 
   export let data: PageData;
-  console.log(data);
 
   let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
-  let contents: string[] = data?.content?.split('\n');
-  let boardName: string = data!.boardName;
+  let contents: string[] = data.content!.split('\n');
+  let boardName: string = data.boardName!;
   // eslint-disable-next-line no-undef
   // export let author: IUser;
   export let users: Record<string, IUser>;
@@ -88,7 +87,7 @@
   let imageSize = {
     x: -1,
     y: -1,
-  }
+  };
 
   async function addComment() {
     if (!$client.user && !commenting) {
@@ -123,7 +122,7 @@
       } else if (imageSize.x > 0 && imageSize.y > 0) {
         commentData.imageSize = imageSize;
       } else if (commentData.image) {
-        const getNaturalSize = new Promise<{x: number, y: number}>((resolve) => {
+        const getNaturalSize = new Promise<{ x: number, y: number }>((resolve) => {
           const img = new Image();
           img.addEventListener('load', () => {
             resolve({x: img.naturalWidth, y: img.naturalHeight});
@@ -218,6 +217,7 @@
   }
 
   let lastScrollTop = 0;
+
   function disableMobileInput() {
     setTimeout(() => {
       visualViewport.removeEventListener('touchmove', blockMobileScroll, true);
@@ -235,9 +235,10 @@
   }
 
   type FavImageSelectedData = {
-    fav: {src: string, size: {x: number, y: number}},
+    fav: { src: string, size: { x: number, y: number } },
     disable: () => void,
   }
+
   async function commentFavoriteImageSelected(event: CustomEvent<FavImageSelectedData>) {
     const {fav, disable} = event.detail;
     commentImageUploadSrc = fav.src;
@@ -269,7 +270,7 @@
   async function deleteComment(comment: Partial<IComment>) {
     try {
       await ky.delete(
-        `/community/${article.board}/${article._key}/comments/${comment._key}/api/manage`)
+        `/community/${article.board}/${article._key}/comments/${comment._key}/api/manage`);
     } catch {
       // todo: alert delete failed
     }
@@ -302,6 +303,7 @@
     goto(`/community/${article.board}${$page.url.search}`);
   }
 
+
   afterNavigate(({from, to}) => {
     if (from?.pathname !== to.pathname) {
       $highlighed = undefined;
@@ -323,7 +325,7 @@
             const newComment: IComment = {
               ...body,
               myVote: {like: false, dislike: false},
-              createdAt: new Date
+              createdAt: new Date,
             };
             comments = [...comments, newComment];
             return;
@@ -341,7 +343,7 @@
           if (body.type === 'del') {
             const key = body.target;
             // comments = comments.filter((c: IComment) => c._key !== key);
-            const target = comments.find(comment => comment._key === key) as IComment & {deleted: boolean};
+            const target = comments.find(comment => comment._key === key) as IComment & { deleted: boolean };
             if (target) {
               target.deleted = true;
             }
@@ -384,7 +386,7 @@
       };
 
       // comment votes only
-      const whenVoteChanged = async ({body}: {body: IMessageVote}) => {
+      const whenVoteChanged = async ({body}: { body: IMessageVote }) => {
         if (body.comment) {
           const comment = comments.find(comment => comment._key === body.comment);
           if (comment) {
@@ -404,13 +406,13 @@
           comments = [...comments];
           await tick();
         }
-      }
+      };
 
       pusher.subscribe<Partial<IComment>>('comments', whenCommentChanged);
       pusher.subscribe('tag', whenTagChanged);
       pusher.subscribe('comments:vote', whenVoteChanged);
     }
-  })
+  });
 
   let fileUploader: HTMLInputElement;
   const fileChangeListener = writable<File | null>(null);
@@ -504,7 +506,7 @@
     }
   }
 
-  function fileDragLeaveCheck(event: DragEvent) {
+  function fileDragLeaveCheck() {
     fileDragging = false;
   }
 
@@ -519,6 +521,7 @@
   }
 
   let selectedComment: IComment | undefined;
+
   function commentReplyClicked(id) {
     if (!$client.user) {
       return;
@@ -569,7 +572,7 @@
 
 </svelte:head>
 
-<svelte:body on:dragover|preventDefault={fileDrag} />
+<svelte:body on:dragover|preventDefault={fileDrag}/>
 
 {#if fileDragging}
   <div on:drop|preventDefault={fileDrop}
@@ -591,7 +594,7 @@
 </div>
 
 {#if showingImageEditor}
-  <EditImage on:close={closeImageEditor} on:save={imageEditedInComment} bind:src="{commentImageUploadSrc}" />
+  <EditImage on:close={closeImageEditor} on:save={imageEditedInComment} bind:src="{commentImageUploadSrc}"/>
 {/if}
 
 <div class="w-full absolute z-[11] bg-white dark:bg-gray-600 px-4">
@@ -674,7 +677,7 @@
         </div>
       {/if}
 
-      <Article {article} {contents} {users} isAdult="{Object.keys(article.tags??{}).includes('성인')}" />
+      <Article {article} {contents} {users} isAdult="{Object.keys(article.tags??{}).includes('성인')}"/>
 
       {#if Object.keys(article.tags).find(tag => tag.startsWith('연재:'))}
         <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
@@ -683,7 +686,8 @@
             <ol class="divide-y divide-dotted divide-zinc-400">
               {#each article.serials as serial}
                 <li class="hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">
-                  <a class="underline decoration-sky-400 decoration-dashed" class:text-bold={article._key === serial._key} href="/community/{article.board}/{serial._key}">
+                  <a class="underline decoration-sky-400 decoration-dashed"
+                     class:text-bold={article._key === serial._key} href="/community/{article.board}/{serial._key}">
                     <p class="px-4 py-2">
                       {serial.title}
                       {#if article._key === serial._key}(지금 보는 중){/if}
@@ -703,7 +707,7 @@
                    allComments="{comments}"
                    myVote="{selectedComment.myVote}"
                    isReplyMode="{true}"
-                   {users} />
+                   {users}/>
 
           <p class="hidden sm:block mt-8 text-zinc-500 text-lg text-center select-none cursor-default">
             댓글 입력창에서 <i class="pr-0.5">Esc</i>를 눌러 답글 작성 모드 취소
@@ -728,7 +732,7 @@
                              bind:allComments="{comments}"
                              bind:users="{users}"
                              selected="{selectedComment?._key === comment._key}"
-                             {comment} isBest="{true}" />
+                             {comment} isBest="{true}"/>
                   </li>
                 {/each}
               </ul>
@@ -745,7 +749,7 @@
                          bind:allComments="{comments}"
                          bind:users="{users}"
                          selected="{selectedComment?._key === comment._key}"
-                         {comment} />
+                         {comment}/>
               </li>
             {/each}
 
@@ -776,7 +780,7 @@
                  isReplyMode="{true}"
                  allComments="{comments}"
                  board="{article.board}"
-                 {users} />
+                 {users}/>
       {/if}
 
       <CommentInput {commenting} {users}
@@ -793,16 +797,16 @@
                     bind:commentImageUploadSrc={commentImageUploadSrc}
                     bind:smallImage="{image100x100}"
                     bind:content={commentContent}
-                    bind:mobileTextInput={mobileTextInput} />
+                    bind:mobileTextInput={mobileTextInput}/>
 
     </div>
-
 
 
   {/if}
   {#if !mobileInputMode}
     <div class="relative w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto">
-      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]" style="bottom: {$client?.user ? '9' : '2'}rem;">
+      <div id="__simple-navigator" class="absolute left-[-0.5rem] sm:left-[-1.5rem]"
+           style="bottom: {$client?.user ? '9' : '2'}rem;">
         <ul class="space-y-2">
           <li>
             <!-- todo: add page parameter -->
@@ -842,7 +846,7 @@
                       bind:commentImageUploadSrc={commentImageUploadSrc}
                       bind:smallImage="{image100x100}"
                       bind:content={commentContent}
-                      bind:textInput={commentTextInput} />
+                      bind:textInput={commentTextInput}/>
       {/if}
     </div>
   {/if}
@@ -872,7 +876,7 @@
     :target::before {
       content: '';
       display: block;
-      height:      10rem;
+      height: 10rem;
       margin-top: -10rem;
     }
   }

@@ -1,24 +1,24 @@
-import { json } from '$lib/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '$lib/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {nanoid} from 'nanoid';
 import {S3} from '$lib/file/s3';
 
-export async function POST({locals, url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({locals, url}: RequestEvent): Promise<Response> {
   const type = url.searchParams.get('type');
   if (!type) {
     return json({
-  reason: 'type is require',
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: 'type is require',
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
   if (!locals.user) {
     return json({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
+      reason: 'please login and try again',
+    }, {
+      status: HttpStatus.UNAUTHORIZED,
     });
   }
 

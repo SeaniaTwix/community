@@ -1,44 +1,46 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {EUserRanks} from '$lib/types/user-ranks';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {Article} from '$lib/community/article/server';
+import {error} from '$lib/kit';
 
-const noPermissionError: RequestHandlerOutput = {
+const noPermissionError = {
   status: HttpStatus.NOT_ACCEPTABLE,
 };
 
-export async function GET({params, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user || user.rank <= EUserRanks.User) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return noPermissionError;
+    throw error(noPermissionError.status);
   }
 
-  const manage = new TagManageRequest(params.id, params.article);
+  const {id, article} = params;
+
+  if (!id || !article) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
+  const manage = new TagManageRequest(id, article);
 
   if (!await manage.exists()) {
     return json({
-  reason: 'article not exists',
-}, {
-      status: HttpStatus.BAD_REQUEST
+      reason: 'article not exists',
+    }, {
+      status: HttpStatus.BAD_REQUEST,
     });
   }
 
   try {
     return json({
-  tags: await manage.getAllTags(),
-  author: await manage.getArticleAuthor(),
-}, {
-      status: HttpStatus.OK
+      tags: await manage.getAllTags(),
+      author: await manage.getArticleAuthor(),
+    }, {
+      status: HttpStatus.OK,
     });
   } catch (e: any) {
-    return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 }
 

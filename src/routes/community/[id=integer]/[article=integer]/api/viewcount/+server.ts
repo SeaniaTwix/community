@@ -1,4 +1,4 @@
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 
@@ -6,7 +6,7 @@ import {Article} from '$lib/community/article/server';
   DEPRECATED!
  */
 
-export async function PUT(): Promise<RequestHandlerOutput> {
+export async function PUT(): Promise<Response> {
   /*
   const viewCount = new AddViewCountRequest(params.article);
 

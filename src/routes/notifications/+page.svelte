@@ -1,34 +1,9 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-
-  // export async function load({session, fetch}: LoadEvent): Promise<LoadOutput> {
-  //   if (!session.user) {
-  //     return {
-  //       status: HttpStatus.MOVED_TEMPORARILY,
-  //       redirect: '/login',
-  //     };
-  //   }
-
-  //   const res = await fetch('/notifications/api/list');
-  //   const {list} = await res.json();
-  //   return {
-  //     status: HttpStatus.OK,
-  //     props: {
-  //       list,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
   import type {IPublicNotify} from '$lib/types/notify';
+  import type {PageData} from './$types';
 
-  export let list: IPublicNotify[];
+  export let data: PageData;
+  export let list: IPublicNotify[] = data.list;
 
   function content(notify: IPublicNotify) {
     if (notify.type === 'comment') {

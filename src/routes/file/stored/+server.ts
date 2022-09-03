@@ -1,5 +1,5 @@
 import {json} from '$lib/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
@@ -9,7 +9,7 @@ import {isEmpty} from 'lodash-es';
  * 외부 이미지 변환에서 콜백으로 도착하는 웹 훅의 최종 처리입니다.
  */
 
-export async function POST({request, url: {searchParams}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request, url: {searchParams}}: RequestEvent): Promise<Response> {
   const {key, from, to} = await request.json() as IStoredEventPayload;
   if (key !== process.env.EICO_KEY) {
     return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});

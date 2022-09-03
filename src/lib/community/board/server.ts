@@ -28,7 +28,9 @@ export class Board {
         await pageRequest.getListRecents(locals?.user?.uid ?? null) as any[]
       : await pageRequest.getBestListRecents(locals?.user?.uid ?? null) as any[];
 
-    const maxPage = await pageRequest.getMaxPage();
+    const maxPage = type === 'default' ?
+        await pageRequest.getMaxPage()
+      : await pageRequest.getBestMaxPage();
 
     const page = pageRequest.page
 
@@ -40,12 +42,12 @@ export class Board {
 
     const bests = await this.getBests(page, user?.uid ?? null, 10, 1);
 
-    const announcements = await this.getAnnouncements(page, user ? user.uid : sessionId);
+    const announcements = await this.getAnnouncements(page, user ? user.uid : sessionId!);
 
     return {
       articles: list
         .map((article) => {
-          let {tags} = article;
+          const {tags} = article;
           if (tags) {
             const counted: Rec<number> = {};
             for (const tag of tags) {

@@ -21,7 +21,7 @@
   import ky from 'ky-universal';
   import Image from './Image.svelte';
   import {striptags} from 'striptags';
-  import {session, page} from '$app/stores';
+  import {page} from '$app/stores';
   import {isEmpty, last} from 'lodash-es';
   import {
     commentInput,
@@ -31,6 +31,7 @@
   } from '$lib/community/comment/client';
   import {uploadAllowedExtensions} from '$lib/file/image/shared';
   import {toSources} from '$lib/file/image/shared.js';
+  import {client} from '$lib/auth/user/client';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -69,7 +70,7 @@
   }
 
   function onReplyClicked(event: PointerEvent) {
-    if (!$session.user || !isOk(event.composedPath())) {
+    if (!$client.user || !isOk(event.composedPath())) {
       return;
     }
     $highlighed = undefined;
@@ -112,7 +113,7 @@
   }
 
   async function like() {
-    if (!$session.user || voting || $session.user.uid === comment.author) {
+    if (!$client.user || voting || $client.user.uid === comment.author) {
       return;
     }
 
@@ -138,7 +139,7 @@
   }
 
   async function dislike() {
-    if (!$session.user || voting || $session.user.uid === comment.author) {
+    if (!$client.user || voting || $client.user.uid === comment.author) {
       return;
     }
 
@@ -213,7 +214,7 @@
   // if you commented, fetch all replies
   function fetchAllRepliesMine() {
     const notFetched: IComment[] = allReplies?.filter(c => !replies.find(r => r._key === c._key)) ?? [];
-    if (notFetchedReplyCounts > 0 && notFetched.find(c => c.author === $session.user.uid)) {
+    if (notFetchedReplyCounts > 0 && notFetched.find(c => c.author === $client?.user?.uid)) {
       fetchAllReplies();
     }
   }
@@ -350,12 +351,12 @@
 
           {/if}
         </div>
-        {#if $session.user}
+        {#if $client.user}
           {#if !editMode}
             <div class="pt-2 flex justify-between select-none">
           <span class="space-x-2 flex-shrink-0">
             <span on:click|preventDefault={like} prevent-reply class:cursor-progress={voting}
-                  class="text-sky-500 {$session.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+                  class="text-sky-500 {$client.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
               {#if comment.myVote.like}
                 <Like size="1rem" />
               {:else}
@@ -364,7 +365,7 @@
               {likeCount}
             </span>
             <span on:click={dislike} prevent-reply class:cursor-progress={voting}
-                  class="text-red-500 {$session.user.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+                  class="text-red-500 {$client.user.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
               {#if comment.myVote.dislike}
                 <Dislike size="1rem" />
               {:else}
@@ -384,26 +385,26 @@
                   </span>
                 </span>
               {/if}
-              {#if $session?.user && $session.user.uid !== comment.author}
+              {#if $client?.user && $client.user.uid !== comment.author}
                 <span class="cursor-pointer hover:text-red-600"
                       on:click={() => onReportClicked(comment._key)} prevent-reply>
                   <Report size="1rem"/>
                 </span>
               {/if}
-              {#if $session?.user?.uid === comment.author}
+              {#if $client?.user?.uid === comment.author}
                 <span class="cursor-pointer hover:text-sky-400"
                       on:click={() => onEditClicked(comment._key)} prevent-reply>
                   <Edit size="1rem"/>
                 </span>
               {/if}
-              {#if comment.author === $session.user?.uid || $session?.user?.rank >= EUserRanks.Manager}
+              {#if comment.author === $client.user?.uid || $client?.user?.rank >= EUserRanks.Manager}
                 <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onDeleteClicked(comment._key)} prevent-reply>
                   <Delete size="1rem"/>
                 </span>
               {/if}
 
-              {#if $session?.user?.rank >= EUserRanks.Manager}
+              {#if $client?.user?.rank >= EUserRanks.Manager}
                 <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onLockClicked(comment._key)} prevent-reply>
                   <Admin size="1rem"/>

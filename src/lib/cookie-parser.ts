@@ -5,11 +5,15 @@ export class CookieParser {
       .map(v => v.trim())
       .map(v => v.split('='))
       .forEach((value) => {
-        this.cookies[value[0]] = decodeURIComponent(value[1]) ?? undefined;
+        try {
+          this.cookies[value[0]] = decodeURIComponent(value[1]);
+        } catch {
+          // continue;
+        }
       });
   }
 
-  static parse(cookie: string): Record<string, string | undefined> {
+  static parse(cookie: string): Record<string, string> {
     try {
       return (new CookieParser(cookie!)).get();
     } catch (e) {
@@ -18,13 +22,13 @@ export class CookieParser {
     }
   }
 
-  private readonly cookies: Rec<string | undefined> = {};
+  private readonly cookies: Rec<string> = {};
 
   static new(cookie: string): CookieParser {
     return new CookieParser(cookie);
   }
 
-  get(): Rec<string | undefined> {
+  get(): Rec<string> {
     return this.cookies;
   }
 }

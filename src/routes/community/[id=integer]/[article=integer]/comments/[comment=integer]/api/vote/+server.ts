@@ -1,94 +1,92 @@
-import { json } from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
 // noinspection DuplicatedCode
 
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {Pusher} from '$lib/pusher/server';
+import {error} from '$lib/kit';
 
-export async function GET({params, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
-  const {article, comment} = params;
+  const {comment} = params;
+
+  if (!comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
 
   const commentVote = new CommentVoteRequest(comment);
 
   try {
     const result = await commentVote.myVote(locals.user.uid);
     return json({
-  vote: result ?? 'undefined',
-}, {
-      status: HttpStatus.OK
+      vote: result ?? 'undefined',
+    }, {
+      status: HttpStatus.OK,
     });
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
 }
 
 const allowed = ['like', 'dislike'];
-const error = (type?: string) => ({
+const error$1 = (type?: string) => ({
   status: HttpStatus.BAD_REQUEST,
-  body: {
-    reason: !type ? 'type is required.' : 'type not allowed.',
-  },
+  reason: !type ? 'type is required.' : 'type not allowed.',
 });
 const errorCommentNotFound = {
   status: HttpStatus.NOT_FOUND,
-  body: {
-    reason: 'comment invalid',
-  },
+  reason: 'comment invalid',
 };
 const errorUserNotSigned = {
   status: HttpStatus.UNAUTHORIZED,
-  body: {
-    reason: 'please login and try again',
-  },
+  reason: 'please login and try again',
 };
 
-export async function PUT({params, url, locals, clientAddress, platform}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function PUT({params, url, locals}: RequestEvent): Promise<Response> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return error(type);
+    const err = error$1(type);
+    throw error(err.status, err.reason);
   }
 
   if (!locals?.user?.uid) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return errorUserNotSigned;
+    throw error(errorUserNotSigned.status, errorUserNotSigned.reason);
   }
 
   const {id, article, comment} = params;
 
+  if (!comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const commentVote = new CommentVoteRequest(comment);
 
+  if (!await commentVote.isCommentExists()) {
+    throw error(errorCommentNotFound.status, errorCommentNotFound.reason);
+  }
+
+  if (await commentVote.isMyComment(locals.user.uid)) {
+    throw error(HttpStatus.NOT_ACCEPTABLE, 'you can vote your self');
+  }
+
   try {
-    if (!await commentVote.isCommentExists()) {
-      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-      return errorCommentNotFound;
-    }
-
-    if (await commentVote.isMyComment(locals.user.uid)) {
-      return json({
-  reason: 'you can vote your self',
-}, {
-        status: HttpStatus.NOT_ACCEPTABLE
-      });
-    }
-
     await commentVote.vote(locals.user.uid, type as any);
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
@@ -102,47 +100,47 @@ export async function PUT({params, url, locals, clientAddress, platform}: Reques
     console.error(e);
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
-export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function DELETE({params, url, locals}: RequestEvent): Promise<Response> {
   const type = url.searchParams.get('type') ?? undefined;
   if (!type || !allowed.includes(type)) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return error(type);
+    const err = error$1(type);
+    throw error(err.status, err.reason);
   }
 
   if (!locals?.user?.uid) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return errorUserNotSigned;
+    throw error(errorUserNotSigned.status, errorUserNotSigned.reason);
   }
 
 
   const {id, article, comment} = params;
 
+  if (!comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const vote = new CommentVoteRequest(comment);
 
-  try {
-    if (!await vote.isCommentExists()) {
-      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-      return errorCommentNotFound;
-    }
+  if (!await vote.isCommentExists()) {
+    throw error(errorCommentNotFound.status, errorCommentNotFound.reason);
+  }
 
-    const mv = await vote.myVote(locals.user.uid);
-    if (!mv) {
-      return json({
-  reason: 'not exists vote',
-}, {
-        status: HttpStatus.NOT_ACCEPTABLE
-      });
-    }
+  const mv = await vote.myVote(locals.user.uid);
+  if (!mv) {
+    throw error(HttpStatus.NOT_ACCEPTABLE, 'not exists vote');
+  }
+
+  try {
 
     await vote.withdrawal(locals.user.uid);
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
@@ -156,7 +154,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     console.error(e);
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 

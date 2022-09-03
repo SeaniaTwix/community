@@ -5,15 +5,16 @@ import {isStringInteger} from '$lib/util';
 import HttpStatus from 'http-status-codes';
 import {parseInt} from 'lodash-es';
 import {Board} from '$lib/community/board/server';
+import {error} from '$lib/kit';
 
-export async function GET({params, url, locals}: RequestEvent): Promise<Response> {
+export async function GET({params, url, locals}: RequestEvent, best = false): Promise<Response> {
   if (!params.id || !isStringInteger(params.id)) {
-    return new Response(undefined, {status: HttpStatus.BAD_REQUEST});
+    throw error(HttpStatus.BAD_REQUEST);
   }
 
   const pageParam = url.searchParams.get('page') ?? '1';
   const amountParam = url.searchParams.get('amount') ?? '30';
-  const type = url.searchParams.get('type') !== 'best' ? 'default' : 'best';
+  const type = best || url.searchParams.get('type') === 'best' ? 'best' : 'default';
 
   return json(await load(params.id, pageParam, amountParam, type, locals));
 }
@@ -51,8 +52,8 @@ export class ListBoardRequest {
     return this.board.getMaxPage(this.amount);
   }
 
-  getBestMaxPage(amount: number) {
-    return this.board.getMaxPage(amount, 1);
+  getBestMaxPage() {
+    return this.board.getMaxPage(this.amount, 1);
   }
 
   getListRecents(reader: string | null): Promise<ArticleDto[]> {

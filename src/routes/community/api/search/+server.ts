@@ -1,44 +1,28 @@
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {isEmpty, last} from 'lodash-es';
 import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {client} from '$lib/database/search';
+import {error, json} from '$lib/kit';
 
-export async function GET({params, url}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({params, url}: RequestEvent): Promise<Response> {
   const q = url.searchParams.get('q') ?? '';
-  console.log('q:', q);
+  //console.log('q:', q);
   if (isEmpty(q)) {
     return new Response(undefined, { status: HttpStatus.NO_CONTENT });
   }
 
   const {id} = params;
+  if (!id) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+  const search = new ArticleSearch(id, q);
   try {
-
-    const search = new ArticleSearch(id, q);
-
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    // Suggestion (check for correctness before using):
-    // return new Response({
-  result: await search.result(),
-} as any, { status: HttpStatus.OK });
-    return {
-      status: HttpStatus.OK,
-      body: {
-        result: await search.result(),
-      } as any,
-    };
+    return json({
+      result: await search.result(),
+    });
   } catch (e: any) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    // Suggestion (check for correctness before using):
-    // return new Response({
-  reason: e.toString(),
-} as any, { status: HttpStatus.BAD_GATEWAY });
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: e.toString(),
-      } as any,
-    };
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 }
 

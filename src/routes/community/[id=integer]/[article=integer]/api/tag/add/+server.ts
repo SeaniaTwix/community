@@ -1,13 +1,15 @@
-import { json } from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
 // noinspection NonAsciiCharacters
 
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {isEmpty, uniq} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {Pusher} from '$lib/pusher/server';
 import {User} from '$lib/auth/user/server';
 import {EUserRanks} from '$lib/types/user-ranks';
+import type {IUserSession} from '@root/app';
+import {error} from '$lib/kit';
 
 /**
  * 예약된 태그들입니다.
@@ -27,11 +29,11 @@ const reserved = {
  *
  * @param id 게시판 id
  * @param article 게시글 id, 새 글 쓰기 중일 땐 null
- * @param locals App.Locals
+ * @param user user session
  * @param tagList 태그 이름 배열
  * @return 에러가 있다면 에러<RequestHandlerOutput>를, 없다면 undefined를 반환합니다.
  */
-export async function getTagErrors(id: string, article: string | null, locals: App.Locals, tagList: string[]): Promise<RequestHandlerOutput | undefined> {
+export async function getTagErrors(id: string, article: string | null, user: IUserSession, tagList: string[]): Promise<TagError | undefined> {
   const validatorDefault = '[a-zA-Zㄱ-ㅎ가-힣@:-]+$';
   const validatorSub = '[a-zA-Zㄱ-ㅎ가-힣@-]+$';
 
@@ -48,36 +50,30 @@ export async function getTagErrors(id: string, article: string | null, locals: A
       if (Object.values(reserved).includes(name.slice(1))) {
         const addTag = article ? new AddTagRequest(article, [name]) : null;
 
-        if (!addTag || await addTag.isMyArticle(locals.user.uid)) {
+        if (!addTag || await addTag.isMyArticle(user.uid)) {
           return {
             status: HttpStatus.NOT_ACCEPTABLE,
-            body: {
-              reason: 'cannot be tagged by yourself that',
-            },
+            reason: 'cannot be tagged by yourself that',
           };
         }
 
         if (name === '_like' || name === '_dislike') {
-          if (!addTag || await addTag.isVoteAlready(locals.user.uid)) {
+          if (!addTag || await addTag.isVoteAlready(user.uid)) {
             return {
               status: HttpStatus.NOT_ACCEPTABLE,
-              body: {
-                reason: 'you voted this already',
-              },
+              reason: 'you voted this already',
             };
           }
         }
 
         try {
           if (addTag) {
-            await addTag.addAll(locals.user.uid);
+            await addTag.addAll(user.uid);
           }
         } catch (e: any) {
           return {
             status: HttpStatus.BAD_GATEWAY,
-            body: {
-              reason: e.toString(),
-            },
+            reason: e.toString(),
           };
         }
 
@@ -98,7 +94,7 @@ export async function getTagErrors(id: string, article: string | null, locals: A
 
     // console.log(`${name}:`, tagNameValidator.test(name), tagNameValidator.exec(name));
 
-    if (name === '공지' && (!locals.user || locals.user.rank <= EUserRanks.User)) {
+    if (name === '공지' && (!user || user.rank <= EUserRanks.User)) {
       return unacceptableTagNameError(name, 'you have no permission');
     }
     if (!tagNameValidator.test(name)) {
@@ -131,32 +127,30 @@ export async function getTagErrors(id: string, article: string | null, locals: A
   }
 }
 
-export async function PUT({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function PUT({params, url, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    return json({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
-    });
+    throw error(HttpStatus.UNAUTHORIZED, 'please login and try again');
   }
 
   const names = url.searchParams.get('name');
 
   if (!names || isEmpty(names)) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidTagNameError;
+    throw error(invalidTagNameError.status, invalidTagNameError.reason);
   }
 
   // 연재물 태그는 최소 한 글자 이상이어야 합니다.
   const {id, article} = params;
 
+  if (!id || !article) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const tagList = uniq(names.split(',').map(t => t.trim()));
 
-  const tagError = await getTagErrors(id, article, locals, tagList);
+  const tagError = await getTagErrors(id, article, locals.user, tagList);
 
   if (tagError) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return tagError;
+    throw error(tagError.status, tagError.reason);
   }
 
   // transform to reserved tag name
@@ -175,9 +169,9 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
     await addTag.addAll(locals.user.uid);
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
@@ -191,7 +185,7 @@ export async function PUT({params, url, locals}: RequestEvent): Promise<RequestH
   }
 
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 class AddTagRequest {
@@ -243,30 +237,27 @@ class AddTagRequest {
 }
 
 
-const invalidTagNameError: RequestHandlerOutput = {
+const invalidTagNameError: TagError = {
   status: HttpStatus.NOT_ACCEPTABLE,
-  body: {
-    reason: 'tag name is require and must be longer than 1 character.',
-  },
+  reason: 'tag name is require and must be longer than 1 character.',
 };
 
-const succeed: RequestHandlerOutput = {
-  status: HttpStatus.ACCEPTED,
-};
+const succeed = undefined;
 
-const unacceptableTagNameError: (tag: string, reason?: string) => RequestHandlerOutput = (tag, reason) => {
+const unacceptableTagNameError: (tag: string, reason?: string) => TagError = (tag, reason) => {
   console.trace(tag, reason);
   return {
     status: HttpStatus.NOT_ACCEPTABLE,
-    body: {
-      reason: reason ? reason : `'${tag}' is unacceptable`,
-    },
+    reason: reason ? reason : `'${tag}' is unacceptable`,
   };
 };
 
-const unacceptableSerialNameError: RequestHandlerOutput = {
+const unacceptableSerialNameError: TagError = {
   status: HttpStatus.NOT_ACCEPTABLE,
-  body: {
-    reason: 'serial tag identifier cannot be empty',
-  },
+  reason: 'serial tag identifier cannot be empty',
 };
+
+export interface TagError {
+  status: number;
+  reason: string;
+}

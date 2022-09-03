@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({request}: RequestEvent): Promise<Res
   });
 };
 
-export const DELETE: RequestHandler = async ({request}: RequestEvent): Promise<Response> => {
+export const DELETE: RequestHandler = async (): Promise<Response> => {
   return new Response(undefined, {status: HttpStatus.ACCEPTED, headers: newLogoutHeader()});
 }
 

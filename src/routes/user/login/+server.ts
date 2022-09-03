@@ -1,56 +1,34 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
 import {inRange} from 'lodash-es';
+import {error} from '$lib/kit';
+import {newLoginHeaders} from '@routes/login/api/+server';
 
 // noinspection JSUnusedGlobalSymbols
-export async function POST({request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request}: RequestEvent): Promise<Response> {
   // console.log('new login')
   const login = new LoginRequest(await request.json() as LoginDto);
 
   if (!inRange(login.id.length, 3, 16)) {
-    return new Response(undefined, { status: HttpStatus.NOT_ACCEPTABLE })
+    return new Response(undefined, {status: HttpStatus.NOT_ACCEPTABLE});
   }
 
   const user = new User(login.id);
 
   if (!await user.verify(login.password)) {
-    return json$1({
-  error: 'user not found',
-}, {
-      status: HttpStatus.NOT_FOUND
-    });
+    throw error(HttpStatus.NOT_FOUND, 'user not found');
   }
 
   const {token, headers} = await newLoginHeaders(user);
 
-  return json$1({token: token.compact()}, {
+  return json({token: token.compact()}, {
     status: login.status,
-    headers: headers
+    headers: headers,
   });
-}
-
-export async function newLoginHeaders(user: User) {
-  const token = await user.token('user', {
-    rank: await user.rank, adult: await user.isAdult(),
-  });
-  const expire = dayjs().add(10, 'minute').toDate();
-  token.setExpiration(expire);
-
-  const refresh = await user.token('refresh');
-  const expireRefresh = dayjs().add(1, 'day').toDate();
-  refresh.setExpiration(expireRefresh);
-
-  const headers = new Headers();
-  headers.append('Set-Cookie',
-    `token=${token.compact()}; Path=/; Expires=${expire.toUTCString()}; SameSite=Strict; HttpOnly;`);
-  headers.append('Set-Cookie',
-    `refresh=${refresh.compact()}; Path=/; Expires=${expireRefresh.toUTCString()}; SameSite=Strict; HttpOnly;`);
-
-  return {token, headers};
 }
 
 class LoginRequest {

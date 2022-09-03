@@ -184,7 +184,7 @@
 
       const expectedTagCount = Object.keys(article.tags).length + todoAdd.length;
 
-      if (article.author._key === $client.user.uid) {
+      if (article.author._key === $client.user?.uid) {
         if (expectedTagCount >= 30) {
           // todo: error message
           return;

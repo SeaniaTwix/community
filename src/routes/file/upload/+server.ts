@@ -1,5 +1,5 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json as json$1} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
 import {createReadStream, createWriteStream} from 'node:fs';
@@ -10,9 +10,9 @@ import {nanoid} from 'nanoid';
 import {isStringInteger} from '$lib/util';
 import {ImageConverter} from '$lib/file/image/converter';
 
-export async function POST({request, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   const {src} = await request.json() as { src: string };
@@ -20,20 +20,20 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   const head = await got.head(src);
 
   if (head.statusCode !== 200) {
-    return new Response(undefined, { status: head.statusCode });
+    return new Response(undefined, {status: head.statusCode});
   }
 
   if (head.headers['content-length'] && isStringInteger(head.headers['content-length'])) {
     const contentLength = parseInt(head.headers['content-length']);
     if (contentLength > 10485760) {
       return json$1({
-  reason: 'content-length must be less than 10485760'
-}, {
-        status: HttpStatus.NOT_ACCEPTABLE
-      })
+        reason: 'content-length must be less than 10485760',
+      }, {
+        status: HttpStatus.NOT_ACCEPTABLE,
+      });
     }
   } else {
-    return new Response(undefined, { status: HttpStatus.BAD_REQUEST })
+    return new Response(undefined, {status: HttpStatus.BAD_REQUEST});
   }
 
   const uploadedLink = await new Promise<string>(async (resolve, reject) => {
@@ -65,8 +65,8 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   });
 
   return json$1({
-  uploadedLink,
-}, {
-    status: 201
+    uploadedLink,
+  }, {
+    status: 201,
   });
 }

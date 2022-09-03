@@ -4,7 +4,7 @@
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
   import {classList} from 'svelte-body';
-  import {onMount} from 'svelte'
+  import {onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
   import {page} from '$app/stores';
   import {iosStatusBarColor} from '$lib/stores/shared/theme';
@@ -15,28 +15,33 @@
   import type {PageData} from './$types';
   import {client} from '$lib/auth/user/client';
   import {afterNavigate} from '$app/navigation';
+  import type {AllowedExtensions} from '@root/app';
+
   export let data: PageData;
 
   console.log('+layout:', data);
 
+  function getImageOrder(cookies: Record<string, string>): AllowedExtensions[] {
+    const {image_order} = cookies;
+    return ((<string>image_order)?.split(',') as AllowedExtensions[] || undefined) ?? ['jxl', 'avif', 'webp', 'png'];
+  }
+
   afterNavigate(() => {
-    client.update((session) => {
-      if (!session) {
-        session = {
-          user: data.user,
-          settings: {
-            imageOrder: ['jxl', 'avif', 'webp', 'png'],
-          },
-          ui: {
-            commentFolding: false,
-            buttonAlign: 'right',
-            listType: 'list',
-          },
-        };
-      }
-      return session;
+    const cookies = CookieParser.parse(document.cookie);
+    client.update(() => {
+      return {
+        user: data.user,
+        settings: {
+          imageOrder: getImageOrder(cookies),
+        },
+        ui: {
+          commentFolding: cookies?.comment_folding === 'true',
+          buttonAlign: cookies?.button_align !== 'left' ? 'right' : 'left',
+          listType: cookies?.list_type !== 'gallery' ? 'list' : 'gallery',
+        },
+      };
     });
-    console.log(data, $client);
+    // console.log(data, $client);
   });
 
   onMount(() => {
@@ -56,7 +61,7 @@
   page.subscribe(async () => {
     if (data?.user) {
       try {
-        const {unread: u} = await ky.get('/notifications/api/unread?exists').json<{unread: boolean}>();
+        const {unread: u} = await ky.get('/notifications/api/unread?exists').json<{ unread: boolean }>();
         unread.set(u ?? false);
         // console.log('set:', u);
       } catch {
@@ -75,10 +80,10 @@
           })
           .catch(() => {
             data.user = undefined;
-          })
+          });
       }
     }
-  })
+  });
 
   //export let boards: string[] = [];
   // console.log(uid)
@@ -90,7 +95,7 @@
 </svelte:head>
 <svelte:body use:classList={'dark:bg-gray-600 dark:text-zinc-200 transition-colors'}/>
 
-<Nav {data} />
+<Nav {data}/>
 <Notifications/>
 <main>
   <slot/>

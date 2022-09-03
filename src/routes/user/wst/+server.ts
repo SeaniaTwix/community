@@ -1,13 +1,13 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {dayjs} from 'dayjs';
 
-export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({locals}: RequestEvent): Promise<Response> {
   const user = await User.findByUniqueId(locals?.user?.uid);
   if (!user) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   const token = await user.token('ws', {adult: await user.isAdult()});
@@ -15,9 +15,8 @@ export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput>
   token.setExpiration(expireRefresh);
 
   return json({
-  token: token.compact(),
-}, {
-    status: HttpStatus.OK
+    token: token.compact(),
+  }, {
+    status: HttpStatus.OK,
   });
-
 }

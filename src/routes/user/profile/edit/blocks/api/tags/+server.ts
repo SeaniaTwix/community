@@ -1,63 +1,55 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import {isArray, isEmpty, isString} from 'lodash-es';
+import {error} from '$lib/kit';
 
-const invalidUserError: RequestHandlerOutput = {
+const invalidUserError = {
   status: HttpStatus.UNAUTHORIZED,
-  body: {
-    reason: 'please login and retry',
-  },
+  reason: 'please login and retry',
 };
 
-const invalidTagNamesError: RequestHandlerOutput = {
+const invalidTagNamesError = {
   status: HttpStatus.BAD_REQUEST,
-  body: {
-    reason: 'tagNames must be string array and not empty'
-  }
+  reason: 'tagNames must be string array and not empty',
 };
 
 // get blocked list
-export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
   const tag = new TagBlockRequest(user);
 
-  return json$1({
-  blocked: await tag.getAll(),
-}, {
-    status: HttpStatus.OK
+  return json({
+    blocked: await tag.getAll(),
+  }, {
+    status: HttpStatus.OK,
   });
 }
 
 // add tag blocks
-export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({locals, request}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
-  const {tagNames} = await request.json() as {tagNames: string[]};
+  const {tagNames} = await request.json() as { tagNames: string[] };
 
   if (!isArray(tagNames) || (isArray(tagNames) && isEmpty(tagNames))) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidTagNamesError
+    throw error(invalidTagNamesError.status, invalidTagNamesError.reason);
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
   const block = new TagBlockRequest(user);
@@ -65,34 +57,27 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
   try {
     await block.add(tagNames.map(tag => tag.trim()).filter(tag => isString(tag) && !isEmpty(tag)));
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 // remove tag blocks
-export async function DELETE({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function DELETE({locals, request}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
-  const {tagNames} = await request.json() as {tagNames: string[]};
+  const {tagNames} = await request.json() as { tagNames: string[] };
 
   if (!isArray(tagNames) || (isArray(tagNames) && isEmpty(tagNames))) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidTagNamesError
+    throw error(invalidTagNamesError.status, invalidTagNamesError.reason);
   }
 
   const user = await User.findByUniqueId(locals.user.uid);
   if (!user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidUserError;
+    throw error(invalidUserError.status, invalidUserError.reason);
   }
 
   const block = new TagBlockRequest(user);
@@ -100,14 +85,10 @@ export async function DELETE({locals, request}: RequestEvent): Promise<RequestHa
   try {
     await block.remove(tagNames.map(tag => tag.trim()).filter(tag => isString(tag) && !isEmpty(tag)));
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 class TagBlockRequest {

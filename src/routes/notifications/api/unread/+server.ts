@@ -1,9 +1,9 @@
 import {json} from '$lib/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {User} from '$lib/auth/user/server';
 
-export async function GET({locals, url: {searchParams}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({locals, url: {searchParams}}: RequestEvent): Promise<Response> {
   if (!locals.user) {
     return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }

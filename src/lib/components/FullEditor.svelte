@@ -2,7 +2,6 @@
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Delete from 'svelte-material-icons/Delete.svelte';
   import _, {isEmpty, uniq} from 'lodash-es';
-  import {session} from '$app/stores';
   import Editor from '@tinymce/tinymce-svelte';
   import type {Editor as TinyMCE} from 'tinymce';
   import Tag from '$lib/components/Tag.svelte';
@@ -17,6 +16,8 @@
   import type {Unsubscriber} from 'svelte/store';
   import {fade} from 'svelte/transition';
   import {load} from 'cheerio'
+  import {client} from '$lib/auth/user/client';
+  import {page} from '$app/stores';
 
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
@@ -40,7 +41,6 @@
 
 
   export let editorKey: string;
-  export let board: string;
   export let article: string;
   export let usedTags: string[] = [];
   export let isEditMode = false;
@@ -76,7 +76,7 @@
 
       registeredAutoTag = resultAutoTag[1];
 
-      if (!$session.user.adult && registeredAutoTag.trim() === '성인') {
+      if (!$client?.user?.adult === true && registeredAutoTag.trim() === '성인') {
         registeredAutoTag = undefined;
         return adultTagError = true;
       } else {
@@ -140,7 +140,7 @@
   }
 
   function addTag(tag: string) {
-    if (!$session.user.adult && tag.trim() === '성인') {
+    if (!$client?.user?.adult === true && tag.trim() === '성인') {
       return adultTagError = true;
     } else {
       adultTagError = false;
@@ -255,11 +255,11 @@
           tags,
         };
 
-        await ky.post(`/community/${board}/${article}/api/edit`, {
+        await ky.post(`/community/${$page.params.id}/${article}/api/edit`, {
           json: updateData,
         });
 
-        await goto(`/community/${board}/${article}`);
+        await goto(`/community/${$page.params.id}/${article}`);
 
 
       } else {
@@ -267,7 +267,7 @@
 
         const data: Partial<ArticleDto<string[]>> = {
           views: 0,
-          board,
+          board: $page.params.id,
           title,
           source,
           content, //editorObject.getHTML(),
@@ -275,13 +275,13 @@
           // images: false,
         };
 
-        const response = await ky.post(`/community/${board}/api/write`, {
+        const response = await ky.post(`/community/${$page.params.id}/api/write`, {
           json: data,
         });
 
         const {id} = await response.json<{ id: string }>();
 
-        await goto(`/community/${board}/${id}`);
+        await goto(`/community/${$page.params.id}/${id}`);
       }
 
     } finally {
@@ -532,7 +532,7 @@
         {/if}
       {/if}
     </button>
-    <a href="/community/{board}"
+    <a href="/community/{$page.params.id}"
        class="inline-block items-center bg-red-400 dark:bg-red-800 px-4 py-2 text-white rounded-md shadow-md">
       게시판으로 돌아가기
     </a>

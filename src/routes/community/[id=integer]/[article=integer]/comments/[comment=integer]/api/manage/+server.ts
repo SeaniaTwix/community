@@ -1,34 +1,33 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json as json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Comment} from '$lib/community/comment/server';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {Pusher} from '$lib/pusher/server';
 import {sanitize} from '$lib/community/comment/client';
+import {error} from '$lib/kit';
 
-const noPermisionError: RequestHandlerOutput = {
-  status: HttpStatus.NOT_ACCEPTABLE,
-  body: {
-    reason: 'you have no permission of this action',
-  },
+const noPermisionError = {
+  status: HttpStatus.UNAUTHORIZED,
+  reason: 'you have no permission of this action',
 };
 
-export async function PATCH({params, request, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function PATCH({params, request, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return noPermisionError;
+    throw error(noPermisionError.status, noPermisionError.reason);
   }
 
   const {comment} = params;
 
+  if (!comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const manage = new ManageCommentRequest(comment);
 
   if (!await manage.isAuthor(locals.user.uid)) {
-    return json$1({
-  reason: 'you are not author',
-}, {
-      status: HttpStatus.NOT_ACCEPTABLE
-    });
+    throw error(HttpStatus.NOT_ACCEPTABLE, 'you are not author');
   }
 
   let newContent: string;
@@ -37,27 +36,28 @@ export async function PATCH({params, request, locals}: RequestEvent): Promise<Re
 
     newContent = await manage.edit(content);
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return json$1({
-  newContent,
-}, {
-    status: HttpStatus.ACCEPTED
+  return json({
+    newContent,
+  }, {
+    status: HttpStatus.ACCEPTED,
   });
 }
 
-export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function DELETE({params, url, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return noPermisionError;
+    throw error(noPermisionError.status, noPermisionError.reason);
   }
 
   const {id, article, comment} = params;
+
+  if (!id || !article || !comment) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   // console.log(params)
   const p = url.searchParams.get('permanant') ?? 'no';
   const permanantly = p === 'yes';
@@ -67,47 +67,36 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   const isAdmin = rank >= EUserRanks.Manager;
 
   if (permanantly && !isAdmin) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return noPermisionError;
+    throw error(noPermisionError.status, noPermisionError.reason);
   }
 
   const manage = new ManageCommentRequest(comment);
 
+  if (!await manage.exists()) {
+    throw error(HttpStatus.NOT_FOUND, 'comment not exists');
+  }
+
+  const isAuthorsRequest = await manage.isAuthor(uid);
+  if (!isAuthorsRequest && !isAdmin) {
+    throw error(noPermisionError.status, noPermisionError.reason);
+  }
+
   try {
-    if (!await manage.exists()) {
-      return json$1({
-  reason: 'comment not exists',
-}, {
-        status: HttpStatus.NOT_FOUND
-      });
-    }
-
-    const isAuthorsRequest = await manage.isAuthor(uid);
-    if (!isAuthorsRequest && !isAdmin) {
-      throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-      return noPermisionError;
-    }
-
     if (permanantly) {
       await manage.del();
     } else {
       await manage.unpub();
     }
-
-    Pusher.notify('comments', `${article}@${id}`, uid, {
-      type: 'del',
-      target: params.comment,
-    }).then();
-
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  Pusher.notify('comments', `${article}@${id}`, uid, {
+    type: 'del',
+    target: params.comment,
+  }).then();
+
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 class ManageCommentRequest {

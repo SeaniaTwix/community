@@ -1,5 +1,5 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {S3} from '$lib/file/s3';
 import db from '$lib/database/instance';
@@ -7,56 +7,40 @@ import {aql} from 'arangojs';
 import {isEmpty} from 'lodash-es';
 import {purge} from '$lib/file/cloudflare';
 import {nanoid} from 'nanoid';
+import {error} from '$lib/kit';
 
 // get link
-export async function GET({locals}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    return json$1({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
-    });
+    throw error(HttpStatus.UNAUTHORIZED, 'please login and try again');
   }
 
-  throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-  // Suggestion (check for correctness before using):
-  // return new Response({
-  // ...S3.newAvatarUploadLink(locals.user.uid),
-} as any, { status: HttpStatus.CREATED });
-  return {
+  return json({
     status: HttpStatus.CREATED,
     body: {
       ...S3.newAvatarUploadLink(locals.user.uid),
     } as any,
-  };
+  });
 }
 
 // save uploaded url
-export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({locals, request}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    return json$1({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
-    });
+    throw error(HttpStatus.UNAUTHORIZED, 'please login and try again');
   }
 
   try {
     const {link} = await request.json() as { link: string };
 
     if (isEmpty(link)) {
-      return json$1({
-  reason: 'link is required',
-}, {
-        status: HttpStatus.NOT_ACCEPTABLE
-      });
+      throw error(HttpStatus.BAD_REQUEST, 'link is required');
     }
 
     if (!(new RegExp(`^https://s3.ru.hn/avatar/${locals.user.uid}.`)).test(link)) {
-      return json$1({
-  reason: 'avatar url seems to be invalid',
-}, {
-        status: HttpStatus.NOT_ACCEPTABLE
+      return json({
+        reason: 'avatar url seems to be invalid',
+      }, {
+        status: HttpStatus.NOT_ACCEPTABLE,
       });
     }
 
@@ -67,12 +51,8 @@ export async function POST({locals, request}: RequestEvent): Promise<RequestHand
 
     purge([link]).then().catch();
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED })
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }

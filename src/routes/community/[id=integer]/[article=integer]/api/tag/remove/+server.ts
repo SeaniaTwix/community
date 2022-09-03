@@ -1,26 +1,27 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {Article} from '$lib/community/article/server';
 import {isEmpty, uniq} from 'lodash-es';
 import {Pusher} from '$lib/pusher/server';
+import {error} from '$lib/kit';
+import type {TagError} from '@routes/community/[id=integer]/[article=integer]/api/tag/add/+server';
 
-export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function DELETE({params, url, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
-    return json({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
-    });
+    throw error(HttpStatus.UNAUTHORIZED, 'please login and try again');
   }
 
   const {id, article} = params;
 
+  if (!id || !article) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const names = url.searchParams.get('name');
 
   if (!names || isEmpty(names)) {
-    throw new Error("@migration task: Migrate this return statement (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292701)");
-    return invalidTagNameError;
+    throw error(invalidTagNameError.status, invalidTagNameError.reason);
   }
 
   const tagList = uniq(names.split(',').map(t => t.trim()));
@@ -30,11 +31,7 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   try {
     await remover.removeAll(locals.user.uid);
   } catch (e: any) {
-    return json({
-  reason: e.toString()
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    })
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
   const uniqTagList: string[] = uniq(tagList);
@@ -44,14 +41,12 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     type: 'remove',
   });
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
-const invalidTagNameError: RequestHandlerOutput = {
+const invalidTagNameError: TagError = {
   status: HttpStatus.NOT_ACCEPTABLE,
-  body: {
-    reason: 'tag name is require and must be longer than 1 character.',
-  },
+  reason: 'tag name is require and must be longer than 1 character.',
 };
 
 class RemoveTagRequest {

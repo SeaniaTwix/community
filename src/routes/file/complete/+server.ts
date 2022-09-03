@@ -1,5 +1,5 @@
 import {json} from '$lib/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
 import {ImageConverter} from '$lib/file/image/converter';
@@ -7,7 +7,7 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {EUserRanks} from '$lib/types/user-ranks';
 
-export async function POST({locals, request}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({locals, request}: RequestEvent): Promise<Response> {
   if (!locals.user || locals.user.rank <= EUserRanks.Banned) {
     return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }

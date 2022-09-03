@@ -1,12 +1,11 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
-export async function GET(_: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET(): Promise<Response> {
   return json({
-  boards: await AllBoardRequest.get(),
-})
+    boards: await AllBoardRequest.get(),
+  });
 }
 
 class AllBoardRequest {
@@ -16,6 +15,6 @@ class AllBoardRequest {
         filter board.pub == true
           return {id: board._key, name: board.name}`);
 
-    return await cursor.all()
+    return await cursor.all();
   }
 }

@@ -1,18 +1,19 @@
-import { json as json$1 } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
 import got from 'got';
+import {error} from '$lib/kit';
 
-export async function GET({url, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function GET({url, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   const u = await User.findByUniqueId(user.uid);
 
   if (!u) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   // 이게 존재하면 해당 링크가 저장되어있는지를 검색해야 함.
@@ -22,17 +23,17 @@ export async function GET({url, locals: {user}}: RequestEvent): Promise<RequestH
     // todo: test url
     const headCheck = await got.head(link);
     if (!headCheck.ok) {
-      return new Response(undefined, { status: HttpStatus.NOT_FOUND });
+      return new Response(undefined, {status: HttpStatus.NOT_FOUND});
     }
 
     const favs = await u.getFavoriteImages();
     const i = Object.values(favs).findIndex(fav => fav.src === link);
     // console.log(favs, i, Object.keys(favs)[i]);
 
-    return json$1({
-  name: i >= 0 ? Object.keys(favs)[i] : null,
-}, {
-      status: HttpStatus.OK
+    return json({
+      name: i >= 0 ? Object.keys(favs)[i] : null,
+    }, {
+      status: HttpStatus.OK,
     });
   }
 
@@ -44,22 +45,22 @@ export async function GET({url, locals: {user}}: RequestEvent): Promise<RequestH
    */
 
   //
-  return json$1({
-  favorites: await u.getFavoriteImages(),
-}, {
-    status: HttpStatus.OK
+  return json({
+    favorites: await u.getFavoriteImages(),
+  }, {
+    status: HttpStatus.OK,
   });
 }
 
-export async function POST({request, locals: {user}}: RequestEvent): Promise<RequestHandlerOutput> {
+export async function POST({request, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   const u = await User.findByUniqueId(user.uid);
 
   if (!u) {
-    return new Response(undefined, { status: HttpStatus.UNAUTHORIZED });
+    return new Response(undefined, {status: HttpStatus.UNAUTHORIZED});
   }
 
   const {url, name, size} = await request.json() as {
@@ -72,31 +73,26 @@ export async function POST({request, locals: {user}}: RequestEvent): Promise<Req
   };
 
   if (typeof url !== 'string' || typeof name !== 'string' || typeof size !== 'object') {
-    // console.log(!url, !name, !size)
-    return new Response(undefined, { status: HttpStatus.BAD_REQUEST })
+    throw error(HttpStatus.BAD_REQUEST);
   }
 
   if (!size.y || typeof size.y !== 'number') {
-    return new Response(undefined, { status: HttpStatus.BAD_REQUEST })
+    throw error(HttpStatus.BAD_REQUEST);
   } else if (size.y > 10000) {
-    return new Response(undefined, { status: HttpStatus.BAD_REQUEST })
+    throw error(HttpStatus.BAD_REQUEST);
   }
 
   try {
     await u.addFavoriteImage(url, name, size);
   } catch (e: any) {
-    return json$1({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_REQUEST, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
-export async function DELETE({request}: RequestEvent): Promise<RequestHandlerOutput> {
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+export async function DELETE({request}: RequestEvent): Promise<Response> {
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 

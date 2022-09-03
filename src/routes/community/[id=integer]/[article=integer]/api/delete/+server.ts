@@ -1,19 +1,26 @@
-import { json } from '@sveltejs/kit';
-import type {RequestEvent, RequestHandlerOutput} from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
+import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {EUserRanks} from '$lib/types/user-ranks';
 import {Article} from '$lib/community/article/server';
+import {error} from '$lib/kit';
 
-export async function DELETE({params, url, locals}: RequestEvent): Promise<RequestHandlerOutput> {
+// noinspection JSUnusedGlobalSymbols
+export async function DELETE({params, url, locals}: RequestEvent): Promise<Response> {
   if (!locals.user) {
     return json({
-  reason: 'please login and try again',
-}, {
-      status: HttpStatus.UNAUTHORIZED
+      reason: 'please login and try again',
+    }, {
+      status: HttpStatus.UNAUTHORIZED,
     });
   }
 
   const {article} = params;
+
+  if (!article) {
+    throw error(HttpStatus.BAD_GATEWAY);
+  }
+
   const permanent = !!url.searchParams.get('permanant');
 
   const remover = new ArticleDeleteRequest(article);
@@ -23,11 +30,11 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
   const isManager = locals.user.rank >= EUserRanks.Manager;
   if (!isExists || (!isAuthor && !isManager)) {
     return json({
-  notExists: !isExists,
-  notAuthor: !isAuthor,
-  notManager: !isManager,
-}, {
-      status: HttpStatus.UNAUTHORIZED
+      notExists: !isExists,
+      notAuthor: !isAuthor,
+      notManager: !isManager,
+    }, {
+      status: HttpStatus.UNAUTHORIZED,
     });
   }
 
@@ -35,14 +42,10 @@ export async function DELETE({params, url, locals}: RequestEvent): Promise<Reque
     // permdel only allowed by Admin
     await remover.delete(locals.user.rank > EUserRanks.Manager && permanent);
   } catch (e: any) {
-    return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
-    });
+    throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 class ArticleDeleteRequest {
