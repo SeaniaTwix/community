@@ -1,7 +1,7 @@
 import type {IArangoDocumentIdentifier} from '$lib/database';
-import type {CommentDto} from './dto/comment.dto';
+import type {CommentDto, PublicVoteType} from './dto/comment.dto';
 
-export interface IComment<AuthorType = string> extends IArangoDocumentIdentifier, CommentDto {
+export interface IComment<AuthorType = string, VoteType = PublicVoteType> extends IArangoDocumentIdentifier, CommentDto<VoteType> {
 
   // user id
   author: AuthorType;

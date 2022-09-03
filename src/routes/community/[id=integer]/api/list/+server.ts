@@ -7,14 +7,18 @@ import {parseInt} from 'lodash-es';
 import {Board} from '$lib/community/board/server';
 import {error} from '$lib/kit';
 
-export async function GET({params, url, locals}: RequestEvent, best = false): Promise<Response> {
+interface ListParams {
+  best: boolean;
+}
+
+export async function GET({params, url, locals}: RequestEvent, {best}: Partial<ListParams> = {}): Promise<Response> {
   if (!params.id || !isStringInteger(params.id)) {
     throw error(HttpStatus.BAD_REQUEST);
   }
 
   const pageParam = url.searchParams.get('page') ?? '1';
   const amountParam = url.searchParams.get('amount') ?? '30';
-  const type = best || url.searchParams.get('type') === 'best' ? 'best' : 'default';
+  const type = best === true || url.searchParams.get('type') === 'best' ? 'best' : 'default';
 
   return json(await load(params.id, pageParam, amountParam, type, locals));
 }

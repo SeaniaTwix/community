@@ -1,4 +1,4 @@
-import {json} from '$lib/kit';
+import {error, json} from '$lib/kit';
 import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {nanoid} from 'nanoid';
@@ -7,19 +7,11 @@ import {S3} from '$lib/file/s3';
 export async function POST({locals, url}: RequestEvent): Promise<Response> {
   const type = url.searchParams.get('type');
   if (!type) {
-    return json({
-      reason: 'type is require',
-    }, {
-      status: HttpStatus.BAD_GATEWAY,
-    });
+    throw error(HttpStatus.BAD_GATEWAY, 'type is require');
   }
 
   if (!locals.user) {
-    return json({
-      reason: 'please login and try again',
-    }, {
-      status: HttpStatus.UNAUTHORIZED,
-    });
+    throw error(HttpStatus.UNAUTHORIZED, 'please login and try again');
   }
 
   const randomId = nanoid(32);
@@ -33,13 +25,10 @@ export async function POST({locals, url}: RequestEvent): Promise<Response> {
   // prefix,
   // presigned: S3.newUploadLink(prefix, type),
   return json({
-    status: HttpStatus.CREATED,
-    body: {
-      // uploadUrl,
-      bucket: process.env.BUCKET_NAME,
-      prefix,
-      presigned: S3.newUploadLink(prefix, type),
-    } as any,
-  });
+    // uploadUrl,
+    bucket: process.env.BUCKET_NAME,
+    prefix,
+    presigned: S3.newUploadLink(prefix, type),
+  }, {status: HttpStatus.CREATED});
 }
 

@@ -9,6 +9,9 @@
   import {imageSrc} from '../community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
   import {client} from '$lib/auth/user/client';
+  import type {PageData} from '@routes/$types';
+
+  export let data: PageData;
 
   let img: HTMLImageElement;
   let wrapper: HTMLDivElement;
@@ -165,7 +168,7 @@
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
-        {#if $client?.user}
+        {#if ($client?.user ?? data?.user)}
           <span on:click={addFavorite} prevent-reply
                 class:text-yellow-400={isFavorite}
                 class="{isFavorite ? 'hover:text-red-400' : 'hover:text-yellow-400'} cursor-pointer drop-shadow transition-all">

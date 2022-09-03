@@ -4,8 +4,6 @@
 
   export let data: PageData;
 
-  console.log(data);
-
   let editorKey: string = data.editorKey;
   let name: string = data.boardName;
   let usedTags: string[] = data.usedTags;

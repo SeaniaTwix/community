@@ -37,9 +37,9 @@
   let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
   let contents: string[] = data.content!.split('\n');
   let boardName: string = data.boardName!;
-  // eslint-disable-next-line no-undef
-  // export let author: IUser;
-  export let users: Record<string, IUser>;
+  // eslint-disable-next-line no-redeclare
+  declare var users: Record<string, IUser>;
+  $: users = {};
   let comments = data.comments;
   $: noRelativeComments = comments.filter(comment => !comment.relative);
   const bestComments = comments
@@ -178,11 +178,12 @@
         const {user} = await ky.get(`/user/profile/api/detail?id=${author}`)
           .json<{ user: IUser }>();
 
-        users[user._key] = user;
+        users[author] = user;
       } catch {
         console.error('user detail unavaliable');
       }
     }
+    return users[author];
   }
 
   function openImageEditor() {
@@ -319,7 +320,8 @@
       const whenCommentChanged = async ({body}) => {
         // console.log('comment:', body);
         if (typeof body.author === 'string') {
-          await userNameExistingCheck(body.author);
+          body.author = await userNameExistingCheck(body.author);
+          console.log(body.author);
 
           if (body.relative) {
             const newComment: IComment = {
@@ -514,7 +516,7 @@
     await tick();
     fileDragging = false;
     const uploadPending = event.dataTransfer.files.item(0);
-    if (uploadPending.type.startsWith('image')) {
+    if (uploadPending && uploadPending.type.startsWith('image')) {
       commentImageUploadSrc = URL.createObjectURL(uploadPending!);
       commentImageUploadFileInfo = uploadPending;
     }
@@ -707,7 +709,7 @@
                    allComments="{comments}"
                    myVote="{selectedComment.myVote}"
                    isReplyMode="{true}"
-                   {users}/>
+                   {users} {data} />
 
           <p class="hidden sm:block mt-8 text-zinc-500 text-lg text-center select-none cursor-default">
             댓글 입력창에서 <i class="pr-0.5">Esc</i>를 눌러 답글 작성 모드 취소
@@ -732,7 +734,7 @@
                              bind:allComments="{comments}"
                              bind:users="{users}"
                              selected="{selectedComment?._key === comment._key}"
-                             {comment} isBest="{true}"/>
+                             {comment} {data} isBest="{true}"/>
                   </li>
                 {/each}
               </ul>
@@ -749,7 +751,7 @@
                          bind:allComments="{comments}"
                          bind:users="{users}"
                          selected="{selectedComment?._key === comment._key}"
-                         {comment}/>
+                         {comment} {data} />
               </li>
             {/each}
 
@@ -780,7 +782,7 @@
                  isReplyMode="{true}"
                  allComments="{comments}"
                  board="{article.board}"
-                 {users}/>
+                 {users} {data} />
       {/if}
 
       <CommentInput {commenting} {users}

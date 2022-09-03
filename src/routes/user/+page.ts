@@ -1,2 +1,0 @@
-// todo: check session
-

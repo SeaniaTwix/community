@@ -31,8 +31,9 @@ export async function load({request, locals}: ServerLoadEvent): Promise<LayoutOu
     } */
     return {
       user: locals?.user,
-      boards
-    }
+      ui: locals?.ui,
+      boards,
+    };
   } catch (e: any) {
     throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }

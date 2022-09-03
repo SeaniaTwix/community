@@ -315,7 +315,7 @@
               <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
                 <div>
                   <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                    <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author]?.id}</span>
+                    <span class="w-max after:content-[':']">{comment.author.id}</span>
                     <p class="flex-grow w-0 truncate">
                       {getRelative(comment.relative).content}
                     </p>
@@ -332,7 +332,7 @@
           {/if}
           {#if comment.image}
             <div>
-              <Image src="{comment.image}" size="{comment.imageSize}" sources="{toSources(comment.images)}" />
+              <Image {data} src="{comment.image}" size="{comment.imageSize}" sources="{toSources(comment.images)}" />
             </div>
           {/if}
           {#if !editMode}
@@ -384,7 +384,7 @@
                   </span>
                 </span>
               {/if}
-              {#if ($client?.user ?? data?.user) && ($client.user ?? data.user)?.uid !== comment.author._key}
+              {#if ($client?.user ?? data?.user) && ($client?.user ?? data?.user)?.uid !== comment.author._key}
                 <span class="cursor-pointer hover:text-red-600"
                       on:click={() => onReportClicked(comment._key)} prevent-reply>
                   <Report size="1rem"/>
@@ -396,7 +396,7 @@
                   <Edit size="1rem"/>
                 </span>
               {/if}
-              {#if comment.author._key === ($client?.user ?? data?.user)?.uid || ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
+              {#if ($client?.user ?? data?.user)?.uid === comment.author._key || ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
                 <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onDeleteClicked(comment._key)} prevent-reply>
                   <Delete size="1rem"/>

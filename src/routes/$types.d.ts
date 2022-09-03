@@ -1,8 +1,9 @@
 import type * as Kit from '@sveltejs/kit';
-import type {IUserSession} from '@root/app';
+import type {IUserSession, UI} from '@root/app';
 
 interface PageDataInternal {
   user: IUserSession;
+  ui: UI;
   boards: {
     _key: string;
     name: string;

@@ -24,7 +24,7 @@ export async function load({params, url, locals}: ServerLoadEvent): Promise<Page
     throw error(HttpStatus.NOT_FOUND, '없는 게시판입니다.');
   }
 
-  const bests = await GET({params, url, locals} as any, true);
+  const bests = await GET({params, url, locals} as any, {best: true});
   const data = await bests.json();
 
   // const bestR = await fetch(`${url.pathname}/api/best`);

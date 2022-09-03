@@ -14,7 +14,6 @@
   import {Pusher} from '$lib/pusher/client';
   import GalleryList from '$lib/components/GalleryList.svelte';
   import Cookies from 'js-cookie';
-  import type {UI} from '@root/app';
   import type {PageData} from './$types';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
   import ky from 'ky-universal';
@@ -47,7 +46,6 @@
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
-    console.log(from)
     if (from?.pathname !== to.pathname) {
       if (pusher) {
         pusher.destory();
@@ -65,16 +63,17 @@
   async function getRecentList() {
     const p = $page.url.searchParams.get('page') ?? '1';
     const res = await fetch(`${$page.url.pathname}/api/list?page=${p}`);
-    return await res.json() as { list: ArticleItemDto[], maxPage: number };
+    return await res.json() as PageData;
   }
 
   async function fullRefresh() {
-    const {list: l, maxPage: mp} = await getRecentList();
+    const newList = await getRecentList();
 
     data.session.ui.listType = listType;
 
-    articles = l;
-    maxPage = mp;
+    articles = newList.articles;
+    bests = newList.bests;
+    maxPage = newList.maxPage;
   }
 
   function toggleViewMode() {

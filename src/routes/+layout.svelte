@@ -19,7 +19,7 @@
 
   export let data: PageData;
 
-  console.log('+layout:', data);
+  // console.log('+layout:', data);
 
   function getImageOrder(cookies: Record<string, string>): AllowedExtensions[] {
     const {image_order} = cookies;

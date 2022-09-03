@@ -119,9 +119,9 @@
       <span class="hidden 2xl:inline">2xl</span-->
 
     </h2>
-    {#if $client?.user}
-      <div class="space-x-2" class:flex-row-reverse={$client?.ui?.buttonAlign === 'left'}>
-        {#if $client.user.rank >= EUserRanks.Manager}
+    {#if ($client?.user ?? data?.user)}
+      <div class="space-x-2" class:flex-row-reverse={($client?.ui ?? data?.ui)?.buttonAlign === 'left'}>
+        {#if ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
           <a href="/community/{$page.params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700
@@ -162,8 +162,8 @@
     <p>정의되지 않음.</p>
   {/if}
 
-  {#if $client?.user}
-    <div class="flex flex-row justify-end" class:flex-row-reverse={$client.ui.buttonAlign === 'left'}>
+  {#if ($client?.user ?? data?.user)}
+    <div class="flex flex-row justify-end" class:flex-row-reverse={($client?.ui ?? data?.ui)?.buttonAlign === 'left'}>
       <a href="/community/{$page.params.id}/write"
          class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600

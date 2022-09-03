@@ -1,17 +1,10 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
-import HttpStatus from 'http-status-codes';
 import {redirect} from '$lib/kit';
-import {GET} from './api/list/+server';
+import HttpStatus from 'http-status-codes';
 
 export async function load({locals}: ServerLoadEvent): Promise<any> {
+  console.log('user/+page.server.ts:', !locals.user);
   if (!locals.user) {
     throw redirect(HttpStatus.MOVED_TEMPORARILY, '/login');
   }
-
-  const response = await GET({locals} as any);
-  const {list} = await response.json();
-
-  return {
-    list,
-  };
 }
