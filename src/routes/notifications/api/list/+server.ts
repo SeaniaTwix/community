@@ -19,7 +19,6 @@ export async function GET({locals}: RequestEvent): Promise<Response> {
 
   const list = await user.loadAllNotifications(1, 20);
 
-
   return json({
     body: {
       list: await Promise.all(

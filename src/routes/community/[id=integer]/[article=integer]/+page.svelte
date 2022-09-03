@@ -40,7 +40,7 @@
   // eslint-disable-next-line no-undef
   // export let author: IUser;
   export let users: Record<string, IUser>;
-  export let comments = [];
+  let comments = data.comments;
   $: noRelativeComments = comments.filter(comment => !comment.relative);
   const bestComments = comments
     .filter(comment => comment.votes.like - comment.votes.dislike >= 1)

@@ -1,23 +1,3 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Replace error load function (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3293209)");
-/** @type {import('@sveltejs/kit').Load} */
-  // import HttpStatus from 'http-status-codes';
-
-  // export function load({ error, status, session }) {
-  //   const isNotFound = status === HttpStatus.NOT_FOUND;
-  //   const isNoAdult = error.message === 'you are not adult account';
-  //   return {
-  //     props: {
-  //       session,
-  //       title: `${status}: ${error.message}`,
-  //       errors: {
-  //         isNotFound,
-  //         isNoAdult,
-  //       }
-  //     }
-  //   };
-  // }
-</script>
 <script lang="ts">
   import {page} from '$app/stores';
 
@@ -34,7 +14,7 @@
   <h1 class="text-3xl">해당 페이지를 열람할 수 없습니다.</h1>
 
   <div class="flex flex-row">
-    {#if errors.isNoAdult}
+    {#if errors?.isNoAdult === true}
       {#if !session.user}
         <a class="text-sky-500 hover:underline decoration-sky-400" href="/login" on:click={saveLink}>
           로그인
@@ -51,10 +31,12 @@
         {/if}
         이 필요합니다
       </p>
-    {:else if errors.isNotFound}
+    {:else if errors?.isNotFound === true}
       <p>해당 게시글이 존재하지 않습니다...</p>
     {:else}
-      이유를 알 수 없습니다. 관리자에게 문의하세요. dev@ez.is
+      <p>이유를 알 수 없습니다. 관리자에게 문의하세요. dev@ez.is</p>
+      <p>{$page.error.message}</p>
+
     {/if}
   </div>
 

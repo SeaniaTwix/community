@@ -32,6 +32,7 @@
   import {uploadAllowedExtensions} from '$lib/file/image/shared';
   import {toSources} from '$lib/file/image/shared.js';
   import {client} from '$lib/auth/user/client';
+  import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
 
   const dispatch = createEventDispatcher();
   let voting = false;
@@ -181,12 +182,13 @@
   }
 
   let showInfo = false;
+  export let data: PageData;
   export let level = 0;
   export let board: string;
   export let article: string;
   export let selected = false;
   export let users: Record<string, IUser>;
-  export let comment: IComment;
+  export let comment: IComment<IUser>;
   export let allComments: IComment[] = [];
   export let isReplyMode = false;
   export let deleted = comment?.deleted === true;
@@ -228,10 +230,7 @@
   }
 
   function toImageSource(): IImage {
-    let avatar = users[comment.author]?.avatar;
-    if (!avatar) {
-      avatar = 'https://s3.ru.hn/IMG_2775.GIF';
-    }
+    let avatar = comment.author?.avatar ?? 'https://s3.ru.hn/IMG_2775.GIF';
     const type = last(avatar.split('.')).toLowerCase();
     return {src: avatar, type: `image/${type}`};
   }
@@ -278,7 +277,7 @@
                 <CircleAvatar fallback="{toImageSource()}"/>
               </div>
               <span class="group-hover:text-sky-400">
-                {users[comment.author]?.id ?? '[이름을 불러지 못 했습니다]'}
+                {comment.author?.id ?? '[이름을 불러지 못 했습니다]'}
               </span>
 
               {#if isBest}
@@ -351,12 +350,12 @@
 
           {/if}
         </div>
-        {#if $client.user}
+        {#if $client?.user ?? data?.user}
           {#if !editMode}
             <div class="pt-2 flex justify-between select-none">
           <span class="space-x-2 flex-shrink-0">
             <span on:click|preventDefault={like} prevent-reply class:cursor-progress={voting}
-                  class="text-sky-500 {$client.user.uid !== comment.author ? 'hover:text-sky-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+                  class="text-sky-500 {($client?.user ?? data?.user)?.uid !== comment.author._key ? 'hover:text-sky-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
               {#if comment.myVote.like}
                 <Like size="1rem" />
               {:else}
@@ -365,7 +364,7 @@
               {likeCount}
             </span>
             <span on:click={dislike} prevent-reply class:cursor-progress={voting}
-                  class="text-red-500 {$client.user.uid !== comment.author ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
+                  class="text-red-500 {($client?.user ?? data?.user)?.uid !== comment.author._key ? 'hover:text-red-700' : 'cursor-not-allowed'} cursor-pointer p-2 sm:p-0">
               {#if comment.myVote.dislike}
                 <Dislike size="1rem" />
               {:else}
@@ -385,26 +384,26 @@
                   </span>
                 </span>
               {/if}
-              {#if $client?.user && $client.user.uid !== comment.author}
+              {#if ($client?.user ?? data?.user) && ($client.user ?? data.user)?.uid !== comment.author._key}
                 <span class="cursor-pointer hover:text-red-600"
                       on:click={() => onReportClicked(comment._key)} prevent-reply>
                   <Report size="1rem"/>
                 </span>
               {/if}
-              {#if $client?.user?.uid === comment.author}
+              {#if ($client?.user ?? data?.user)?.uid === comment.author._key}
                 <span class="cursor-pointer hover:text-sky-400"
                       on:click={() => onEditClicked(comment._key)} prevent-reply>
                   <Edit size="1rem"/>
                 </span>
               {/if}
-              {#if comment.author === $client.user?.uid || $client?.user?.rank >= EUserRanks.Manager}
+              {#if comment.author._key === ($client?.user ?? data?.user)?.uid || ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
                 <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onDeleteClicked(comment._key)} prevent-reply>
                   <Delete size="1rem"/>
                 </span>
               {/if}
 
-              {#if $client?.user?.rank >= EUserRanks.Manager}
+              {#if ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
                 <span class="cursor-pointer hover:text-red-400"
                       on:click={() => onLockClicked(comment._key)} prevent-reply>
                   <Admin size="1rem"/>

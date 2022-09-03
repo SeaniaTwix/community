@@ -35,41 +35,43 @@ export async function GET({params, url, locals}: RequestEvent): Promise<Response
   const amount = Math.max(
     isStringInteger(paramAmount) ? toInteger(paramAmount) : 50, 50);
   const reader = locals.user ? locals.user.uid : null;
-  const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.list(amount, page, reader) ?? [];
+  const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.listAll(amount, page, reader) ?? [];
 
   return json({
-    comments: await Promise.all(comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
-      const pubVoteResult = {like: 0, dislike: 0};
-      if (!Object.hasOwn(comment, 'votes')) {
-        (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
-        comment.myVote = {like: false, dislike: false};
-        return comment;
-      }
-      for (const vote of Object.values(comment.votes)) {
-        if (vote) {
-          // @ts-ignore
-          pubVoteResult[vote.type] += 1;
+    comments: await Promise.all(
+      comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
+        const pubVoteResult = {like: 0, dislike: 0};
+        if (!Object.hasOwn(comment, 'votes')) {
+          (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
+          comment.myVote = {like: false, dislike: false};
+          return comment;
         }
-      }
-      (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
-      try {
-        if (locals.user?.uid) {
-          const cursor = await db.query(aql`
+        for (const vote of Object.values(comment.votes)) {
+          if (vote) {
+            // @ts-ignore
+            pubVoteResult[vote.type] += 1;
+          }
+        }
+        (<CommentDto<PublicVoteType>>comment).votes = pubVoteResult;
+        try {
+          if (locals.user?.uid) {
+            const cursor = await db.query(aql`
             for comment in comments
               filter comment._key == ${comment._key}
                 return comment.votes[${locals.user.uid}].type`);
-          const type = await cursor.next() as 'like' | 'dislike';
-          comment.myVote = {like: false, dislike: false};
-          if (type) {
-            comment.myVote[type] = true;
+            const type = await cursor.next() as 'like' | 'dislike';
+            comment.myVote = {like: false, dislike: false};
+            if (type) {
+              comment.myVote[type] = true;
+            }
           }
+        } catch (e) {
+          console.log('comment.ts:', e);
         }
-      } catch (e) {
-        console.log('comment.ts:', e);
-      }
 
-      return comment;
-    }) as any[]),
+        return comment;
+      }) as any[]
+    ),
   });
 }
 
@@ -244,7 +246,7 @@ class CommentRequest {
     this.article = new Article(articleId);
   }
 
-  list(amount: number, page = 1, reader: string | null) {
+  listAll(amount: number, page = 1, reader: string | null) {
     // console.log('list:', this.article.id)
     return this.article.getComments(page, amount, reader);
   }
