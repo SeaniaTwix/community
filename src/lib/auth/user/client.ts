@@ -4,7 +4,18 @@ import {decode} from 'js-base64';
 import {CookieParser} from '$lib/cookie-parser';
 import type {AllowedExtensions, IUserSession} from '../../../app';
 
-export const client = writable<App.Locals>(undefined);
+export const client = writable<App.Locals>({
+  user: undefined,
+  sessionId: '',
+  settings: {
+    imageOrder: ['jxl', 'avif', 'webp', 'png'],
+  },
+  ui: {
+    listType: 'list',
+    commentFolding: false,
+    buttonAlign: 'right',
+  }
+});
 
 function decodeToken(token: string): IUserSession | undefined {
   try {

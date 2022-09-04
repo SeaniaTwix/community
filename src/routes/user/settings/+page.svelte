@@ -1,41 +1,19 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-
-  // export async function load({session: {user, ui, settings}}: LoadEvent): Promise<LoadOutput> {
-  //   if (!user) {
-  //     return {
-  //       status: HttpStatus.MOVED_TEMPORARILY,
-  //       redirect: '/',
-  //     };
-  //   }
-
-  //   return {
-  //     status: HttpStatus.OK,
-  //     props: {
-  //       leftAlign: ui.buttonAlign === 'left',
-  //       settings,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
   import Checkbox from '$lib/components/Checkbox.svelte';
   import Cookies from 'js-cookie';
-  import {session} from '$app/stores';
   import {dayjs} from 'dayjs';
   import {flip} from 'svelte/animate';
   import {dndzone} from 'svelte-dnd-action';
-  import type {AllowedExtensions} from '../../../app';
-  import {merge} from 'lodash-es';
+  import type {AllowedExtensions} from '@root/app';
+  import {client} from '$lib/auth/user/client';
 
-  export let leftAlign: boolean;
-  export let settings;
+  import type {PageData} from './$types';
+
+  export let data: PageData;
+
+  let leftAlign = data.leftAlign;
+  let settings = data.settings;
+
   // @ts-ignore
   let imageOrder: {id: number, name: AllowedExtensions}[] = [];
   for (const i in settings.imageOrder) {
@@ -49,7 +27,7 @@
       expires: dayjs().add(1000, 'years').toDate(),
     });
 
-    session.update((s) => {
+    client.update((s) => {
       s.ui.buttonAlign = isSetAlignLeft ? 'left' : 'right';
       return s;
     });
@@ -66,7 +44,7 @@
     const expires = dayjs().add(1000, 'year').toDate();
     Cookies.set('image_order', encodeURIComponent(orders.join(',')), {expires});
 
-    session.update((s) => {
+    client.update((s) => {
       s.settings.imageOrder = orders;
       return s;
     });

@@ -1,39 +1,15 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-  // import {EUserRanks} from '$lib/types/user-ranks';
-
-  // export async function load({params: {id, article}, fetch, session: {user}}: LoadEvent): Promise<LoadOutput> {
-  //   if (!user || user.rank <= EUserRanks.User) {
-  //     return {
-  //       status: HttpStatus.NOT_ACCEPTABLE,
-  //       error: '권한이 없습니다',
-  //     };
-  //   }
-  //   const r = await fetch(`/community/${id}/${article}/manage/api/tags`);
-  //   const {tags, author} = await r.json();
-  //   return {
-  //     status: HttpStatus.OK,
-  //     props: {
-  //       tags,
-  //       author,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
-  import type {ITag} from '$lib/types/tag';
   import {isEmpty} from 'lodash-es';
   import {page} from '$app/stores';
   import Back from 'svelte-material-icons/ArrowLeftBold.svelte'
-  import {IUser} from '$lib/types/user';
 
-  export let tags: (ITag & {user: IUser})[] = [];
-  export let author: string;
+  import type {PageData} from './$types';
+
+  export let data: PageData;
+
+  let tags = data.tags;
+  let author = data.author;
+
   let exceptReserved = tags
     .filter(tag => !tag.name.startsWith('_'))
     .sort((a, b) => {
@@ -59,7 +35,12 @@
       {#each likedOnly as like}
         <li>
           <div class="bg-zinc-100 dark:bg-gray-500 px-4 py-2 rounded-md shadow-md">
-            <span>추천한 사람: {like.user.id}({like.user._key})</span>
+            <span>
+              추천한 사람: {like.user.id}({like.user._key})
+              {#if !like.pub}
+                (unpub)
+              {/if}
+            </span>
           </div>
         </li>
       {/each}
@@ -72,7 +53,12 @@
       {#each dislikedOnly as dislike}
         <li>
           <div class="bg-zinc-100 dark:bg-gray-500 px-4 py-2 rounded-md shadow-md">
-            <span>비추천한 사람: {dislike.user.id}({dislike.user._key})</span>
+            <span>
+              비추천한 사람: {dislike.user.id}({dislike.user._key})
+              {#if !dislike.pub}
+                (unpub)
+              {/if}
+            </span>
           </div>
         </li>
       {/each}

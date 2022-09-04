@@ -5,13 +5,14 @@ import HttpStatus from 'http-status-codes';
 import {isStringInteger} from '$lib/util';
 import type {IUser} from '$lib/types/user';
 import {isEmpty, uniq} from 'lodash-es';
+import {error} from '$lib/kit';
 
 export async function GET({url}: RequestEvent): Promise<Response> {
-  const id = url.searchParams.get('id');
-  if (!id) {
-    const ids = url.searchParams.get('ids');
-    if (ids) {
-      const list = uniq(ids.split(','));
+  const userId = url.searchParams.get('id');
+  if (!userId) {
+    const userIds = url.searchParams.get('ids');
+    if (userIds) {
+      const list = uniq(userIds.split(','));
       if (isEmpty(list)) {
         return json({
           users: [],
@@ -48,13 +49,9 @@ export async function GET({url}: RequestEvent): Promise<Response> {
     });
   }
 
-  const user = await User.findByUniqueId(id);
+  const user = await User.findByUniqueId(userId);
   if (!user || !await user.exists) {
-    return json({
-      reason: 'id invalid',
-    }, {
-      status: HttpStatus.BAD_GATEWAY,
-    });
+    throw error(HttpStatus.NOT_FOUND, 'user not found');
   }
 
   const userData = await user.safeData;

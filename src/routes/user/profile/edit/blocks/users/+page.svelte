@@ -1,45 +1,5 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-  // import type {IUser} from '$lib/types/user';
-
-  // export async function load({fetch, session, url}: LoadEvent): Promise<LoadOutput> {
-  //   if (!session) {
-  //     return {
-  //       status: HttpStatus.MOVED_TEMPORARILY,
-  //       redirect: '/login'
-  //     }
-  //   }
-
-  //   const requestTags = await fetch('/user/profile/edit/blocks/api/users');
-  //   const {blocked} = await requestTags.json();
-
-  //   const requestUserInfos = await fetch(`/user/profile/api/detail?ids=${blocked.map(b => b.key).join(',')}`);
-  //   const {users: usersArray} = await requestUserInfos.json() as {users: IUser[]};
-
-  //   const users = {};
-  //   for (const user of usersArray) {
-  //     users[user._key] = user;
-  //   }
-
-  //   // console.log(url.searchParams.get('id'))
-
-  //   return {
-  //     status: HttpStatus.OK,
-  //     props: {
-  //       blocked,
-  //       users,
-  //       userId: url.searchParams.get('id') ?? '',
-  //     }
-  //   }
-
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
+  import type {IUser} from '$lib/types/user';
   import {isEmpty} from 'lodash-es';
   import ky from 'ky-universal';
   import {EUserRanks} from '$lib/types/user-ranks';
@@ -48,13 +8,17 @@
   import {goto} from '$app/navigation';
   import Delete from 'svelte-material-icons/Close.svelte';
 
-  export let blocked: Array<{key: string, reason: string}>;
-  export let users: Record<string, IUser>;
+  import type {PageData} from './$types';
 
-  export let userId = '';
+  export let data: PageData;
+
+  export let blocked: Array<{key: string, reason: string}> = data.blocked;
+  export let users: Record<string, IUser> = data.users;
+
+  export let userId = data.userId;
   let reason = '';
   let uploading = false;
-  let foundUser: IUser;
+  let foundUser: IUser | undefined;
 
   async function add(target: string) {
     if (uploading || isEmpty(userId.trim())) {
@@ -137,6 +101,10 @@
     }
   });
 </script>
+
+<svelte:head>
+  <title>루헨 - 사용자 차단</title>
+</svelte:head>
 
 <div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto space-y-4">
   <div class="text-sm">

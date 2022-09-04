@@ -186,7 +186,7 @@ export class User {
           update user with {blockedUsers: newBlockedUsers} in users`);
   }
 
-  async getBlockedUsers(): Promise<string[]> {
+  async getBlockedUsers(): Promise<{key: string, reason: string}[]> {
     const cursor = await db.query(aql`
       for user in users
         filter user.id == ${this.id}

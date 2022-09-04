@@ -1,37 +1,13 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import HttpStatus from 'http-status-codes';
-
-  // export async function load({fetch, session}: LoadEvent): Promise<LoadOutput> {
-  //   if (!session) {
-  //     return {
-  //       status: HttpStatus.MOVED_TEMPORARILY,
-  //       redirect: '/login',
-  //     };
-  //   }
-
-  //   const requestTags = await fetch('/user/profile/edit/blocks/api/tags');
-  //   const {blocked} = await requestTags.json();
-
-  //   return {
-  //     status: HttpStatus.OK,
-  //     props: {
-  //       blocked,
-  //     },
-  //   };
-
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
   import ky from 'ky-universal';
   import {isEmpty} from 'lodash-es';
   import Delete from 'svelte-material-icons/Close.svelte';
 
-  export let blocked: string[];
+  import type {PageData} from './$types';
+
+  export let data: PageData;
+
+  let blocked = data.blocked;
   let tagName = '';
   let uploading = false;
 
@@ -88,6 +64,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>루헨 - 태그 차단</title>
+</svelte:head>
+
 <div class="w-4/6 sm:w-2/3 md:w-1/2 lg:w-1/3 mx-auto space-y-4">
   <div class="text-sm">
     <p>태그 차단은 최대 24개 까지 지원합니다.</p>
@@ -102,7 +82,7 @@
     {#if isEmpty(blocked)}
       <p class="text-center text-zinc-500 dark:text-zinc-300">등록된 태그 차단이 없습니다.</p>
     {:else}
-      <ul>
+      <ul class="space-y-2">
         {#each blocked as tag}
           <li>
             <div

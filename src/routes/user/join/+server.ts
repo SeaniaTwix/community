@@ -2,7 +2,7 @@ import {json} from '@sveltejs/kit';
 import type {RequestEvent} from '@sveltejs/kit';
 import {RegisterRequest} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
-import {newLoginHeaders} from '@routes/user/login/+server';
+import {newLoginHeaders} from '@routes/login/api/+server';
 import {error} from '$lib/kit';
 
 export async function POST({request}: RequestEvent): Promise<Response> {

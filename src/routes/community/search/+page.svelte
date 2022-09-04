@@ -1,47 +1,17 @@
-<script lang="ts" context="module">
-  throw new Error("@migration task: Check code was safely removed (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292722)");
-
-  // import type {LoadEvent, LoadOutput} from '@sveltejs/kit';
-  // import {isEmpty} from 'lodash-es';
-
-  // export async function load({params, url, fetch}: LoadEvent): Promise<LoadOutput> {
-  //   const q = url.searchParams.get('q') ?? '';
-
-  //   if (isEmpty(q)) {
-  //     return {
-  //       status: 200,
-  //       props: {
-  //         result: [],
-  //         q,
-  //       },
-  //     };
-  //   }
-
-  //   const response = await fetch(`/community/api/search?q=${encodeURIComponent(q)}`);
-  //   const {result} = await response.json();
-
-  //   return {
-  //     status: 200,
-  //     props: {
-  //       result: result?.hits ?? [],
-  //       q,
-  //     },
-  //   };
-  // }
-</script>
 <script lang="ts">
-  throw new Error("@migration task: Add data prop (https://github.com/sveltejs/kit/discussions/5774#discussioncomment-3292707)");
-
+  import {isEmpty} from 'lodash-es';
   import Tag from '$lib/components/Tag.svelte';
-
   import {dayjs} from 'dayjs';
+
+  import type {PageData} from './$types';
 
   function timeFullFormat(time: Date) {
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 mm분');
   }
 
-  export let result;
-  export let q = '';
+  export let data: PageData;
+  let result = data.result;
+  let q = data.q;
 </script>
 
 <svelte:head>

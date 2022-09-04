@@ -1,7 +1,6 @@
-import type {LoadEvent} from '@routes/community/[id=integer]/$types';
-import {json} from '$lib/kit';
+import type {ServerLoadEvent} from '@sveltejs/kit';
 
-export async function load({params, url, locals}: LoadEvent): Promise<Rec<any>> {
+export async function load({params, url, locals}: ServerLoadEvent): Promise<Rec<any>> {
   return {
     test:1
   }

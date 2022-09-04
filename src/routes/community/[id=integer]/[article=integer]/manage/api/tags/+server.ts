@@ -6,6 +6,8 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import {Article} from '$lib/community/article/server';
 import {error} from '$lib/kit';
+import type {ITag} from '$lib/types/tag';
+import type {IUser} from '$lib/types/user';
 
 const noPermissionError = {
   status: HttpStatus.NOT_ACCEPTABLE,
@@ -64,7 +66,7 @@ class TagManageRequest {
   /**
    * 태그를 작성한 사용자 정보와 함께 pub이 false인 태그도 전부 반환합니다.
    */
-  async getAllTags() {
+  async getAllTags(): Promise<(ITag & {user: IUser})[]> {
     const cursor = await db.query(aql`
       for tag in tags
         filter tag.target == ${this.article.id}

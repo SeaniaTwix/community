@@ -11,6 +11,8 @@ export async function load({locals}: ServerLoadEvent): Promise<any> {
   const response = await GET({locals} as any);
   const {list} = await response.json();
 
+  console.log(list);
+
   return {
     list,
   };

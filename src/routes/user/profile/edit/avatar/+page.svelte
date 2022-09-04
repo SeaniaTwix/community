@@ -4,7 +4,6 @@
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
   import EditImage from '$lib/components/EditImage.svelte';
   import ky from 'ky-universal';
-  import {session} from '$app/stores'
 
   let file: HTMLInputElement;
   let files: FileList;

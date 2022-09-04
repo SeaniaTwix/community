@@ -30,7 +30,7 @@
     highlighed,
   } from '$lib/community/comment/client';
   import {uploadAllowedExtensions} from '$lib/file/image/shared';
-  import {toSources} from '$lib/file/image/shared.js';
+  import {toSources} from '$lib/file/image/shared';
   import {client} from '$lib/auth/user/client';
   import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
 

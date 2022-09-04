@@ -5,18 +5,15 @@ import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {client} from '$lib/database/search';
 import {error, json} from '$lib/kit';
 
-export async function GET({params, url}: RequestEvent): Promise<Response> {
+export async function GET({url}: RequestEvent): Promise<Response> {
   const q = url.searchParams.get('q') ?? '';
   //console.log('q:', q);
   if (isEmpty(q)) {
     return new Response(undefined, { status: HttpStatus.NO_CONTENT });
   }
 
-  const {id} = params;
-  if (!id) {
-    throw error(HttpStatus.BAD_GATEWAY);
-  }
-  const search = new ArticleSearch(id, q);
+  // todo: board relative search
+  const search = new ArticleSearch('', q);
   try {
     return json({
       result: await search.result(),
@@ -39,6 +36,13 @@ class ArticleSearch {
   // it contains exclude (-) bcz arangodb support fulltext search
   private readonly plains: string[];
 
+  /**
+   *
+   * @param board 검색할 게시판 id. 비어있으면 전체 검색
+   * @param query 검색할 검색어 (fulltext search)
+   * @param page 현재 페이지
+   * @param max 한 페이지에서 보여줄 최대 요소 수
+   */
   constructor(private readonly board: string,
               query: string,
               private readonly page = 1,

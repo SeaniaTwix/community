@@ -1,4 +1,4 @@
-import { json } from '@sveltejs/kit';
+import {json} from '@sveltejs/kit';
 // noinspection DuplicatedCode
 
 import type {RequestEvent} from '@sveltejs/kit';
@@ -33,9 +33,9 @@ export async function GET({locals}: RequestEvent): Promise<Response> {
   const tag = new UserBlockRequest(user);
 
   return json({
-  blocked: await tag.getAll(),
-}, {
-    status: HttpStatus.OK
+    blocked: await tag.getAll(),
+  }, {
+    status: HttpStatus.OK,
   });
 }
 
@@ -59,17 +59,17 @@ export async function POST({locals, request}: RequestEvent): Promise<Response> {
   const target = await User.findByUniqueId(userId.trim());
   if (!target) {
     return json({
-  reason: 'target is not found',
-}, {
-      status: HttpStatus.NOT_FOUND
+      reason: 'target is not found',
+    }, {
+      status: HttpStatus.NOT_FOUND,
     });
   }
 
   if (await target.rank >= EUserRanks.Manager) {
     return json({
-  reason: 'you cannot block manager and admin',
-}, {
-      status: HttpStatus.NOT_ACCEPTABLE
+      reason: 'you cannot block manager and admin',
+    }, {
+      status: HttpStatus.NOT_ACCEPTABLE,
     });
   }
 
@@ -79,13 +79,13 @@ export async function POST({locals, request}: RequestEvent): Promise<Response> {
     await block.add(await target.uid, reason);
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 // remove tag blocks
@@ -111,13 +111,13 @@ export async function DELETE({locals, request}: RequestEvent): Promise<Response>
     await block.remove(userIds.map(tag => tag.trim()).filter(tag => isString(tag) && !isEmpty(tag)));
   } catch (e: any) {
     return json({
-  reason: e.toString(),
-}, {
-      status: HttpStatus.BAD_GATEWAY
+      reason: e.toString(),
+    }, {
+      status: HttpStatus.BAD_GATEWAY,
     });
   }
 
-  return new Response(undefined, { status: HttpStatus.ACCEPTED });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 class UserBlockRequest {

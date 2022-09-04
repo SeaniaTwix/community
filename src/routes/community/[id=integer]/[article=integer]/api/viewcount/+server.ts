@@ -5,22 +5,7 @@ import {Article} from '$lib/community/article/server';
 /*
   DEPRECATED!
  */
-
 export async function PUT(): Promise<Response> {
-  /*
-  const viewCount = new AddViewCountRequest(params.article);
-
-  if (!await viewCount.isArticleExists()) {
-    return {
-      status: HttpStatus.BAD_GATEWAY,
-      body: {
-        reason: 'article not exists',
-      }
-    }
-  }
-
-  await viewCount.add(user ? user.uid : sessionId); */
-
   return new Response(undefined, { status: HttpStatus.ACCEPTED })
 }
 

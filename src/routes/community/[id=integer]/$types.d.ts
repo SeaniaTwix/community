@@ -14,4 +14,3 @@ interface PageDataInternal {
 }
 
 export type PageData = PageDataInternal;
-export type LoadEvent = Kit.ServerLoadEvent

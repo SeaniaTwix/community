@@ -19,7 +19,36 @@ import {
 global.atob = atob;
 global.btoa = btoa;
 
-export const handle = sequence(ui, images, auth, setSessionId);
+// noinspection JSUnusedGlobalSymbols
+export const handle = sequence(init, ui, images, auth, setSessionId);
+
+function init({event, resolve}: HandleParameter): MaybePromise<Response> {
+  if (!event.locals) {
+    event.locals = {
+      settings: {
+        imageOrder: ['jxl', 'avif', 'webp', 'png'],
+      },
+    } as any
+  }
+
+  const cookie = event.request.headers.get('cookie') ?? '';
+  const {image_order} = CookieParser.parse(cookie);
+
+  if (image_order) {
+    try {
+      const imageOrder = decodeURIComponent(image_order)
+        .split(',')
+        .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext)) as AllowedExtensions[];
+      event.locals.settings = {
+        imageOrder,
+      }
+    } catch {
+      // do nothing
+    }
+  }
+
+  return resolve(event);
+}
 
 /** @type {import('@sveltejs/kit').Handle} */
 async function ui({event, resolve}: HandleParameter): Promise<Response> {
@@ -226,37 +255,6 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
 
   return { user: jwt.body.toJSON() as any };
 }
-
-/*
-export function getSession(event: RequestEvent) {
-  const session: App.Session = {
-    user: event.locals.user,
-    ui: event.locals.ui,
-    settings: {
-      imageOrder: ['jxl', 'avif', 'webp', 'png'],
-    },
-  };
-
-  const cookie = event.request.headers.get('cookie') ?? '';
-  const {image_order} = CookieParser.parse(cookie);
-
-  if (image_order) {
-    try {
-      const imageOrder = decodeURIComponent(image_order)
-        .split(',')
-        .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext)) as AllowedExtensions[];
-      console.log(image_order, imageOrder);
-      session.settings = {
-        imageOrder,
-      }
-
-    } catch {
-      // do nothing
-    }
-  }
-
-  return session;
-} */
 
 interface HandleParameter {
   event: RequestEvent,
