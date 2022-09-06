@@ -31,7 +31,7 @@ const reserved = {
  * @param article 게시글 id, 새 글 쓰기 중일 땐 null
  * @param user user session
  * @param tagList 태그 이름 배열
- * @return 에러가 있다면 에러<RequestHandlerOutput>를, 없다면 undefined를 반환합니다.
+ * @return 에러가 있다면 TagError를, 없다면 undefined를 반환합니다.
  */
 export async function getTagErrors(id: string, article: string | null, user: IUserSession, tagList: string[]): Promise<TagError | undefined> {
   const validatorDefault = '[a-zA-Zㄱ-ㅎ가-힣@:-]+$';
