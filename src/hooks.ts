@@ -54,6 +54,7 @@ function init({event, resolve}: HandleParameter): MaybePromise<Response> {
 async function ui({event, resolve}: HandleParameter): Promise<Response> {
   const cookie = event.request.headers.get('cookie') ?? '';
   const {
+    theme,
     comment_folding,
     button_align,
     list_type,
@@ -66,7 +67,14 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
   };
 
   const expire = dayjs().add(1000, 'year').toDate();
-  const response = await resolve(event);
+  const response = await resolve(event, {
+    transformPageChunk: ({html}) => {
+      const a = /^<html lang="\w+">/gm;
+      const themedHtml = theme === 'dark' ? '<html lang="ko" class="dark">' : '<html lang="ko">';
+      const themedBody = theme === 'dark' ? '<body class="dark:bg-gray-600 dark:text-zinc-200 transition-colors">' : '<body>';
+      return html.replace(a, themedHtml).replace('<body>', themedBody);
+    }
+  });
 
   if (!comment_folding) {
     response.headers.append('set-cookie', `comment_folding=false; Path=/; Expires=${expire};`);
@@ -79,6 +87,7 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
   if (!list_type) {
     response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
   }
+
   return response;
 }
 
