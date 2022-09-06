@@ -319,7 +319,7 @@ export class User {
 
   async isBlockedUser(userId: string) {
     const blockedUser = await this.getBlockedUsers();
-    return blockedUser.includes(userId);
+    return blockedUser.find(b => b.key === userId) !== undefined;
   }
 }
 

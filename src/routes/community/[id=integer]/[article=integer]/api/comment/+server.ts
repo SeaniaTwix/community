@@ -199,7 +199,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Res
       if (!commentData.relative) {
         const {author: authorId} = await comment.article.get();
         const author = await User.findByUniqueId(authorId);
-        const blocked = await author?.isBlockedUser(locals.user.uid) === true;
+        const blocked = await author?.isBlockedUser(locals.user.uid);
         if (author && await author.uid !== locals.user.uid && !blocked) {
           const noti = new Notifications(author);
           noti.send('articles', {
@@ -213,7 +213,7 @@ export async function POST({params, request, locals}: RequestEvent): Promise<Res
         const replyTarget = new Comment(commentData.relative);
         const {author} = await replyTarget.get();
         const commentAuthor = await User.findByUniqueId(author);
-        const blocked = await commentAuthor?.isBlockedUser(locals.user.uid) === true;
+        const blocked = await commentAuthor?.isBlockedUser(locals.user.uid);
         if (commentAuthor && await commentAuthor.uid !== locals.user.uid && !blocked) {
           const noti = new Notifications(commentAuthor);
           noti.send('articles', {

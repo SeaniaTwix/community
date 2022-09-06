@@ -43,7 +43,7 @@
                 {#if !isEmpty(hit.tags)}
                   <div class="py-2">
                     <ul class="space-x-2">
-                      {#each Object.keys(hit.tags) as tagName}
+                      {#each Object.keys(hit.tags).filter(tagName => !tagName.startsWith('_')) as tagName}
                         <li class="inline-block">
                           <a href="/community/search?q={encodeURIComponent('#' + tagName)}">
                             <Tag count="{hit.tags[tagName]}">{tagName}</Tag>
