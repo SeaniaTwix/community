@@ -1,7 +1,9 @@
 <script lang="ts">
   import Image from '$lib/components/Image.svelte';
   import {load} from 'cheerio';
+  import type {PageData} from '@routes/$types';
 
+  export let data: PageData;
   export let contents: string[] = [];
 
   function hasImages(content: string) {
@@ -51,7 +53,7 @@
   {:else if hasImages(content)}
     <p>
       {#each getImages(content) as image}
-        <Image {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
+        <Image {data} {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
       {/each}
     </p>
   {:else}

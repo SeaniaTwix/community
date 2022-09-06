@@ -4,11 +4,14 @@
   import Blind from 'svelte-material-icons/EyeOff.svelte';
   import ky from 'ky-universal';
   import {onMount} from 'svelte';
-  import {session} from '$app/stores';
   import {isEmpty, last, parseInt} from 'lodash-es';
   import HttpStatus from 'http-status-codes';
   import {imageSrc} from '../community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
+  import {client} from '$lib/auth/user/client';
+  import type {PageData} from '@routes/$types';
+
+  export let data: PageData;
 
   let img: HTMLImageElement;
   let wrapper: HTMLDivElement;
@@ -119,7 +122,7 @@
   async function onImageLoaded(element: HTMLImageElement) {
     autoNaturalSize(element);
     try {
-      if ($session.user) {
+      if ($client?.user) {
         const {name} = await ky
           .get(`/user/favorite/image?url=${encodeURIComponent(element.src)}`)
           .json<{ name: string | null }>();
@@ -145,9 +148,12 @@
     forceShow = false;
   }
 
-  const order = $session.settings.imageOrder;
+  const order = $client?.settings?.imageOrder;
 
   function sortSources(images: (typeof sources)) {
+    if (!order) {
+      return images;
+    }
     return images.sort(({srcset: a}, {srcset: b}) => {
       const baseA: string = last(a.split('/'));
       const baseB: string = last(b.split('/'));
@@ -162,7 +168,7 @@
   <div class="absolute w-full">
     {#if !nsfw || forceShow}
       <span class="absolute z-[1] mt-2 ml-2 invisible group-hover:visible text-zinc-200 select-none">
-        {#if $session.user}
+        {#if ($client?.user ?? data?.user)}
           <span on:click={addFavorite} prevent-reply
                 class:text-yellow-400={isFavorite}
                 class="{isFavorite ? 'hover:text-red-400' : 'hover:text-yellow-400'} cursor-pointer drop-shadow transition-all">

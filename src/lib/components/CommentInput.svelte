@@ -23,7 +23,7 @@
 
   export let commenting = false;
   export let commentFolding = false;
-  export let selectedComment: IComment | undefined;
+  export let selectedComment: IComment<IUser> | undefined;
   export let commentImageUploadSrc: string;
   export let smallImage: boolean;
   export let users: Record<string, IUser>;
@@ -145,7 +145,7 @@
       .map(v => v.getAsFile());
     // todo: show select image prompt if pasted images is multiple
     if (!isEmpty(images)) {
-      commentImageUploadSrc = URL.createObjectURL(images[0]);
+      commentImageUploadSrc = URL.createObjectURL(images[0]!);
       event.preventDefault();
     }
   }
@@ -189,7 +189,7 @@
 
       <div class="h-8 flex-grow flex flex-row justify-end text-lg text-zinc-600 dark:text-gray-700 cursor-default select-none w-0">
         <p class="inline-block flex flex-row min-w-0 pl-4">
-          <span class="min-w-fit">{users[selectedComment.author].id}님의 "</span>
+          <span class="min-w-fit">{selectedComment.author.id}님의 "</span>
           <span class="truncate">{selectedComment.content}</span>
           <span class="min-w-fit">"에 답장 중...
             <a id="__goto-comment" class="hover:text-sky-400 dark:hover:text-sky-600" href="{$page.url.pathname}#c{selectedComment._key}">

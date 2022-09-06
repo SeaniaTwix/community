@@ -186,7 +186,7 @@ export class User {
           update user with {blockedUsers: newBlockedUsers} in users`);
   }
 
-  async getBlockedUsers(): Promise<string[]> {
+  async getBlockedUsers(): Promise<{key: string, reason: string}[]> {
     const cursor = await db.query(aql`
       for user in users
         filter user.id == ${this.id}
@@ -224,7 +224,7 @@ export class User {
   /**
    * 많이 쓴 순서대로 태그를 반환합니다.
    */
-  async getUsersTags(): Promise<string[]> {
+  async getUsersMostUsedTags(): Promise<string[]> {
     const cursor = await db.query(aql`
       for tag in tags
         filter tag.user == ${await this.uid} && !regex_test(tag.name, "^_") && tag.pub
@@ -319,7 +319,45 @@ export class User {
 
   async isBlockedUser(userId: string) {
     const blockedUser = await this.getBlockedUsers();
-    return blockedUser.includes(userId);
+    return blockedUser.find(b => b.key === userId) !== undefined;
+  }
+}
+
+export class RegisterRequest {
+  user: User;
+
+  constructor(private body: Rec<string>) {
+    if (/\s/.test(this.id)) {
+      throw new Error('whitespace not allow in id');
+    }
+    if (this.id.length < 3) {
+      throw new Error('id is too short');
+    }
+    if (this.id.length > 16) {
+      throw new Error('id is too long');
+    }
+    if (this.password.length < 6) {
+      throw new Error('pw is too short');
+    }
+    if (this.password.length > 128) {
+      throw new Error('pw is too long');
+    }
+    if (!/^[a-zA-Z가-힣\d_]+$/.test(this.id)) {
+      throw new Error('some character is not allowed');
+    }
+    this.user = new User(this.id);
+  }
+
+  get id(): string {
+    return this.body.id;
+  }
+
+  get password(): string {
+    return this.body.password;
+  }
+
+  register() {
+    return this.user.register(this.password);
   }
 }
 

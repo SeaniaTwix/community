@@ -7,6 +7,8 @@ import {Entity, SafeType} from 'dto-mapping';
 @Entity()
 export class ArticleItemDto {
 
+  _key = '';
+
   // 자동 태그 (페이지 전용)
   autoTag?: string;
 
@@ -19,9 +21,14 @@ export class ArticleItemDto {
   tags: Rec<number> = {};
 
   @SafeType({type: Number})
-  view = 0;
+  views = 0;
 
   @SafeType({type: Date})
   createdAt = new Date(); //
 
+  editedAt?: Date;
+
+  images = false;
+
+  locked = false;
 }

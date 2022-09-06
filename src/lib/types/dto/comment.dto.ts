@@ -31,7 +31,7 @@ export class CommentDto<VoteType = InternalVoteType> {
   @SafeType({type: Boolean})
   pub: boolean = true;
 
-  // 코멘트용 이미지 (상단 고정. 단일 이미지)
+  // 코멘트용 원본 이미지 (상단 고정. 단일 이미지)
   image?: string;
 
   // 코멘트용 변환된 이미지 (jxl, avif, webp, png) 원본은 없음

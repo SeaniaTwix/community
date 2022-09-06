@@ -112,7 +112,12 @@ export class Article {
         filter comment.author not in blockedUsers
           limit ${(page - 1) * amount}, ${amount}
           let publicComment = unset(comment, "_rev", "_id", "pub")
-          return isPub ? merge(publicComment, {images: images}) : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true, images: images})`);
+          let authorData = first(
+            for user in users
+              filter user._key == comment.author
+               return user)
+          let authorDataSafe = keep(authorData, "_key", "id", "rank")
+          return isPub ? merge(publicComment, {images: images, author: authorDataSafe}) : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true, images: images, author: authorDataSafe})`);
     return await cursor.all();
   }
 

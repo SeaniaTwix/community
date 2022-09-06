@@ -6,7 +6,7 @@ import {Entity, SafeType} from 'dto-mapping';
 import type {ITag} from '$lib/types/tag';
 import type {IUser} from '$lib/types/user';
 
-export type InternalTagType = ITag[];
+export type InternalTagType = string[];
 export type ClientToServerTagType = string[];
 export type ServerToClientTagType = Record<string, number>;
 
@@ -40,6 +40,7 @@ export class ArticleDto<TagType = InternalTagType> {
 
   createdAt?: Date | number;
 
+  // deprecated
   @SafeType({type: Number})
   views = 0;
 

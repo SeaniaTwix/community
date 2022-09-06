@@ -10,7 +10,7 @@
   import Comment from 'svelte-material-icons/Comment.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
   import {toSources} from '$lib/file/image/shared';
-  import {page, session} from '$app/stores';
+  import {page} from '$app/stores';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -32,7 +32,7 @@
     return {src: avatar, type: `image/${type}`};
   }
 
-  const order = $session.settings.imageOrder;
+  const order = ['jxl', 'avif', 'webp', 'png']; // $session.settings.imageOrder;
 
   function sortSources(images: {srcset: string, type: string}[]) {
     return images.sort(({srcset: a}, {srcset: b}) => {

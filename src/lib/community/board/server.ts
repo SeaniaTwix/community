@@ -2,9 +2,79 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 import type {EUserRanks} from '$lib/types/user-ranks';
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
+import type {ArticleDto, ServerToClientTagType} from '$lib/types/dto/article.dto';
+import {error} from '$lib/kit';
+import HttpStatus from 'http-status-codes';
+import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
+import {initAutoTag} from '$lib/community/shared/auto-tag';
+import type {ListBoardRequest} from '@routes/community/[id=integer]/api/list/+server';
+
+type BoardType = 'default' | 'best';
 
 export class Board {
   constructor(private readonly id: string) {
+  }
+
+  static async listAll() {
+    const cursor = await db.query(aql`
+      for board in boards
+        filter board.pub
+          return unset(board, "_id", "_rev")`);
+    return await cursor.all();
+  }
+
+  async render(pageRequest: ListBoardRequest, type: BoardType, locals: App.Locals) {
+    const list: ArticleDto[] = type === 'default' ?
+        await pageRequest.getListRecents(locals?.user?.uid ?? null) as any[]
+      : await pageRequest.getBestListRecents(locals?.user?.uid ?? null) as any[];
+
+    const maxPage = type === 'default' ?
+        await pageRequest.getMaxPage()
+      : await pageRequest.getBestMaxPage();
+
+    const page = pageRequest.page
+
+    if (page > maxPage) {
+      throw error(HttpStatus.NOT_FOUND, 'Not found');
+    }
+
+    const {user, sessionId} = locals;
+
+    const bests = await this.getBests(page, user?.uid ?? null, 10, 1);
+
+    const announcements = await this.getAnnouncements(page, user ? user.uid : sessionId!);
+
+    return {
+      articles: list
+        .map((article) => {
+          const {tags} = article;
+          if (tags) {
+            const counted: Rec<number> = {};
+            for (const tag of tags) {
+              if (counted[tag]) {
+                counted[tag] += 1;
+              } else {
+                counted[tag] = 1;
+              }
+            }
+            (<ArticleDto<ServerToClientTagType>><unknown>article).tags = counted;
+
+            if (tags.includes('성인') && locals?.user?.adult !== true) {
+              article.images = '';
+            }
+          }
+
+          return article as unknown as ArticleItemDto;
+        })
+        .map(initAutoTag),
+      user,
+      name: await this.name,
+      currentPage: page,
+      maxPage,
+      bests,
+      announcements,
+      session: locals,
+    };
   }
 
   async create(title: string, pub: boolean) {
