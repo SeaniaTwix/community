@@ -8,7 +8,6 @@ import HttpStatus from 'http-status-codes';
 import {isEmpty} from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 import {EUserRanks} from '$lib/types/user-ranks';
-import type {IArticle} from '$lib/types/article';
 import {load} from 'cheerio';
 import type {Element} from 'cheerio/lib';
 import * as process from 'process';
@@ -32,7 +31,7 @@ export async function GET({params, locals}: RequestEvent): Promise<Response> {
   console.log('_article:', article);
 
   if (!article) {
-    return new Response(undefined, {status: HttpStatus.NOT_FOUND});
+    throw error(HttpStatus.NOT_FOUND);
   }
 
   if (article && Object.keys(article.tags ?? {}).includes('성인')) {

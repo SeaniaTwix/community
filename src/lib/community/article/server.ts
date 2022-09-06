@@ -12,7 +12,6 @@ import rehypeStringify from 'rehype-stringify';
 import {load} from 'cheerio'
 import type {Element as CheerioElement} from 'cheerio/lib'
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
-// import {validate as validateUuid, version as versionUuid} from 'uuid';
 
 export class Article {
 
@@ -116,7 +115,7 @@ export class Article {
             for user in users
               filter user._key == comment.author
                return user)
-          let authorDataSafe = keep(authorData, "_key", "id", "rank")
+          let authorDataSafe = keep(authorData, "_key", "id", "rank", "avatar")
           return isPub ? merge(publicComment, {images: images, author: authorDataSafe}) : merge(keep(publicComment, "_key", "author", "createdAt"), {deleted: true, images: images, author: authorDataSafe})`);
     return await cursor.all();
   }
