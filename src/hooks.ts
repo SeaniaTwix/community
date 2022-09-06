@@ -71,7 +71,7 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
     transformPageChunk: ({html}) => {
       const a = /^<html lang="\w+">/gm;
       const themedHtml = theme === 'dark' ? '<html lang="ko" class="dark">' : '<html lang="ko">';
-      const themedBody = theme === 'dark' ? '<body class="dark:bg-gray-600 dark:text-zinc-200 transition-colors">' : '<body>';
+      const themedBody = '<body class="dark:bg-gray-600 dark:text-zinc-200 transition-colors">';
       return html.replace(a, themedHtml).replace('<body>', themedBody);
     }
   });
