@@ -98,7 +98,6 @@
 <Nav {data}/>
 <Notifications/>
 <main>
-  {JSON.stringify($client)}
   <slot/>
 </main>
 
