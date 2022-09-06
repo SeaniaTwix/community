@@ -28,9 +28,9 @@
 
   afterNavigate(() => {
     const cookies = CookieParser.parse(document.cookie);
-    client.update(() => {
+    client.update((prev) => {
       return {
-        user: data.user,
+        user: prev.user ?? data.user,
         settings: {
           imageOrder: getImageOrder(cookies),
         },
@@ -98,6 +98,7 @@
 <Nav {data}/>
 <Notifications/>
 <main>
+  {JSON.stringify($client)}
   <slot/>
 </main>
 
