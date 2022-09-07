@@ -72,7 +72,7 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
       // todo: global variable?
       const themed = theme === 'light' ? '#FFFFFF' : '#3C4556';
       return html
-        .replace('<>HTML-CLASS<>', 'dark')
+        .replace('<>HTML-CLASS<>', theme === 'light' ? '' : 'dark')
         .replace('<>BODY-CLASS<>', 'dark:bg-gray-600 dark:text-zinc-200 transition-colors')
         .replace('<>META-THEME-COLOR<>', themed);
     }

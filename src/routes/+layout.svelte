@@ -58,6 +58,10 @@
       NotificationsClient.init(user.uid);
     }
 
+    iosStatusBarColor.subscribe((color) => {
+      const themeColorElement: HTMLMetaElement = document.querySelector('meta[name="theme-color"]');
+      themeColorElement.setAttribute('content', color);
+    });
   });
 
   page.subscribe(async () => {
