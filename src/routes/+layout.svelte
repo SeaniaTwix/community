@@ -52,14 +52,18 @@
       html.classList.add('dark');
     }
 
-    if (data?.user) {
-      NotificationsClient.init(data.user.uid);
+    const user = $client?.user ?? data?.user;
+
+    if (user) {
+      NotificationsClient.init(user.uid);
     }
 
   });
 
   page.subscribe(async () => {
-    if (data?.user) {
+    const user = $client?.user ?? data?.user;
+
+    if (user) {
       try {
         const {unread: u} = await ky.get('/notifications/api/unread?exists').json<{ unread: boolean }>();
         unread.set(u ?? false);
@@ -69,17 +73,17 @@
       }
 
       const now = Date.now();
-      const expiredAt = data.user.exp * 1000;
+      const expiredAt = $client.user?.exp * 1000;
       if (isNaN(now - expiredAt)) {
         return;
       }
       if (now - expiredAt > 0) {
         ky.get('/user/profile/api/my').json()
           .then(({user}) => {
-            data.user = user;
+            $client.user = user;
           })
           .catch(() => {
-            data.user = undefined;
+            $client.user = undefined;
           });
       }
     }
@@ -88,11 +92,6 @@
   //export let boards: string[] = [];
   // console.log(uid)
 </script>
-<svelte:head>
-  <meta name="theme-color" content="{$iosStatusBarColor}"/>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-</svelte:head>
 <Nav {data}/>
 <Notifications/>
 <main>

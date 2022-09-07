@@ -69,10 +69,12 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
   const expire = dayjs().add(1000, 'year').toDate();
   const response = await resolve(event, {
     transformPageChunk: ({html}) => {
-      const a = /^<html lang="\w+">/gm;
-      const themedHtml = theme === 'dark' ? '<html lang="ko" class="dark">' : '<html lang="ko">';
-      const themedBody = '<body class="dark:bg-gray-600 dark:text-zinc-200 transition-colors">';
-      return html.replace(a, themedHtml).replace('<body>', themedBody);
+      // todo: global variable?
+      const themed = theme === 'light' ? '#FFFFFF' : '#3C4556';
+      return html
+        .replace('<>HTML-CLASS<>', 'dark')
+        .replace('<>BODY-CLASS<>', 'dark:bg-gray-600 dark:text-zinc-200 transition-colors')
+        .replace('<>META-THEME-COLOR<>', themed);
     }
   });
 
