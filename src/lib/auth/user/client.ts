@@ -4,17 +4,13 @@ import {decode} from 'js-base64';
 import {CookieParser} from '$lib/cookie-parser';
 import type {AllowedExtensions, IUserSession} from '../../../app';
 
-export const client = writable<App.Locals>({
+export const client = writable<Partial<App.Locals>>({
   user: undefined,
   sessionId: '',
   settings: {
     imageOrder: ['jxl', 'avif', 'webp', 'png'],
   },
-  ui: {
-    listType: 'list',
-    commentFolding: false,
-    buttonAlign: 'right',
-  }
+  ui: undefined,
 });
 
 function decodeToken(token: string): IUserSession | undefined {

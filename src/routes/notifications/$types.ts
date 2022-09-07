@@ -1,7 +1,8 @@
 import type {IPublicNotify} from '$lib/types/notify';
+import type {PageData as DefaultData} from '@routes/$types';
 
-interface PageDataInternal {
-  list: IPublicNotify[]
+interface PageDataInternal extends DefaultData {
+  list: IPublicNotify[];
 }
 
 export type PageData = PageDataInternal;

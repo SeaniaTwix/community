@@ -17,8 +17,10 @@
   import type {PageData} from './$types';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
   import ky from 'ky-universal';
+  import {client} from '$lib/auth/user/client.js';
+  import type {UI} from '@root/app';
 
-  export let data: PageData;
+  export let data: PageData & {ui?: UI};
 
   let articles = data.articles;
   let announcements = data.announcements;
@@ -27,7 +29,7 @@
   let name = data.name;
   let currentPage = data.currentPage;
   let maxPage = data.maxPage;
-  let listType = data.session?.ui?.listType ?? 'list';
+  let listType = ($client.ui?.listType ?? data.ui?.listType) ?? 'list';
   let showBest = isEmpty(announcements);
 
   async function reload() {
@@ -40,7 +42,7 @@
     name = data.name;
     currentPage = data.currentPage;
     maxPage = data.maxPage;
-    listType = data.session?.ui?.listType ?? 'list';
+    listType = ($client.ui?.listType ?? data.ui?.listType) ?? 'list';
     showBest = isEmpty(announcements);
   }
 
@@ -69,7 +71,11 @@
   async function fullRefresh() {
     const newList = await getRecentList();
 
-    data.session.ui.listType = listType;
+    if (!$client?.ui) {
+      throw new Error('ui is ' + $client?.ui);
+    }
+
+    $client.ui.listType = listType;
 
     articles = newList.articles;
     bests = newList.bests;
@@ -214,7 +220,7 @@
   </nav>
 
   <div class="flex justify-between items-center" class:pb-2={!isEmpty(bests)}
-       class:flex-row-reverse={data?.ui?.buttonAlign === 'left'}>
+       class:flex-row-reverse={($client.ui?.buttonAlign ?? data.ui?.buttonAlign) === 'left'}>
     <a href="/community/{$page.params.id}" on:click|preventDefault={fullRefresh}>
       <h2 class="text-2xl">
         {name}
@@ -228,9 +234,9 @@
 
       </h2>
     </a>
-    {#if data.session?.user}
-      <div class="space-x-2" class:flex-row-reverse={data.session?.ui.buttonAlign === 'left'}>
-        {#if data.session.user.rank >= EUserRanks.Manager}
+    {#if $client?.user ?? data?.user}
+      <div class="space-x-2" class:flex-row-reverse={($client.ui?.buttonAlign ?? data.ui?.buttonAlign) === 'left'}>
+        {#if data.user.rank >= EUserRanks.Manager}
           <a href="/community/{$page.params.id}/manage"
              class="px-4 py-2 inline-block ring-1 ring-red-400 hover:bg-red-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-red-700
@@ -366,15 +372,15 @@
   </div>
 
   {#if listType === 'list'}
-    <ArticleList user="{data.session.user}" board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
+    <ArticleList user="{$client?.user ?? data?.user}" board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else if listType === 'gallery'}
     <GalleryList board={id} list="{articles}" on:userclick={changeClickedUser} showingUserContextMenuIndex="{userContextMenuIndex}"/>
   {:else}
     <p>정의되지 않음.</p>
   {/if}
 
-  {#if data.session.user}
-    <div class="flex flex-row justify-end" class:flex-row-reverse={data.session?.ui.buttonAlign === 'left'}>
+  {#if $client?.user ?? data?.user}
+    <div class="flex flex-row justify-end" class:flex-row-reverse={($client.ui?.buttonAlign ?? data.ui?.buttonAlign) === 'left'}>
       <a href="/community/{$page.params.id}/write"
          class="px-3 py-1.5 inline-block ring-1 ring-sky-400 hover:bg-sky-400
          hover:text-white rounded-md shadow-md transition-colors dark:bg-sky-600
