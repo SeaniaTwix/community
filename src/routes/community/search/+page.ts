@@ -15,7 +15,7 @@ export async function load({url, fetch}: LoadEvent): Promise<PageData> {
   const response = await fetch(`/community/api/search?q=${encodeURIComponent(q)}`);
   const {result} = await response.json();
 
-  console.log('search:', result);
+  // console.log('search:', result);
 
   return {
     result: result?.hits ?? [],

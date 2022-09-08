@@ -9,7 +9,7 @@ export async function GET({url}: RequestEvent): Promise<Response> {
   const q = url.searchParams.get('q') ?? '';
   //console.log('q:', q);
   if (isEmpty(q)) {
-    return new Response(undefined, { status: HttpStatus.NO_CONTENT });
+    return new Response(undefined, {status: HttpStatus.NO_CONTENT});
   }
 
   // todo: board relative search
@@ -55,10 +55,10 @@ class ArticleSearch {
       .filter(q => q.startsWith('-#') && q.length >= 3);
     this.exclTags = this._exclTags.map(tag => tag.substring(2));
     this._titles = this.frags
-      .filter(q => q.startsWith('@') && q.length >= 2);
+      .filter(q => q.startsWith('$') && q.length >= 2);
     this.titles = this._titles.map(title => title.substring(1));
     this._exclTitles = this
-      .frags.filter(q => q.startsWith('-@') && q.length >= 3);
+      .frags.filter(q => q.startsWith('-$') && q.length >= 3);
     this.exclTitles = this._exclTitles.map(title => title.substring(2));
     this.plains = this.frags.filter((q) => {
       return !this._tags.includes(q)
@@ -79,7 +79,8 @@ class ArticleSearch {
   }
 
   private static transformTagExcludeCondition(tagCondition: string) {
-    // todo: exists filter is not yet ready in meilisearch.
+    // todo: exists filter is not yet ready in meilisearch. (requires ^0.29.0)
+    return `tags.${tagCondition} NOT EXISTS`;
   }
 
   async result(): Promise<ArticleItemDto[]> {
@@ -95,10 +96,12 @@ class ArticleSearch {
     }
 
     const filter = this.tags.map(ArticleSearch.transformTagCondition);
+    const exclFilter = this.exclTags.map(ArticleSearch.transformTagExcludeCondition);
 
     const d = await client.index('articles')
       .search(this.plains.join(' '), {
-        filter,
+        filter: [filter, exclFilter],
+        sort: ['createdAt:desc'],
         limit: this.max,
       });
 

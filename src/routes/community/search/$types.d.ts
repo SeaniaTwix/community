@@ -1,5 +1,7 @@
+import type {Hits} from 'meilisearch';
+
 interface PageDataIntenal {
-  result: any[];
+  result: Hits;
   q: string;
 }
 

@@ -4,6 +4,13 @@
   import {dayjs} from 'dayjs';
 
   import type {PageData} from './$types';
+  import ky from 'ky-universal';
+  import type {SearchResponse} from 'meilisearch';
+  import {page} from '$app/stores';
+  import {onDestroy, onMount} from 'svelte';
+  import {fade} from 'svelte/transition';
+  import type {Unsubscriber} from 'svelte/store';
+  import {beforeNavigate} from '$app/navigation';
 
   function timeFullFormat(time: Date) {
     return dayjs(new Date(time)).format('YYYY년 M월 D일 HH시 mm분');
@@ -12,6 +19,36 @@
   export let data: PageData;
   let result = data.result;
   let q = data.q;
+
+  let querySub: Unsubscriber;
+
+  onMount(() => {
+    querySub = page.subscribe(async (p) => {
+      const current = p.url.searchParams.get('q');
+      if (!isEmpty(q) && q !== current) {
+        const {
+          result: searchResult,
+        } = await ky.get(`/community/api/search?q=${encodeURIComponent(current)}`).json<{ result: SearchResponse }>();
+        result = searchResult.hits;
+        // console.log(searchResult);
+      }
+      q = current;
+    });
+  });
+
+  beforeNavigate(({from, to}) => {
+    if (from.pathname !== to?.pathname) {
+      if (querySub) {
+        querySub();
+      }
+    }
+  });
+
+  onDestroy(() => {
+    if (querySub) {
+      querySub();
+    }
+  });
 </script>
 
 <svelte:head>
@@ -22,7 +59,7 @@
   <ul class="space-y-4">
     {#if !isEmpty(result)}
       {#each result as hit}
-        <li class="group">
+        <li transition:fade class="group">
           <a data-sveltekit-prefetch href="/community/{hit.board}/{hit.id}">
             <div class="rounded-md w-full shadow-md px-4 py-2 space-y-1 flex flex-col">
 
@@ -32,13 +69,16 @@
                 </div>
                 <div class="text-right flex flex-col justify-between">
                   <p class="w-max">작성자: {hit?.author?.name}</p>
-                  <time class="pb-2 hidden sm:block w-max" datetime="{(new Date(hit.createdAt)).toUTCString()}">작성일: {timeFullFormat(hit.createdAt)}</time>
+                  <time class="pb-2 hidden sm:block w-max" datetime="{(new Date(hit.createdAt)).toUTCString()}">
+                    작성일: {timeFullFormat(hit.createdAt)}</time>
                 </div>
               </div>
 
 
               <div>
-                <p>{hit.content.slice(0, 450)}{#if hit.content.length > 450}...{/if}</p>
+                <p>{hit.content.slice(0, 450)}
+                  {#if hit.content.length > 450}...{/if}
+                </p>
 
                 {#if !isEmpty(hit.tags)}
                   <div class="py-2">
