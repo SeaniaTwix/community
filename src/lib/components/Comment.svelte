@@ -372,7 +372,7 @@
             </span>
           </span>
             {#if !isReplyMode}
-            <span class="inline-block flex-grow w-0 flex flex-row justify-end overflow-x-scroll space-x-2">
+            <span class="__no-scrollbar inline-block flex-grow w-0 flex flex-row justify-end overflow-x-scroll space-x-2">
               {#if notFetchedReplyCounts > 0}
                 <span class="cursor-pointer hover:text-sky-600 text-sm flex-grow-0 w-fit flex-shrink-0"
                       on:click={fetchAllReplies} prevent-reply>
@@ -462,6 +462,10 @@
         overflow-wrap: break-word;
       }
     }
+  }
+
+  .__no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   .__center-text {
