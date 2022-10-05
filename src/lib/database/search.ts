@@ -8,7 +8,7 @@ import { uniq } from 'lodash-es';
 import {Article} from '$lib/community/article/server';
 
 export const client = new MeiliSearch({
-  host: 'http://127.0.0.1:7700',
+  host: process.env.SEARCH_ENDPOINT ?? 'http://127.0.0.1:7700',
   apiKey: process.env.SEARCH_KEY,
 });
 
