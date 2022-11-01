@@ -6,7 +6,7 @@
   import Search from 'svelte-material-icons/Magnify.svelte';
   import NewNoti from 'svelte-material-icons/Circle.svelte';
   import Cookies from 'js-cookie';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
   import {fly, fade} from 'svelte/transition';
   import {page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
@@ -78,14 +78,14 @@
     if (isDarkMode) {
       html.classList.remove('dark');
       Cookies.set('theme', 'light', {
-        expires: dayjs().add(999, 'year').toDate(),
+        expires: 3650,
       });
       theme.set({mode: 'light'});
       iosStatusBar.set({mode: 'light'});
     } else {
       html.classList.add('dark');
       Cookies.set('theme', 'dark', {
-        expires: dayjs().add(999, 'year').toDate(),
+        expires: 3650,
       });
       theme.set({mode: 'dark'});
       iosStatusBar.set({mode: 'dark'});

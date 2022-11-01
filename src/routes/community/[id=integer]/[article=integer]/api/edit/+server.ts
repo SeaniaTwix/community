@@ -1,3 +1,5 @@
+// noinspection DuplicatedCode
+
 import {json} from '@sveltejs/kit';
 import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
@@ -14,10 +16,7 @@ import {create} from 'node:domain';
 import {error} from '$lib/kit';
 import type {ITag} from '$lib/types/tag';
 
-/**
- * 편집 전용 게시글 내용 소스 가져오기
- */
-export async function GET({params, locals}: RequestEvent): Promise<Response> {
+export async function retriveEditInfo({params, locals}: RequestEvent) {
   if (!locals.user) {
     throw error(HttpStatus.UNAUTHORIZED);
   }
@@ -35,18 +34,21 @@ export async function GET({params, locals}: RequestEvent): Promise<Response> {
   }
 
   try {
-    return json({
+    return {
       edit: await edit.getEditable(locals.user.uid) as any,
-    }, {
-      status: HttpStatus.OK,
-    });
+    }
   } catch (e: any) {
-    return json({
+    return {
       reason: e.toString(),
-    }, {
-      status: HttpStatus.BAD_GATEWAY,
-    });
+    }
   }
+}
+
+/**
+ * 편집 전용 게시글 내용 소스 가져오기
+ */
+export async function GET(event: RequestEvent): Promise<Response> {
+  return json(await retriveEditInfo(event));
 }
 
 export async function POST({params, locals, request}: RequestEvent): Promise<Response> {

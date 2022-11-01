@@ -1,7 +1,7 @@
 <script lang="ts">
   import Checkbox from '$lib/components/Checkbox.svelte';
   import Cookies from 'js-cookie';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
   import {flip} from 'svelte/animate';
   import {dndzone} from 'svelte-dnd-action';
   import type {AllowedExtensions} from '@root/app';

@@ -2,7 +2,7 @@
   import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
   import TimeAgo from 'javascript-time-ago';
   import {isEmpty, last} from 'lodash-es';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
   import View from 'svelte-material-icons/Eye.svelte';
   import Comment from 'svelte-material-icons/Comment.svelte';
   import {ko} from '$lib/time-ko';

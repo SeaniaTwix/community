@@ -2,7 +2,6 @@ import {json} from '@sveltejs/kit';
 import type {RequestEvent} from '@sveltejs/kit';
 import {User} from '$lib/auth/user/server';
 import HttpStatus from 'http-status-codes';
-import {dayjs} from 'dayjs';
 import type {LoginDto} from '$lib/types/dto/login.dto';
 import {inRange} from 'lodash-es';
 import {error} from '$lib/kit';

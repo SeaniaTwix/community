@@ -1,7 +1,7 @@
 <script lang="ts">
   import ky from 'ky-universal';
   import {goto} from '$app/navigation';
-  import type {PageData} from '@routes/$types';
+  import type {PageData} from '$lib/types/$types';
   import {client} from '$lib/auth/user/client';
 
   export let data: PageData;

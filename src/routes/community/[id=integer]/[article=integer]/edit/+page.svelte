@@ -1,17 +1,24 @@
 <script lang="ts">
   import FullEditor from '$lib/components/FullEditor.svelte';
+  import type {PageData} from './$types';
+  import {key} from '$lib/editor-key';
+  import {page} from '$app/stores';
 
-  export let title = '';
-  export let source = '';
-  export let content = '';
-  export let tags: string[] = [];
-  export let tagCounts = tags.length;
+  export let data: PageData;
 
-  export let editorKey: string;
-  export let article: string;
-  export let board: string;
-  export let name: string;
-  export let usedTags: string[] = [];
+  let title = data.title;
+  let source = data.source;
+  let content = data.content;
+  let tags: string[] = data.tags;
+  // eslint-disable-next-line no-redeclare
+  declare var tagCounts: number;
+  $: tagCounts = tags.length;
+
+  let editorKey = key;
+  let article = $page.params.article;
+  let board = $page.params.id;
+  let name = data.boardName;
+  let usedTags: string[] = [];
 
 </script>
 

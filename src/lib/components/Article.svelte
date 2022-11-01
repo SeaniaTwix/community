@@ -14,7 +14,7 @@
 
   import {goto} from '$app/navigation';
   import TimeAgo from 'javascript-time-ago';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
   import CircleAvatar from './CircleAvatar.svelte';
   import Content from './Content.svelte';
   import Tag from './Tag.svelte';

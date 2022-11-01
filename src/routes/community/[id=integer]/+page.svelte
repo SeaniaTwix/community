@@ -48,7 +48,7 @@
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
-    if (from?.pathname !== to.pathname) {
+    if (from?.url.pathname !== to?.url.pathname) {
       if (pusher) {
         pusher.destory();
       }

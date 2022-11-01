@@ -7,7 +7,7 @@ import {inRange} from 'lodash-es';
 import HttpStatus from 'http-status-codes';
 import {User} from '$lib/auth/user/server';
 import {error as HttpError, json} from '$lib/kit';
-import {dayjs} from 'dayjs';
+import dayjs from 'dayjs';
 
 // noinspection JSUnusedGlobalSymbols
 export const POST: RequestHandler = async ({request}: RequestEvent): Promise<Response> => {

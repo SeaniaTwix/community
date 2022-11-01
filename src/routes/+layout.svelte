@@ -3,7 +3,6 @@
   import '../styles/tailwind.css';
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
-  import {classList} from 'svelte-body';
   import {onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
   import {page} from '$app/stores';
@@ -12,7 +11,7 @@
   import ky from 'ky-universal';
   import {NotificationsClient, unread} from '$lib/notifications/client';
 
-  import type {PageData} from './$types';
+  import type {PageData} from '$lib/types/$types';
   import {client} from '$lib/auth/user/client';
   import {afterNavigate} from '$app/navigation';
   import type {AllowedExtensions} from '@root/app';

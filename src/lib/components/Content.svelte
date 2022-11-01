@@ -1,7 +1,7 @@
 <script lang="ts">
   import Image from '$lib/components/Image.svelte';
   import {load} from 'cheerio';
-  import type {PageData} from '@routes/$types';
+  import type {PageData} from '$lib/types/$types';
 
   export let data: PageData;
   export let contents: string[] = [];

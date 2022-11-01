@@ -306,7 +306,7 @@
 
 
   afterNavigate(({from, to}) => {
-    if (from?.pathname !== to.pathname) {
+    if (from?.url.pathname !== to?.url.pathname) {
       $highlighed = undefined;
 
       if (pusher) {

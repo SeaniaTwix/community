@@ -6,7 +6,7 @@ import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import {atob, btoa} from 'js-base64';
 import {User} from '$lib/auth/user/server';
-import {dayjs} from 'dayjs';
+import dayjs from 'dayjs';
 import type {JwtUser} from '$lib/types/user';
 import type {AllowedExtensions} from './app';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -66,11 +66,13 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
     listType: (list_type ?? 'list') === 'list' ? 'list' : 'gallery',
   };
 
-  const expire = dayjs().add(1000, 'year').toDate();
+  const expire = dayjs().add(1000, 'y').toDate();
+  const validTheme = theme === 'light' ? 'light' : 'dark';
   const response = await resolve(event, {
     transformPageChunk: ({html}) => {
       // todo: global variable?
       const themed = theme === 'light' ? '#FFFFFF' : '#3C4556';
+      console.log(themed)
       return html
         .replace('<>HTML-CLASS<>', theme === 'light' ? '' : 'dark')
         .replace('<>BODY-CLASS<>', 'dark:bg-gray-600 dark:text-zinc-200 transition-colors')
@@ -89,6 +91,8 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
   if (!list_type) {
     response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
   }
+
+  response.headers.append('set-cookie', `theme=${validTheme}; Path=/; Expires=${expire};`);
 
   return response;
 }
@@ -139,12 +143,12 @@ async function auth({event, resolve}: HandleParameter): Promise<Response> {
       result = await getUser(token, refresh);
       try {
         if (refresh) {
-          const r = njwt.verify(refresh, key);
-          if (r) {
-            const exp = r.body.toJSON().exp as number * 1000;
+          const userData = njwt.verify(refresh, key);
+          if (userData) {
+            const exp = userData.body.toJSON().exp as number * 1000;
             const now = Date.now();
             if (exp - 18000000 <= now) {
-              const body = r.body.toJSON();
+              const body = userData.body.toJSON();
               const user = await User.findByUniqueId(body.uid as string);
               newRefresh = await user!.token('refresh');
               const expireRefresh = dayjs().add(1, 'day').toDate();

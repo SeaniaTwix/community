@@ -9,7 +9,7 @@
   import {imageSrc} from '../community/comment/client';
   import type {FavoriteImage} from '$lib/community/comment/client';
   import {client} from '$lib/auth/user/client';
-  import type {PageData} from '@routes/$types';
+  import type {PageData} from '$lib/types/$types';
 
   export let data: PageData;
 

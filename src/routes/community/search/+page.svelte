@@ -1,7 +1,7 @@
 <script lang="ts">
   import {isEmpty} from 'lodash-es';
   import Tag from '$lib/components/Tag.svelte';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
 
   import type {PageData} from './$types';
   import ky from 'ky-universal';
@@ -37,7 +37,7 @@
   });
 
   beforeNavigate(({from, to}) => {
-    if (from.pathname !== to?.pathname) {
+    if (from?.url.pathname !== to?.url.pathname) {
       if (querySub) {
         querySub();
       }

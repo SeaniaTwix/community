@@ -1,4 +1,4 @@
-import {dayjs} from 'dayjs';
+import dayjs from 'dayjs';
 
 export async function POST(): Promise<Response> {
   return new Response(undefined, { status: 201, headers: newLogoutHeader() })

@@ -16,7 +16,7 @@
   import {EUserRanks} from '$lib/types/user-ranks';
   import TimeAgo from 'javascript-time-ago';
   import {ko} from '$lib/time-ko';
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
   import {afterUpdate, createEventDispatcher, tick} from 'svelte';
   import ky from 'ky-universal';
   import Image from './Image.svelte';

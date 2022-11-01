@@ -2,7 +2,7 @@ import type {BoardItemDto} from '$lib/types/dto/board-item.dto';
 import HttpStatus from 'http-status-codes';
 // @ts-ignore
 import {ServerLoadEvent} from '@sveltejs/kit';
-import type {LayoutOutput} from './$types';
+import type {LayoutOutput} from '$lib/types/$types';
 import {Board} from '$lib/community/board/server';
 import {error} from '$lib/kit';
 

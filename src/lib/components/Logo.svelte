@@ -1,5 +1,5 @@
 <script>
-  import {dayjs} from 'dayjs';
+  import dayjs from 'dayjs';
 
   function isNationalLiberation() {
     const now = dayjs();
