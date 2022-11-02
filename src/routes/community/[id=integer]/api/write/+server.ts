@@ -88,7 +88,7 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Res
   try {
     await write.saveToSearchEngine();
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 
   try {

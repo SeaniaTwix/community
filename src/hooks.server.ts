@@ -72,7 +72,7 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
     transformPageChunk: ({html}) => {
       // todo: global variable?
       const themed = theme === 'light' ? '#FFFFFF' : '#3C4556';
-      console.log(themed)
+      // console.log(themed)
       return html
         .replace('<>HTML-CLASS<>', theme === 'light' ? '' : 'dark')
         .replace('<>BODY-CLASS<>', 'dark:bg-gray-600 dark:text-zinc-200 transition-colors')

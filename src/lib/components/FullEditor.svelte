@@ -22,6 +22,7 @@
   let titleInput: HTMLInputElement;
   let tagInput: HTMLInputElement;
   let fileUploader: HTMLInputElement;
+  let videoUploader: HTMLInputElement;
   let editor: TinyMCE & { iframeElement: HTMLIFrameElement };
   export let title = '';
   export let content = '';
@@ -123,7 +124,7 @@
         text: '동영상',
         onAction: async () => {
           await tick();
-
+          videoUploader.click();
         }
       })
     },
@@ -290,9 +291,16 @@
   }
 
   const f = writable<File[] | null>(null);
+  const v = writable<File | null>(null);
 
   function fileSelected() {
     f.set(Array.from(fileUploader.files));
+  }
+
+  function videoSelected(event: Event) {
+    if (event.target instanceof HTMLInputElement) {
+      v.set(event.target.files.item(0));
+    }
   }
 
   function insertImage(links: string[]) {
@@ -307,8 +315,12 @@
     editor.insertContent(template);
   }
 
-  function insertVideo(url: string, type: string) {
-    editor.insertContent(`<video muted preload="metadata"><source src="${url}" type="${type}" />비디오가 지원되지 않음</video><p>&nbsp;</p>`);
+  function insertVideo(endpoint: string, uid: string) {
+    const thumbUrl = encodeURIComponent(`${endpoint}/${uid}/thumbnails/thumbnail.jpg?time=&height=600`);
+    editor.insertContent(
+      `<div style="position: relative; padding-top: 56.25%;">
+       <iframe src="${endpoint}/${uid}/iframe?poster=${thumbUrl}" style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true"></iframe>
+       </div>`);
   }
 
   let unsubs: Unsubscriber[] = [];
@@ -335,7 +347,36 @@
         console.error(rejected);
       }
     }));
+
+    unsubs.push(v.subscribe(async (video) => {
+      if (video instanceof File) {
+        try {
+          const {result, endpoint} = await ky.post(`/file/video/upload`).json<IRequestVideoUploadUrlResponse>();
+
+          const body = new FormData;
+          body.set('file', video);
+
+          await ky.post(result.uploadURL, {body});
+
+          insertVideo(endpoint, result.uid);
+        } catch (e) {
+          console.trace(e);
+        }
+      }
+    }));
   });
+
+  interface IRequestVideoUploadUrlResponse {
+    result: {
+      uploadURL: string;
+      uid: string;
+      watermark: string | null;
+    };
+    success: boolean;
+    errors: unknown[];
+    messages: unknown[];
+    endpoint: string;
+  }
 
   onDestroy(() => {
     for (const unsub of unsubs) {
@@ -395,6 +436,10 @@
          accept="{defaultEditorSettings.images_file_types.split(',').map(v => `.${v}`).join(',')}"
          bind:this={fileUploader}
          on:change={fileSelected}/>
+  <input type="file"
+         accept="MP4, MKV, MOV, AVI, FLV, MPEG-2 TS, MPEG-2 PS, MXF, LXF, GXF, 3GP, WebM, MPG,"
+         bind:this={videoUploader}
+         on:change={videoSelected}/>
 </div>
 
 {#if uploading || uploadingExternalLinks}

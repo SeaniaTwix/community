@@ -12,6 +12,7 @@ import rehypeStringify from 'rehype-stringify';
 import {load} from 'cheerio'
 import type {Element as CheerioElement} from 'cheerio/lib'
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
+import {env} from 'node:process';
 
 export class Article {
 
@@ -30,7 +31,7 @@ export class Article {
           ...defaultSchema.tagNames ?? [],
           'video',
           'source',
-          'iframe'
+          'iframe',
         ],
         attributes: {
           ...defaultSchema.attributes,
@@ -42,23 +43,25 @@ export class Article {
       .use(rehypeStringify)
       .process(content ?? '');
 
-    const sanitzedString = sanitizedContent.value.toString();
+    const sanitizedString = sanitizedContent.value.toString();
 
-    const $ = load(sanitzedString);
+    const $ = load(sanitizedString);
 
     const iframes: CheerioElement[] = $('iframe').toArray() as any[];
     for (const iframe of iframes) {
-      const src = iframe.attribs?.src;
-      if (src) {
-        if (!src.startsWith('https://iframe.videodelivery.net/')) {
-          $($.root()).find(iframe as any).removeAttr('src');
-        } else {
+      const src: string | undefined = iframe.attribs?.src;
+      if (typeof src === 'string') {
+        const {CLOUDFLARE_USER_ENDPOINT} = env;
+        if (CLOUDFLARE_USER_ENDPOINT && src.startsWith(CLOUDFLARE_USER_ENDPOINT)) {
           const elem = $($.root()).find(iframe as any);
           const parent = $(elem.parent('div'));
 
-          parent?.attr('style', 'position: relative; padding-top: 56.25%')
-          elem.attr('style', 'border: none; position: absolute; top: 0; height: 100%; width: 100%');
-
+          parent?.attr('style', 'position: relative; padding-top: 56.25%');
+          elem.attr('style', 'border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;');
+          elem.attr('allow', 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;');
+          elem.attr('allowfullscreen', 'true');
+        } else {
+          $($.root()).find(iframe as any).removeAttr('src');
         }
       }
     }
