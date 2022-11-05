@@ -40,7 +40,7 @@ export class Board {
 
     const {user, sessionId} = locals;
 
-    const bests = await this.getBests(page, user?.uid ?? null, 10, 1);
+    const bests = await this.getBests(user?.uid ?? null, 10, 1);
 
     const announcements = await this.getAnnouncements(page, user ? user.uid : sessionId!);
 
@@ -125,10 +125,7 @@ export class Board {
     return await cursor.all();
   }
 
-  async getBests(page: number, reader: string | null, max = 5, minLikes = 3) {
-    if (page <= 0) {
-      throw new Error('page must be gt 0');
-    }
+  async getBests(reader: string | null, max = 5, minLikes = 3) {
     const cursor = await db.query(aql`
       for article in articles
         sort article.createdAt desc
@@ -161,7 +158,7 @@ export class Board {
                 return savedTag.name)
           filter blockedTags none in savedTags
           filter article.author not in blockedUsers
-            limit ${(page - 1) * max}, ${page * max}
+            limit ${max}
             let tagNames = (
               for tag in tags
                 filter tag.target == article._key && tag.pub

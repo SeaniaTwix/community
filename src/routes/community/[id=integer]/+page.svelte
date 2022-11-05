@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable no-redeclare */
   import ArticleList from '$lib/components/ArticleList.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import Refresh from 'svelte-material-icons/Refresh.svelte';
@@ -22,18 +23,25 @@
 
   export let data: PageData & {ui?: UI};
 
-  let articles = data.articles;
-  let announcements = data.announcements;
-  let bests = data.bests;
-  let id: string = $page.params.id;
-  let name = data.name;
-  let currentPage = data.currentPage;
-  let maxPage = data.maxPage;
-  let listType = ($client.ui?.listType ?? data.ui?.listType) ?? 'list';
-  let showBest = isEmpty(announcements);
+  declare var articles: typeof data.articles;
+  $: articles = data.articles;
+  $: announcements = data.announcements;
+  declare var bests: typeof data.bests;
+  $: bests = data.bests;
+  $: id = $page.params.id;
+  declare var name: string;
+  $: name = data.name;
+  $: currentPage = data.currentPage;
+  declare var maxPage: typeof data.maxPage;
+  $: maxPage = data.maxPage;
+  declare var listType: 'list' | 'gallery'
+  $: listType = ($client.ui?.listType ?? data.ui?.listType) ?? 'list';
+  declare var showBest: boolean;
+  $: showBest = isEmpty(announcements);
 
+  /*
   async function reload() {
-    const newData = await ky.get(`/community/${$page.params.id}/api/list`).json();
+    const newData = await ky.get(`/community/${$page.params.id}/api/list?${$page.url.searchParams}`).json();
     data = newData as any;
     articles = data.articles;
     announcements = data.announcements;
@@ -44,21 +52,18 @@
     maxPage = data.maxPage;
     listType = ($client.ui?.listType ?? data.ui?.listType) ?? 'list';
     showBest = isEmpty(announcements);
-  }
+  } */
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
-    if (from?.url.pathname !== to?.url.pathname) {
+    console.log(from?.url.pathname, to?.url.pathname)
+    if (from?.url.pathname + '?' + from?.url.searchParams !== to?.url.pathname + '?' + to?.url.searchParams) {
       if (pusher) {
         pusher.destory();
       }
 
       pusher = new Pusher(`@${$page.params.id}`);
       pusher.subscribe<INewPublishedArticle>('article', newArticlePublished);
-
-      if (from) {
-        reload();
-      }
     }
   });
 
@@ -126,14 +131,14 @@
       }
 
       return {
-        autoTag,
         _key: item.key,
-        title: item.title,
-        author: item.author,
-        tags: item.tags,
-        image: item.image,
-        views: 1,
+        autoTag,
         createdAt: new Date,
+        images: listType === 'list' ? typeof item.image === 'string' : item.image as any,
+        locked: false,
+        tags: item.tags,
+        title: item.title.trim(),
+        views: 1,
       };
     });
 
@@ -151,7 +156,7 @@
       avatar?: string;
       rank: EUserRanks;
     };
-    image?: string;
+    image?: string | boolean;
     tags: Record<string, number>;
   }
 

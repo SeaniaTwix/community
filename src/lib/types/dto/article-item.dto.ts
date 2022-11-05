@@ -28,7 +28,7 @@ export class ArticleItemDto {
 
   editedAt?: Date;
 
-  images = false;
+  images: string | boolean = false;
 
   locked = false;
 }

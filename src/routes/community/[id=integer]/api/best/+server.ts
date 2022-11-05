@@ -23,7 +23,7 @@ export async function GET({params, url, locals: {user}}: RequestEvent): Promise<
   const board = new Board(id);
 
   try {
-    const bests = await board.getBests(page, user?.uid ?? null, 10, 1);
+    const bests = await board.getBests(user?.uid ?? null, 10, 1);
     return json({
       bests,
     }, {

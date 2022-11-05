@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable no-redeclare */
   import Up from 'svelte-material-icons/ArrowUp.svelte';
   import Down from 'svelte-material-icons/ArrowDown.svelte';
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
@@ -35,14 +36,13 @@
   export let data: PageData;
 
   let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
-  let contents: string[] = data.content!.split('\n');
-  let boardName: string = data.boardName!;
-  // eslint-disable-next-line no-redeclare
+  $: contents = data.content!.split('\n');
+  $: boardName = data.boardName!;
   declare var users: Record<string, IUser>;
   $: users = {};
-  let comments = data.comments;
+  $: comments = data.comments;
   $: noRelativeComments = comments.filter(comment => !comment.relative);
-  const bestComments = comments
+  $: bestComments = comments
     .filter(comment => comment.votes.like - comment.votes.dislike >= 1)
     .sort((a, b) => {
       const aLike = a.votes.like - a.votes.dislike;

@@ -11,7 +11,7 @@ interface ListParams {
   best: boolean;
 }
 
-export async function GET({params, url, locals}: RequestEvent, {best}: Partial<ListParams> = {}): Promise<Response> {
+export async function retrive({params, url, locals}: RequestEvent, {best}: Partial<ListParams> = {}) {
   if (!params.id || !isStringInteger(params.id)) {
     throw error(HttpStatus.BAD_REQUEST);
   }
@@ -20,7 +20,11 @@ export async function GET({params, url, locals}: RequestEvent, {best}: Partial<L
   const amountParam = url.searchParams.get('amount') ?? '30';
   const type = best === true || url.searchParams.get('type') === 'best' ? 'best' : 'default';
 
-  return json(await load(params.id, pageParam, amountParam, type, locals));
+  return await load(params.id, pageParam, amountParam, type, locals);
+}
+
+export async function GET(event: RequestEvent, listParams: Partial<ListParams> = {}): Promise<Response> {
+  return json(await retrive(event, listParams));
 }
 
 function load(id: string, pageParam: string, amountParam: string, type: 'default' | 'best', locals: App.Locals) {
