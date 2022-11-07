@@ -33,16 +33,15 @@
 
   type TagType = Record<string, number>
 
-  export let data: PageData;
+  export let data: PageData = {} as any;
 
   let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
   $: contents = data.content!.split('\n');
   $: boardName = data.boardName!;
   declare var users: Record<string, IUser>;
   $: users = {};
-  $: comments = data.comments;
-  $: noRelativeComments = comments.filter(comment => !comment.relative);
-  $: bestComments = comments
+  $: noRelativeComments = data.comments.filter(comment => !comment.relative);
+  $: bestComments = data.comments
     .filter(comment => comment.votes.like - comment.votes.dislike >= 1)
     .sort((a, b) => {
       const aLike = a.votes.like - a.votes.dislike;
@@ -282,7 +281,9 @@
     commentFolding = !folding;
     Cookies.set('comment_folding', commentFolding.toString());
     client.update((s) => {
-      s.ui.commentFolding = !folding;
+      if (s.ui) {
+        s.ui.commentFolding = !folding;
+      }
       return s;
     });
     if (!commentFolding) {
@@ -321,7 +322,7 @@
         // console.log('comment:', body);
         if (typeof body.author === 'string') {
           body.author = await userNameExistingCheck(body.author);
-          console.log(body.author);
+          // console.log(body.author);
 
           if (body.relative) {
             const newComment: IComment = {
@@ -329,7 +330,7 @@
               myVote: {like: false, dislike: false},
               createdAt: new Date,
             };
-            comments = [...comments, newComment];
+            data.comments = [...data.comments, newComment];
             return;
           }
 
@@ -339,18 +340,18 @@
               myVote: {like: false, dislike: false},
               createdAt: new Date,
             };
-            comments = [...comments, newComment];
+            data.comments = [...data.comments, newComment];
           }
 
           if (body.type === 'del') {
             const key = body.target;
             // comments = comments.filter((c: IComment) => c._key !== key);
-            const target = comments.find(comment => comment._key === key) as IComment & { deleted: boolean };
+            const target = data.comments.find(comment => comment._key === key) as IComment & { deleted: boolean };
             if (target) {
               target.deleted = true;
             }
             // console.log(target);
-            comments = [...comments];
+            data.comments = [...data.comments];
           }
 
           if (body.type === 'edit') {
@@ -390,7 +391,7 @@
       // comment votes only
       const whenVoteChanged = async ({body}: { body: IMessageVote }) => {
         if (body.comment) {
-          const comment = comments.find(comment => comment._key === body.comment);
+          const comment = data.comments.find(comment => comment._key === body.comment);
           if (comment) {
             if (!comment.votes) {
               comment.votes = {like: 0, dislike: 0};
@@ -405,7 +406,7 @@
             await tick();
             comment.votes[body.type] += amount;
           }
-          comments = [...comments];
+          data.comments = [...data.comments];
           await tick();
         }
       };
@@ -529,7 +530,7 @@
       return;
     }
     saveLastScroll();
-    selectedComment = comments.find((comment) => comment._key === id);
+    selectedComment = data.comments.find((comment) => comment._key === id);
     const textGeneral = document.querySelector('#__textarea-general');
     const textMobile = document.querySelector('#__textarea-mobile');
     const isMobileTextEnabled = textMobile.clientHeight > textGeneral.clientHeight;
@@ -702,11 +703,11 @@
         </div>
       {/if}
 
-      <div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
+      <div id="comments" class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
         {#if selectedComment}
           <Comment comment="{selectedComment}"
                    article="{article._key}"
-                   allComments="{comments}"
+                   allComments="{data.comments}"
                    myVote="{selectedComment.myVote}"
                    isReplyMode="{true}"
                    {users} {data} />
@@ -731,7 +732,7 @@
                     <Comment board="{article.board}"
                              article="{article._key}"
                              on:delete={() => deleteComment(comment)}
-                             bind:allComments="{comments}"
+                             bind:allComments="{data.comments}"
                              bind:users="{users}"
                              selected="{selectedComment?._key === comment._key}"
                              {comment} {data} isBest="{true}"/>
@@ -748,7 +749,7 @@
                 <Comment board="{article.board}"
                          article="{article._key}"
                          on:delete={() => deleteComment(comment)}
-                         bind:allComments="{comments}"
+                         bind:allComments="{data.comments}"
                          bind:users="{users}"
                          selected="{selectedComment?._key === comment._key}"
                          {comment} {data} />
@@ -758,7 +759,7 @@
           </ul>
 
           <p class="mt-4 text-zinc-500 text-lg text-center select-none cursor-default">
-            {#if isEmpty(comments)}
+            {#if isEmpty(data.comments)}
               댓글이 없어요...
             {:else}
               끝
@@ -780,7 +781,7 @@
                  myVote="{selectedComment.myVote}"
                  hideToolbar="{true}"
                  isReplyMode="{true}"
-                 allComments="{comments}"
+                 allComments="{data.comments}"
                  board="{article.board}"
                  {users} {data} />
       {/if}

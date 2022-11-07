@@ -10,7 +10,6 @@
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import RemoveTag from 'svelte-material-icons/Close.svelte';
-  import AdultBg from 'svelte-material-icons/Circle.svelte';
 
   import {goto} from '$app/navigation';
   import TimeAgo from 'javascript-time-ago';

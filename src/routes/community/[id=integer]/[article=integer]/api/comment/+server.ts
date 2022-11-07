@@ -16,7 +16,7 @@ import {Comment} from '$lib/community/comment/server';
 import {sanitize} from '$lib/community/comment/client';
 import {json, error} from '$lib/kit';
 
-export async function GET({params, url, locals}: RequestEvent): Promise<Response> {
+export async function retrive({params, url, locals}: RequestEvent) {
   const {article} = params;
 
   if (!article) {
@@ -37,8 +37,8 @@ export async function GET({params, url, locals}: RequestEvent): Promise<Response
   const reader = locals.user ? locals.user.uid : null;
   const comments: (CommentDto & IArangoDocumentIdentifier)[] = await comment.listAll(amount, page, reader) ?? [];
 
-  return json({
-    comments: await Promise.all(
+  return {
+    comments: await Promise.all<IComment[]>(
       comments.map(async (comment: CommentDto<PublicVoteType> & IArangoDocumentIdentifier) => {
         const pubVoteResult = {like: 0, dislike: 0};
         if (!Object.hasOwn(comment, 'votes')) {
@@ -72,7 +72,11 @@ export async function GET({params, url, locals}: RequestEvent): Promise<Response
         return comment;
       }) as any[]
     ),
-  });
+  }
+}
+
+export async function GET(event: RequestEvent): Promise<Response> {
+  return json(await retrive(event));
 }
 
 export async function POST({params, request, locals}: RequestEvent): Promise<Response> {

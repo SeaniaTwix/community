@@ -17,7 +17,7 @@ export async function load({params, locals}: ServerLoadEvent): Promise<PageData>
   }
 
   const {edit} = await retriveEditInfo({params, locals} as any) as T;
-  console.log(edit)
+  // console.log(edit)
   const {title, content, source, tags, tagCounts} = edit;
 
   const board = new Board(id);

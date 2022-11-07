@@ -16,7 +16,7 @@ import {AddViewCountRequest} from '../viewcount/+server';
 import {error} from '$lib/kit';
 import type {PageData} from '@routes/community/[id=integer]/[article=integer]/$types';
 
-export async function GET({params, locals}: RequestEvent): Promise<Response> {
+export async function retrive({params, locals}: RequestEvent) {
   const {id, article: articleId} = params;
 
   if (!id || !articleId) {
@@ -28,7 +28,7 @@ export async function GET({params, locals}: RequestEvent): Promise<Response> {
   const uid: string | undefined = locals?.user?.uid;
   const force = uid ? locals.user!.rank > EUserRanks.User : false;
   const article = await read.get(uid, force);
-  console.log('_article:', article);
+  // console.log('_article:', article);
 
   if (!article) {
     throw error(HttpStatus.NOT_FOUND);
@@ -58,14 +58,36 @@ export async function GET({params, locals}: RequestEvent): Promise<Response> {
 
   article.views = await articleInstance.getViewCount();
 
-  return json({
-    ...article,
-  });
+  return article;
+}
+
+export async function GET(event: RequestEvent): Promise<Response> {
+  return json(await retrive(event));
 }
 
 class ReadArticleRequest {
   constructor(private readonly board: string,
               private readonly article: string) {
+  }
+
+  private async toUserFriendlyLinks(content: string): Promise<string> {
+    const $ = load(content ?? '');
+    const a = $('a');
+    const exes = a.toArray().map(async a => {
+      const href = $(a).attr('href');
+      if (href) {
+        const i = /(\d+)$/.exec(href);
+        if (i) {
+          const article = new Article(i[1]);
+          if (await article.exists) {
+            const data = await article.get();
+            $(a).replaceWith(`<a named="true" href="${href}">${data.title}</a>`)
+          }
+        }
+      }
+    });
+    await Promise.allSettled(exes);
+    return $('body').html() ?? '';
   }
 
   private async toConvertedImages(content: string): Promise<string> {
@@ -163,6 +185,8 @@ class ReadArticleRequest {
 
     // console.log('original:', article.content);
     article.content = await this.toConvertedImages(article.content ?? '');
+
+    article.content = await this.toUserFriendlyLinks(article.content ?? '');
 
     // @ts-ignore
     const result: Partial<IArticleGetResult> = {
