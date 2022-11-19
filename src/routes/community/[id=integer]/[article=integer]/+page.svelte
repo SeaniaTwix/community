@@ -5,11 +5,11 @@
   import Back from 'svelte-material-icons/KeyboardBackspace.svelte';
   import type {IArticle} from '$lib/types/article';
   import ky from 'ky-universal';
-  import {onMount, onDestroy, tick} from 'svelte';
+  import {onDestroy, tick} from 'svelte';
   import {Pusher} from '$lib/pusher/client';
   import {fade} from 'svelte/transition';
   import Comment from '$lib/components/Comment.svelte';
-  import {afterNavigate, goto} from '$app/navigation';
+  import {afterNavigate, beforeNavigate, goto} from '$app/navigation';
   import {writable} from 'svelte/store';
   import type {Unsubscriber} from 'svelte/store';
   import EditImage from '$lib/components/EditImage.svelte';
@@ -26,6 +26,8 @@
   import {client} from '$lib/auth/user/client';
   import {isEmpty} from 'lodash-es';
   import type {IComment} from '$lib/types/comment';
+  import {browser} from '$app/environment'
+  import type {Page} from '@sveltejs/kit';
 
   /**
    * 게시글 보기
@@ -35,7 +37,8 @@
 
   export let data: PageData = {} as any;
 
-  let article: IArticle<TagType, IUser> = data as unknown as IArticle<TagType, IUser>;
+  declare var article: IArticle<TagType, IUser>;
+  $: article = data as unknown as IArticle<TagType, IUser>;
   $: contents = data.content!.split('\n');
   $: boardName = data.boardName!;
   declare var users: Record<string, IUser>;
@@ -97,7 +100,7 @@
 
     try {
       const commentData: Partial<IComment> = {
-        article: article._key,
+        article: $page.params.article,
         content: commentContent,
       };
 
@@ -135,7 +138,7 @@
       commentTextInput?.blur();
 
       // return;
-      await ky.post(`/community/${article.board}/${article._key}/api/comment`, {
+      await ky.post(`/community/${$page.params.id}/${$page.params.article}/api/comment`, {
         json: commentData,
       }); // .json();
 
@@ -243,7 +246,7 @@
     const {fav, disable} = event.detail;
     commentImageUploadSrc = fav.src;
     imageSize = fav.size;
-    console.log(fav);
+    // console.log(fav);
     disable();
   }
 
@@ -270,7 +273,7 @@
   async function deleteComment(comment: Partial<IComment>) {
     try {
       await ky.delete(
-        `/community/${article.board}/${article._key}/comments/${comment._key}/api/manage`);
+        `/community/${$page.params.id}/${$page.params.article}/comments/${comment._key}/api/manage`);
     } catch {
       // todo: alert delete failed
     }
@@ -300,9 +303,9 @@
       const q = $page.url.search.slice(1).split('&');
       const noBestQuery = q.filter(v => v !== 'type=best');
       const result = isEmpty(q) ? '' : `?${noBestQuery.join('&')}`;
-      return goto(`/community/${article.board}/best${result}`);
+      return goto(`/community/${$page.params.id}/best${result}`);
     }
-    goto(`/community/${article.board}${$page.url.search}`);
+    goto(`/community/${$page.params.id}${$page.url.search}`);
   }
 
 
@@ -314,9 +317,9 @@
         pusher.close();
       }
 
-      // console.log(`new sub => ${article._key}@${article.board}`);
+      // console.log(`new sub => ${$page.params.article}@${$page.params.id}`);
 
-      pusher = new Pusher(`${article._key}@${article.board}`);
+      pusher = new Pusher(`${$page.params.article}@${$page.params.id}`);
 
       const whenCommentChanged = async ({body}) => {
         // console.log('comment:', body);
@@ -363,6 +366,7 @@
       // article votes included
       const whenTagChanged = async ({body}) => {
         // await userNameExistingCheck(body.author);
+        console.log(body);
         const tags = body.tag as string[];
         const type = body.type as 'add' | 'remove';
         if (tags) {
@@ -421,7 +425,8 @@
   const fileChangeListener = writable<File | null>(null);
   let unsubscribers: Unsubscriber[] = [];
   let pusher: Pusher;
-  onMount(async () => {
+
+  if (browser) {
     if ($page.url.hash.startsWith('#c')) {
       $highlighed = $page.url.hash.slice(2);
     }
@@ -433,12 +438,12 @@
       // no window. it's okay
     }
 
-    pusher = new Pusher(`${article._key}@${article.board}`);
+    pusher = new Pusher(`${$page.params.article}@${$page.params.id}`);
 
     window.addEventListener('unload', clearSubscribes);
 
     try {
-      // ky.put(`/community/${article.board}/${article._key}/api/viewcount`).then();
+      // ky.put(`/community/${$page.params.id}/${$page.params.article}/api/viewcount`).then();
 
 
       // window.document.body.addEventListener('scroll', preventScrolling, true);
@@ -468,11 +473,10 @@
       });
 
       unsubscribers.push(fileChangeUnsub, replyUnsub, commentDeleteUnsub);
-
     } catch (e) {
       console.error(e);
     }
-  });
+  }
 
   function clearSubscribes() {
     for (const unsub of unsubscribers) {
@@ -482,14 +486,16 @@
     currentReply.set(undefined);
   }
 
-  onDestroy(() => {
-    $commentMobileCursorPosition = 0;
+  beforeNavigate(({to, from}) => {
+    // console.log('+page (article)', to?.params?.article);
     clearSubscribes();
-    try {
-      document.querySelector('html').classList.remove('__page-view');
-      document.querySelector('body').classList.remove('__page-view', 'overflow-hidden');
-    } catch {
-      // no window. it's ok.
+    if (!to?.params?.article) {
+      try {
+        document.querySelector('html').classList.remove('__page-view');
+        document.querySelector('body').classList.remove('__page-view', 'overflow-hidden');
+      } catch {
+        // no window. it's ok.
+      }
     }
   });
 
@@ -523,7 +529,7 @@
     }
   }
 
-  let selectedComment: IComment | undefined;
+  let selectedComment: IComment | undefined = undefined;
 
   function commentReplyClicked(id) {
     if (!$client.user) {
@@ -557,7 +563,7 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
+  <meta property="og:url" content="{$page.url.origin}/community/{$page.params.id}/{$page.params.article}">
   <meta property="og:title" content="루헨 - {article.title}">
   <meta property="og:description" content="{toLiteralContent(article.content)}">
   {#if mainImage && !article.tags['후방']}
@@ -566,7 +572,7 @@
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="{$page.url.origin}/community/{article.board}/{article._key}">
+  <meta property="twitter:url" content="{$page.url.origin}/community/{$page.params.id}/{$page.params.article}">
   <meta property="twitter:title" content="루헨 - {article.title}">
   <meta property="twitter:description" content="{toLiteralContent(article.content)}">
   {#if mainImage && !article.tags['후방']}
@@ -623,7 +629,7 @@
                     d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                     clip-rule="evenodd"></path>
             </svg>
-            <a href="/community/{article.board}{$page.url.search}"
+            <a href="/community/{$page.params.id}{$page.url.search}"
                class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 hover:drop-shadow w-max">
               {boardName}
             </a>
@@ -638,7 +644,7 @@
                       d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                       clip-rule="evenodd"></path>
               </svg>
-              <a href="/community/{article.board}/best"
+              <a href="/community/{$page.params.id}/best"
                  class="ml-1 text-sm font-medium text-gray-700 md:ml-2 dark:text-gray-400 dark:hover:text-white hover:text-sky-400 hover:drop-shadow w-max">
                 베스트
               </a>
@@ -690,10 +696,10 @@
               {#each article.serials as serial}
                 <li class="hover:bg-zinc-100 dark:hover:bg-gray-500 transition-colors">
                   <a class="underline decoration-sky-400 decoration-dashed"
-                     class:text-bold={article._key === serial._key} href="/community/{article.board}/{serial._key}">
+                     class:text-bold={$page.params.article === serial._key} href="/community/{$page.params.id}/{serial._key}">
                     <p class="px-4 py-2">
                       {serial.title}
-                      {#if article._key === serial._key}(지금 보는 중){/if}
+                      {#if $page.params.article === serial._key}(지금 보는 중){/if}
                     </p>
                   </a>
                 </li>
@@ -706,7 +712,7 @@
       <div id="comments" class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto"> <!-- 댓글 -->
         {#if selectedComment}
           <Comment comment="{selectedComment}"
-                   article="{article._key}"
+                   article="{$page.params.article}"
                    allComments="{data.comments}"
                    myVote="{selectedComment.myVote}"
                    isReplyMode="{true}"
@@ -729,8 +735,8 @@
               <ul class="space-y-3">
                 {#each bestComments as comment}
                   <li id="best-c{comment._key}" in:fade class="relative">
-                    <Comment board="{article.board}"
-                             article="{article._key}"
+                    <Comment board="{$page.params.id}"
+                             article="{$page.params.article}"
                              on:delete={() => deleteComment(comment)}
                              bind:allComments="{data.comments}"
                              bind:users="{users}"
@@ -746,8 +752,8 @@
 
             {#each noRelativeComments as comment}
               <li id="c{comment._key}" in:fade class="relative">
-                <Comment board="{article.board}"
-                         article="{article._key}"
+                <Comment board="{$page.params.id}"
+                         article="{$page.params.article}"
                          on:delete={() => deleteComment(comment)}
                          bind:allComments="{data.comments}"
                          bind:users="{users}"
@@ -777,12 +783,12 @@
 
       {#if selectedComment}
         <Comment comment="{selectedComment}"
-                 article="{article._key}"
+                 article="{$page.params.article}"
                  myVote="{selectedComment.myVote}"
                  hideToolbar="{true}"
                  isReplyMode="{true}"
                  allComments="{data.comments}"
-                 board="{article.board}"
+                 board="{$page.params.id}"
                  {users} {data} />
       {/if}
 

@@ -2,7 +2,7 @@
   import {createEventDispatcher} from 'svelte';
   import {ELoginError} from '$lib/errors/login';
   import {goto} from '$app/navigation';
-  import Pulse from 'svelte-loading-spinners/dist/Pulse.svelte'
+  import Pulse from 'svelte-loading-spinners/Pulse.svelte'
 
   const dispatch = createEventDispatcher();
   let passwordInput: HTMLInputElement;

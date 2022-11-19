@@ -13,10 +13,9 @@
   import {goto} from '$app/navigation';
   import {darkColor, iosStatusBar, iosStatusBarColor, theme} from '$lib/stores/shared/theme';
   import {tick} from 'svelte';
-  import {unread} from '$lib/notifications/client';
   import Logo from '$lib/components/Logo.svelte';
 
-  import type {PageData} from '@root/routes/$types';
+  import type {PageData} from '$lib/types/$types';
   import {client} from '$lib/auth/user/client';
   import User from '$lib/components/nav-elements/UserName.svelte';
   export let data: PageData;
@@ -55,7 +54,7 @@
 
   }
 
-  $: showSearch = $page.routeId?.startsWith('community/') === true;
+  $: showSearch = $page.route.id?.startsWith('community/') === true;
 
   function gotoLogin(event: Event) {
     event.preventDefault();

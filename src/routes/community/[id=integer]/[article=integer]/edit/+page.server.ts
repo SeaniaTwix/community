@@ -1,6 +1,5 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
-import {key} from '$lib/editor-key';
 import type {PageData} from './$types';
 import {retriveEditInfo} from '../api/edit/+server';
 import type {IEditable} from '../api/edit/+server';

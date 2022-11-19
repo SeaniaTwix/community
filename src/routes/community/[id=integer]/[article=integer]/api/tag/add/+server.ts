@@ -77,15 +77,6 @@ export async function getTagErrors(id: string, article: string | null, user: IUs
           };
         }
 
-        try {
-          await Pusher.notify('tag', `${article}@${id}`, '0' /*locals.user.uid*/, {
-            tag: [name],
-            type: 'add',
-          });
-        } catch {
-          //
-        }
-
         return succeed;
       }
 

@@ -115,7 +115,6 @@
   }
 
   async function vote(type: 'like' | 'dislike') {
-    // console.log(type);
     if (type === 'like') {
       if (liked) {
         liked = false;
@@ -124,7 +123,6 @@
         disliked = false;
         await removeTag('_dislike');
       }
-      // noinspection TypeScriptUnresolvedVariable
       if ($client?.user?.uid !== article.author._key) {
         liked = true;
         return await addTag('_like');

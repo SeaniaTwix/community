@@ -31,6 +31,7 @@ export class Pusher {
       window.addEventListener('unload', this.close);
       window.addEventListener('online', this.online, true);
       window.addEventListener('offline', this.offline, true);
+      // @ts-ignore
       navigator?.connection?.addEventListener('change', this.networkChanged, true);
     }
   }
@@ -44,6 +45,7 @@ export class Pusher {
     this.close();
     window.removeEventListener('online', this.online, true);
     window.removeEventListener('offline', this.offline, true);
+    // @ts-ignore
     navigator?.connection?.removeEventListener('change', this.networkChanged, true);
   }
 
