@@ -1,4 +1,5 @@
-import {CollectionType, Database} from 'arangojs';
+import {Database} from 'arangojs';
+import {CollectionType} from 'arangojs/collection';
 import assert from 'node:assert/strict';
 import * as process from 'process';
 import type {AqlQuery} from 'arangojs/aql';
