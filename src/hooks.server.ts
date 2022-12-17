@@ -10,14 +10,16 @@ import dayjs from 'dayjs';
 import type {JwtUser} from '$lib/types/user';
 import type {AllowedExtensions} from './app';
 import { sequence } from '@sveltejs/kit/hooks';
+// todo: 나중에 패키지로 고칠 것. 패키지에서 불러오면 undefined로 불러와짐...
 import {
   v5 as uuid,
   validate as validateUuid,
   version as versionUuid,
-} from 'uuid';
+} from '$lib/uuid/esm-node';
 
 global.atob = atob;
 global.btoa = btoa;
+
 
 // noinspection JSUnusedGlobalSymbols
 export const handle = sequence(init, ui, images, auth, setSessionId);
@@ -112,10 +114,11 @@ async function images({event, resolve}: HandleParameter): Promise<Response> {
       const imageOrder = decodeURIComponent(image_order)
         .split(',')
         .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext))
-        .join(encodeURIComponent(','));
+        .join(',');
 
-      response.headers.append('set-cookie', `image_order=${imageOrder}; Path=/; Expires=${expire};`);
+      response.headers.append('set-cookie', `image_order=${encodeURIComponent(imageOrder)}; Path=/; Expires=${expire};`);
     } catch {
+      console.log(`image_order=${defaultOrder}; Path=/; Expires=${expire};`);
       response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
     }
   } else {
