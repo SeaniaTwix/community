@@ -211,7 +211,7 @@
     type: string
   }
 </script>
-<div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+<div class="w-full sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-2 rounded-md shadow-none sm:shadow-md transition-transform divide-y divide-dotted">
   <div class="space-y-2 mb-4">
     <div class="flex justify-between">
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
