@@ -17,7 +17,6 @@
   import Cookies from 'js-cookie';
   import type {PageData} from './$types';
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
-  import ky from 'ky-universal';
   import {client} from '$lib/auth/user/client.js';
   import type {UI} from '@root/app';
 

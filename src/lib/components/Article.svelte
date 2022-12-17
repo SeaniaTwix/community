@@ -1,4 +1,6 @@
 <script lang="ts">
+  import '@root/styles/time-tooltip.css';
+
   import View from 'svelte-material-icons/Eye.svelte';
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Edit from 'svelte-material-icons/Pencil.svelte';
@@ -249,9 +251,9 @@
       <div class="flex flex-col md:flex-col">
         <span class="w-max"><View size="1rem"/> {article.views ?? 1}</span>
 
-        <div class="__time-tooltip" time="작성 시간: {timeFullFormat(article.createdAt)}">
+        <div class="__time-tooltip before:bg-zinc-200 dark:before:bg-gray-700 dark:before:text-white" time="작성 시간: {timeFullFormat(article.createdAt)}">
           <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
-            <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+            <time class="text-zinc-500 dark:text-zinc-300 text-sm" datetime="{(new Date(article.createdAt)).toUTCString()}">
               {timeAgo.format(new Date(article.createdAt))}
             </time>
           </button>
@@ -360,33 +362,5 @@
       border-radius: 50%;
       aspect-ratio: 1/1;
     }
-  }
-
-  .__time-tooltip {
-    position: relative;
-  }
-
-  .__time-tooltip::before {
-    content: "\2003" attr(time);
-    text-indent: -1rem;
-    display: inline-block;
-    position: absolute;
-    bottom: 50%;
-    background: #222F3E;
-    color: #FFFFFF;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    opacity: 0;
-    transition: 0.3s;
-    overflow: hidden;
-    max-width: 50%;
-    pointer-events: none;
-    min-width: max-content;
-    right: calc(100% - 3rem);
-  }
-
-  .__time-tooltip:hover::before {
-    opacity: 1;
-    bottom: 100%;
   }
 </style>

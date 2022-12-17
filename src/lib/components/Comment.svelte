@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '@root/styles/time-tooltip.css';
   import CircleAvatar from '$lib/components/CircleAvatar.svelte';
   import type {IComment} from '$lib/types/comment';
   import type {IUser} from '$lib/types/user';
@@ -267,7 +268,7 @@
          class:invisible={comment.deleted}
          class="rounded-md p-2 min-h-[8rem] divide-y divide-dotted hover:ring-2 outline-amber-400 ring-offset-2 {selected ? 'ring-sky-400 dark:ring-sky-600' : 'ring-sky-400/50 dark:ring-sky-600/80'} dark:ring-offset-gray-600">
       <div class="space-y-4">
-        <div class="flex justify-between ml-2" class:mb-3={!showInfo}>
+        <div class="flex justify-between items-center ml-2" class:mb-3={!showInfo}>
           <div class="flex space-x-2 pt-1 flex-col md:flex-row lg:flex-row">
             <div prevent-reply class="flex space-x-2 hover:cursor-pointer group items-center">
 
@@ -285,18 +286,13 @@
               {/if}
             </div>
           </div>
-          <div>
-            <button data-tooltip-target="tooltip-comment-time-specific-{comment._key}" type="button">
-              <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+
+          <div class="__time-tooltip" time="작성 시간: {timeFullFormat(comment.createdAt)}">
+            <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
+              <time class="text-zinc-500 dark:text-zinc-300 text-sm" datetime="{(new Date(comment.createdAt)).toUTCString()}">
                 {timeAgo.format(new Date(comment.createdAt))}
               </time>
             </button>
-
-            <div id="tooltip-comment-time-specific-{comment._key}" role="tooltip"
-                 class="inline-block absolute invisible z-10 py-2 px-3 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300 tooltip dark:bg-gray-700">
-              작성 시간: {timeFullFormat(comment.createdAt)}
-              <div class="tooltip-arrow" data-popper-arrow></div>
-            </div>
           </div>
         </div>
         {#if showInfo}

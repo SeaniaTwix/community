@@ -1,0 +1,36 @@
+.__time-tooltip {
+  position: relative;
+}
+
+.__time-tooltip::before {
+  background: rgb(243 244 246);
+  color: black;
+}
+
+.dark .__time-tooltip::before {
+  background: rgb(31 41 55);
+  color: rgb(228 228 231);
+}
+
+.__time-tooltip::before {
+  content: "\2003" attr(time);
+  text-indent: -1rem;
+  display: inline-block;
+  position: absolute;
+  top: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  opacity: 0;
+  transition: 0.3s;
+  overflow: hidden;
+  max-width: 50%;
+  pointer-events: none;
+  min-width: max-content;
+  right: calc(100% - 3rem);
+}
+
+.__time-tooltip:hover::before {
+  opacity: 1;
+  top: 100%;
+}
