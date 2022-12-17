@@ -17,6 +17,7 @@ import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
 import {getTagErrors} from '../../[article=integer]/api/tag/add/+server';
 import {error} from '$lib/kit';
+import {Permission} from '$lib/community/permission';
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
@@ -121,8 +122,9 @@ class WriteRequest {
   id?: string;
   private board: Board;
   private article?: Article;
+  private permission: Permission;
 
-  constructor(private body: ArticleDto<ClientToServerTagType>) {
+  constructor(private body: ArticleDto<ClientToServerTagType>, userId: string) {
     if (this.isTitleEmpty || this.isContentEmpty) {
       this.error = 'some field is empty';
     }
@@ -132,6 +134,7 @@ class WriteRequest {
     }
 
     this.board = new Board(this.boardId!);
+    this.permission = new Permission('', userId);
   }
 
   get boardId(): string | undefined {

@@ -1,6 +1,6 @@
 import db from '$lib/database/instance';
 import {aql} from 'arangojs';
-import type {EUserRanks} from '$lib/types/user-ranks';
+import {EUserRanks} from '$lib/types/user-ranks';
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
 import type {ArticleDto, ServerToClientTagType} from '$lib/types/dto/article.dto';
 import {error} from '$lib/kit';
@@ -8,6 +8,9 @@ import HttpStatus from 'http-status-codes';
 import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {initAutoTag} from '$lib/community/shared/auto-tag';
 import type {ListBoardRequest} from '@routes/community/[id=integer]/api/list/+server';
+import type {User} from '$lib/auth/user/server';
+import type {IBoard} from '$lib/types/board';
+import type {PermissionType} from '$lib/types/permissions';
 
 type BoardType = 'default' | 'best';
 
@@ -259,6 +262,40 @@ export class Board {
         })
         .catch(reject);
     });
+  }
+
+  async available(context: string, user: User): Promise<boolean> {
+    if (await user.rank <= EUserRanks.Banned) {
+      return false;
+    }
+
+    const cursor = await db.query(aql`
+      return document("boards/${this.id}")})`);
+
+    const board: IBoard = await cursor.next();
+    const permissions = board.permissions ?? {};
+
+    if (context in permissions) {
+      // @ts-ignore
+      const permission: PermissionType = permissions[context];
+
+      if (typeof permission === 'boolean') {
+        return permission;
+      } else {
+        const {min, user: userId} = permission;
+        if (userId && min) {
+          if (await user.uid === userId) {
+            return await user.rank >= min;
+          }
+        } else if (min) {
+          return await user.rank >= min;
+        }
+
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
