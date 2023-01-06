@@ -80,11 +80,13 @@ export class Article {
       .toArray()
       .filter((v) => {
         const src = $(v).attr('src');
-        if (!src) {
+        const {CLOUDFLARE_USER_ENDPOINT} = env;
+        if (!src || !CLOUDFLARE_USER_ENDPOINT) {
           return false;
         }
         const url = new URL(src);
-        return url.hostname === 'customer-30x5bsqeouuujoue.cloudflarestream.com';
+        const endpoint = new URL(CLOUDFLARE_USER_ENDPOINT);
+        return url.hostname === endpoint.hostname;
       });
 
     return iframePreviews.length > 0;
