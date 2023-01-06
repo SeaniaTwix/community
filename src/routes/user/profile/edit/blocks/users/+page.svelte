@@ -119,7 +119,7 @@
 
   {#if foundUser}
     <div class="flex flex-row items-center space-x-2">
-      <div class="w-16">
+      <div class="w-16 h-16">
         <CircleAvatar fallback="{toImageSource(foundUser)}" />
       </div>
       <span>{foundUser.id}</span>

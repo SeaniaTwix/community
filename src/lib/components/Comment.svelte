@@ -272,7 +272,7 @@
           <div class="flex space-x-2 pt-1 flex-col md:flex-row lg:flex-row">
             <div prevent-reply class="flex space-x-2 hover:cursor-pointer group items-center">
 
-              <div class="w-10 min-h-[2.5rem]">
+              <div class="w-10 h-10">
                 <CircleAvatar fallback="{toImageSource()}"/>
               </div>
               <span class="group-hover:text-sky-400">

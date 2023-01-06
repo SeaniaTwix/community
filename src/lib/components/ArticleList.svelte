@@ -101,7 +101,7 @@
                 </div>
                 <!-- (mobile only) i have no idea to make no duplicated elements... -->
                 <div on:click|preventDefault={() => toggleUserMenu(i)} class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
-                  <div class="w-6 max-h-6">
+                  <div class="w-6 h-6">
                     <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                   </div>
                   <div class="cursor-pointer hover:text-sky-400
@@ -140,7 +140,7 @@
                 </div>
                 <div class="inline-block flex w-max items-center">
                   <div on:click={() => toggleUserMenu(i)} class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
-                    <div class="w-6 max-h-6 inline-block mt-[-1px]">
+                    <div class="w-6 h-6 inline-block mt-[-1px]">
                       <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                     </div>
                     <div on:click|preventDefault class="cursor-pointer hover:text-sky-400 inline-block align-super

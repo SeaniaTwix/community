@@ -98,8 +98,8 @@
             </h2>
           </div>
         </a>
-        <button class="flex flex-row items-center space-x-1 hover:underline min-w-0">
-          <span class="inline-block w-8">
+        <button class="flex flex-row items-center space-x-1.5 hover:underline min-w-0">
+          <span class="inline-block w-8 h-8">
             <CircleAvatar fallback="{toImageSource(gallery.author.avatar)}" />
           </span>
           <span class="truncate">

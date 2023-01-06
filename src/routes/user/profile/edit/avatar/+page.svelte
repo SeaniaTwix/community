@@ -159,11 +159,11 @@
   {#if !isEmpty(editAvatarSrc)}
     <h2>미리보기</h2>
 
-    <div class="w-16 inline-block">
+    <div class="w-16 h-16 inline-block">
       <CircleAvatar fallback="{{src: editAvatarSrc, type: imageType}}" />
     </div>
 
-    <div class="w-10 inline-block">
+    <div class="w-10 h-10 inline-block">
       <CircleAvatar fallback="{{src: editAvatarSrc, type: imageType}}" />
     </div>
 

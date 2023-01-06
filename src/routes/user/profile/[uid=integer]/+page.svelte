@@ -15,7 +15,7 @@
   <header class="bg-sky-400 -mt-2 h-48 relative">
     <div class="w-11/12 md:w-4/5 lg:w-3/4 xl:w-3/5 2xl:w-[60%] mx-auto relative h-full">
       <div class="flex flex-row items-center gap-4 absolute -bottom-4 w-full">
-        <div class="w-32 bg-white __circle-image flex-shrink-0">
+        <div class="w-32 h-32 bg-white rounded-full aspect-square flex-shrink-0">
           <CircleAvatar />
         </div>
         <div class="flex flex-row justify-between items-center flex-grow w-full">
@@ -53,10 +53,3 @@
     </div>
   </div>
 </div>
-
-<style>
-  .__circle-image {
-    border-radius: 50%;
-    aspect-ratio: 1/1;
-  }
-</style>
