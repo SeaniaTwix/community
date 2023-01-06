@@ -11,6 +11,7 @@
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import Image from 'svelte-material-icons/Image.svelte';
+  import Video from 'svelte-material-icons/Video.svelte';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {page} from '$app/stores';
   import {createEventDispatcher} from 'svelte';
@@ -117,7 +118,11 @@
                     {article._key}
                   </span>
                   <span class="h-full flex items-center space-x-1 gap-0.5">
-                    {#if article.images}
+                    {#if article.video}
+                      <span class="mr-0.5">
+                        <Video />
+                      </span>
+                    {:else if article.images}
                       <span class="mr-0.5"><Image size="1rem"/></span>
                     {/if}
                     <span class="mr-0.5"><View size="1rem"/></span>{article.views ?? 0}

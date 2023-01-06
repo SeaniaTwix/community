@@ -8,6 +8,7 @@
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import View from 'svelte-material-icons/Eye.svelte';
   import Comment from 'svelte-material-icons/Comment.svelte';
+  import Video from 'svelte-material-icons/Video.svelte';
   import CircleAvatar from './CircleAvatar.svelte';
   import {toSources} from '$lib/file/image/shared';
   import {page} from '$app/stores';
@@ -89,12 +90,17 @@
               </span>
             {/if}
             </div>
-          <div class="hover:underline">
+          <div class="pt-2 hover:underline">
             <h2 class="text-lg font-bold px-1 after:ml-1 after:inline-block  after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center" class:__warning-adult-content={Object.keys(gallery.tags).includes('성인')}>
               {#if gallery.autoTag}
                 <a class="font-bold text-sky-400" href="/community/search?q=%23{gallery.autoTag}">{gallery.autoTag})</a>
               {/if}
               {typeof gallery.autoTag === 'string' ? gallery.title.replace(new RegExp('^' + gallery.autoTag + '.'), '') : gallery.title}
+              {#if gallery.video}
+                <span>
+                  <Video />
+                </span>
+              {/if}
             </h2>
           </div>
         </a>

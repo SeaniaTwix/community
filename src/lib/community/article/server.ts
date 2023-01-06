@@ -4,12 +4,12 @@ import type {CommentDto} from '$lib/types/dto/comment.dto';
 import type {ITag} from '$lib/types/tag';
 import type {IArticle} from '$lib/types/article';
 import type {IComment} from '$lib/types/comment';
-import {inRange} from 'lodash-es';
+import {inRange, isEmpty} from 'lodash-es';
 import {unified} from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeSanitize, {defaultSchema} from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
-import {load} from 'cheerio'
+import {load as loadHtml, load} from 'cheerio';
 import type {Element as CheerioElement} from 'cheerio/lib'
 import {uploadAllowedExtensions} from '$lib/file/image/shared';
 import {env} from 'node:process';
@@ -67,6 +67,63 @@ export class Article {
     }
 
     return $('body').html() ?? '';
+  }
+
+  static async isContainsVideos(content?: string): Promise<boolean> {
+    if (!content) {
+      return false;
+    }
+
+    const $ = loadHtml(content);
+
+    const iframePreviews = $('iframe')
+      .toArray()
+      .filter((v) => {
+        const src = $(v).attr('src');
+        if (!src) {
+          return false;
+        }
+        const url = new URL(src);
+        return url.hostname === 'customer-30x5bsqeouuujoue.cloudflarestream.com';
+      });
+
+    return iframePreviews.length > 0;
+  }
+
+  static async extractFirstImage(content?: string) {
+    if (!content) {
+      return '';
+    }
+
+    const $ = loadHtml(content);
+    const images = $('img');
+
+    if (!isEmpty(images)) {
+      return $(images[0])?.attr('src')?.toString() ?? '';
+    }
+
+    const iframePreviews = $('iframe')
+      .toArray()
+      .filter((v) => {
+        const src = $(v).attr('src');
+        if (!src) {
+          return false;
+        }
+        const url = new URL(src);
+        return url.searchParams.has('poster');
+      })
+      .map((v) => {
+        const src = $(v).attr('src')!;
+        const url = new URL(src);
+        const poster = url.searchParams.get('poster')!;
+        const preview = new URL(poster.replace(`.jpg?`, `.gif?`));
+        preview.searchParams.set('width', '260');
+        preview.searchParams.set('height', '260');
+        preview.searchParams.set('duration', '5s');
+        return preview.toString();
+      });
+
+    return isEmpty(iframePreviews) ? '' : iframePreviews[0];
   }
 
   async get(): Promise<IArticle> {

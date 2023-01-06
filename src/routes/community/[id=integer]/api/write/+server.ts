@@ -171,16 +171,6 @@ class WriteRequest {
     return this.body.content?.trim();
   }
 
-  async getImage(content?: string): Promise<string> {
-    if (!content) {
-      return '';
-    }
-
-    const $ = loadHtml(content);
-    const images = $('img');
-    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '');
-  }
-
   private get isBoardExists(): Promise<boolean> {
     return this.board.exists;
   }
@@ -226,7 +216,8 @@ class WriteRequest {
       board: this.boardId!,
       pub: true,
       locked: false,
-      images: await this.getImage(content),
+      images: await Article.extractFirstImage(content),
+      video: await Article.isContainsVideos(content),
     };
 
     const cursor = await db.query(aql`INSERT ${data} INTO articles return NEW`);
