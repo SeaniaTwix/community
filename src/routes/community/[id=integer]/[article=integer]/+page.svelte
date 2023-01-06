@@ -803,6 +803,7 @@
                     on:blur={disableMobileInput}
                     on:favoriteclick={commentFavoriteImageSelected}
                     on:selectfile={() => fileUploader.click()}
+                    on:closereply={disableReplyMode}
                     bind:commentImageUploadSrc={commentImageUploadSrc}
                     bind:smallImage="{image100x100}"
                     bind:content={commentContent}
@@ -852,6 +853,7 @@
                       on:favoriteclick={commentFavoriteImageSelected}
                       on:mobilemode={enableMobileInput}
                       on:selectfile={() => fileUploader.click()}
+                      on:closereply={disableReplyMode}
                       bind:commentImageUploadSrc={commentImageUploadSrc}
                       bind:smallImage="{image100x100}"
                       bind:content={commentContent}

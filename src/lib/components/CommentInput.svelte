@@ -136,7 +136,8 @@
   }
 
   function closeReply() {
-    selectedComment = undefined;
+    // selectedComment = undefined;
+    dispatch('closereply');
   }
 
   function onPaste(event: ClipboardEvent) {
