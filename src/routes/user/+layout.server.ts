@@ -1,15 +1,11 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
 import {redirect} from '$lib/kit';
 import HttpStatus from 'http-status-codes';
-import {User} from '$lib/auth/user/server';
 
 export async function load({locals}: ServerLoadEvent): Promise<any> {
-  if (!locals || !locals.user) {
+  // console.log('user/+layout.server.ts:', !locals.user);
+  if (!locals.user) {
     // @ts-ignore
     throw redirect(HttpStatus.MOVED_TEMPORARILY, '/login');
   }
-  const id = locals.user.sub.split('/')[1]!;
-  const user = new User(id);
-  const isAdult = await user.isAdult();
-  return {isAdult};
 }

@@ -440,7 +440,7 @@
 
     pusher = new Pusher(`${$page.params.article}@${$page.params.id}`);
 
-    window.addEventListener('unload', clearSubscribes);
+    window.addEventListener('pagehide', clearSubscribes);
 
     try {
       // ky.put(`/community/${$page.params.id}/${$page.params.article}/api/viewcount`).then();

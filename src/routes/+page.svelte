@@ -3,6 +3,7 @@
 
 <svelte:head>
   <title>루헨 - 홈</title>
+  <meta name="description" content="커뮤니티 루헨">
 </svelte:head>
 
 <div class="w-full text-center mt-4">

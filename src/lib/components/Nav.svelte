@@ -166,25 +166,26 @@
       {#if showSearch}
 
         <li>
-          <span on:click={enableSearchMode} aria-label="검색 모드 활성화"
+          <button on:click={enableSearchMode} aria-label="검색 모드 활성화"
                 class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
                        dark:hover:bg-gray-500">
             <Search size="1.25rem" />
-          </span>
+          </button>
         </li>
       {/if}
 
       <li>
-      <span on:click={switchTheme} aria-label="라이트 - 다크 모드 스위치"
-            class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
-                   dark:hover:bg-gray-500 leading-zero">
-        <Switch size="20px" />
-      </span>
+        <button on:click={switchTheme} aria-label="라이트 - 다크 모드 스위치"
+              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md cursor-pointer
+                     dark:hover:bg-gray-500 leading-zero">
+          <Switch size="20px" />
+        </button>
       </li>
 
       {#if $client?.user && $client.user.rank > EUserRanks.User}
         <li>
-          <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
+          <a role="button" aria-label="관리 페이지로"
+             class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
              href="/community/admin">
             <Console size="20px"/>
@@ -198,7 +199,7 @@
         </li>
       {:else}
         <li>
-          <a data-sveltekit-prefetch aria-label="로그인 버튼" on:click={gotoLogin}
+          <a data-sveltekit-prefetch role="button" aria-label="로그인 버튼" on:click={gotoLogin}
              class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md transition-colors
                   dark:hover:bg-gray-500"
              href="/login">

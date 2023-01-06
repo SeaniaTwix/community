@@ -224,23 +224,23 @@
           {#if ($client?.user ?? data?.user)}
             <div class="w-max py-2 md:py-0.5">
               {#if ($client?.user ?? data?.user)?.uid !== article.author._key}
-                    <span class="mt-0.5 cursor-pointer hover:text-red-600">
-                      <Report size="1rem"/>
-                    </span>
+                <button class="mt-0.5 cursor-pointer hover:text-red-600">
+                  <Report size="1rem"/>
+                </button>
               {/if}
               {#if article.author._key === ($client?.user ?? data?.user)?.uid}
-                <a href="/community/{article.board}/{article._key}/edit"
+                <a role="button" aria-label="이 게시글 수정" href="/community/{article.board}/{article._key}/edit"
                    class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
                   <Edit size="1rem"/>
                 </a>
               {/if}
               {#if article.author._key === ($client?.user ?? data?.user)?.uid || ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
-                <span on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
+                <button on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Delete size="1rem"/>
-                </span>
+                </button>
               {/if}
               {#if ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
-                <a href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
+                <a role="button" aria-label="관리" href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Admin size="1rem"/>
                 </a>
               {/if}
@@ -261,7 +261,7 @@
       </div>
     </div>
     <div class="flex space-x-3 items-center">
-      <div class="w-12 min-h-[3rem] inline-block">
+      <div class="w-12 h-12 inline-block">
         <CircleAvatar fallback="{toImageSource(article.author._key)}"/>
       </div>
       <span class="inline-block leading-none hover:text-sky-400">{article.author?.id}</span>

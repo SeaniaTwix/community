@@ -115,6 +115,7 @@
 		"tlds": "^1.236.0",
 		"unified": "^10.1.2",
 		"uuid": "^9.0.0",
+		"vite-plugin-compression": "^0.5.1",
 		"wysiwyg-editor-node-sdk": "^4.0.16",
 		"youtube-player": "^5.5.2"
 	}

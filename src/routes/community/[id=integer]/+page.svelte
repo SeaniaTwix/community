@@ -280,7 +280,7 @@
             {/if}
           </button>
         </span>
-        <a class="underline decoration-sky-400" href="/community/{$page.params.id}/best">전체 보기</a>
+        <a class="underline decoration-sky-400" href="/community/{$page.params.id}/best">모두 보기</a>
       </div>
 
       <div id="__top-list" on:scroll={checkPage}
