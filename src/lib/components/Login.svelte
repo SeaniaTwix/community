@@ -2,7 +2,9 @@
   import {createEventDispatcher} from 'svelte';
   import {ELoginError} from '$lib/errors/login';
   import {goto} from '$app/navigation';
+  import {applyAction, enhance} from '$app/forms';
   import Pulse from 'svelte-loading-spinners/Pulse.svelte'
+  import type {ActionResult} from '@sveltejs/kit';
 
   const dispatch = createEventDispatcher();
   let passwordInput: HTMLInputElement;
@@ -11,6 +13,17 @@
   let loading = false;
 
   let error: ELoginError = ELoginError.None;
+
+  function onlySuccess() {
+    return async (action) => {
+      const result: ActionResult = action.result;
+      if (result.type === 'success') {
+        await applyAction(result);
+      } else {
+        whenFailed();
+      }
+    }
+  }
 
   function done() {
     loading = false;
@@ -52,7 +65,7 @@
   }
 
   let animating: number | null = null;
-  export function whenFailed() {
+  function whenFailed() {
     if (animating) {
       clearTimeout(animating);
     }
@@ -65,19 +78,21 @@
 
 </script>
 
-<form on:submit|preventDefault class="space-y-4 font-medium">
+<form method="post" action="/login" use:enhance={onlySuccess} class="space-y-4 font-medium">
   <div class="__auto-fill shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
     <input type="text" placeholder="ID" on:keydown={(e) => checkEnter(e, 0)}
+           name="id"
            bind:value={id} autocorrect="off" autocapitalize="none"
            class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
   </div>
   <div class="shadow-md rounded-md px-4 py-2 bg-zinc-50 dark:bg-gray-500">
-    <input type="password" placeholder="PW" on:keydown={(e) => checkEnter(e, 1)}
+    <input type="password" placeholder="비밀번호" on:keydown={(e) => checkEnter(e, 1)}
+           name="password"
            bind:this={passwordInput} bind:value={password}
            class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
   </div>
   <div class="flex space-x-2">
-    <button on:click={login} id="btn-login" bind:this={loginButton}
+    <button id="btn-login" bind:this={loginButton}
             class="bg-sky-400 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white items-center rounded-md px-4 py-2
                     flex-grow disabled:bg-sky-600 disabled:text-zinc-500 transition-colors">
       {#if !loading}

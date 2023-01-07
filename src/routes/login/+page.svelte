@@ -2,30 +2,31 @@
   import Login from '$lib/components/Login.svelte';
   import {goto} from '$app/navigation';
   import {NotificationsClient} from '$lib/notifications/client';
-  import {User} from '$lib/auth/user/client';
+  import {client, decodeToken} from '$lib/auth/user/client';
+  import {page} from '$app/stores';
+  import {onDestroy} from 'svelte';
 
-  let whenFailed: () => void;
+  const unsub = page.subscribe(({form}) => {
+    const token = form?.token;
 
-  type LoginDetail = { id: string, password: string, whenDone: () => void };
+    if (token) {
+      const user = decodeToken(token);
 
-  async function login(event: CustomEvent<LoginDetail>) {
-    const {id, password} = event.detail;
-    const user = new User(id);
-    user.login(password)
-      .then(async (user) => {
+      if (user) {
+        $client.user = user;
+
         NotificationsClient.init(user.uid);
 
         goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
           sessionStorage.removeItem('ru.hn:back');
         });
-      })
-      .catch((e) => {
-        // show error message
-        console.error(e);
-        whenFailed();
-      });
-    event.detail.whenDone();
-  }
+      }
+    }
+
+  });
+
+  onDestroy(unsub);
+
 </script>
 
 <svelte:head>
@@ -33,5 +34,5 @@
 </svelte:head>
 
 <div class="mt-24 w-10/12 md:w-3/5 lg:w-1/3 mx-auto">
-  <Login on:login={login} bind:whenFailed={whenFailed}/>
+  <Login />
 </div>

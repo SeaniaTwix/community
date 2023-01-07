@@ -1,11 +1,10 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
 import {redirect} from '$lib/kit';
-import HttpStatus from 'http-status-codes';
+import HttpStatus from '$lib/http-status';
 import {User} from '$lib/auth/user/server';
 
 export async function load({locals}: ServerLoadEvent): Promise<any> {
   if (!locals || !locals.user) {
-    // @ts-ignore
     throw redirect(HttpStatus.MOVED_TEMPORARILY, '/login');
   }
   const id = locals.user.sub.split('/')[1]!;

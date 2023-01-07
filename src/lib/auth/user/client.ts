@@ -13,7 +13,7 @@ export const client = writable<Partial<App.Locals>>({
   ui: undefined,
 });
 
-function decodeToken(token: string): IUserSession | undefined {
+export function decodeToken(token: string): IUserSession | undefined {
   try {
     // console.log(JSON.parse(decode(token.split('.')[1])))
     return JSON.parse(decode(token.split('.')[1]));

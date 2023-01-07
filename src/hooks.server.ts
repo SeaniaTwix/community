@@ -1,14 +1,14 @@
 import type {RequestEvent, ResolveOptions} from '@sveltejs/kit';
 import type {MaybePromise} from '@sveltejs/kit/types/private';
-import _ from 'lodash-es';
+import {isEmpty} from 'lodash-es';
 import njwt from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import {atob, btoa} from 'js-base64';
 import {User} from '$lib/auth/user/server';
 import dayjs from 'dayjs';
-import type {JwtUser} from '$lib/types/user';
-import type {AllowedExtensions} from './app';
+import type {IUser, JwtUser} from '$lib/types/user';
+import type {AllowedExtensions, IUserSession} from './app';
 import { sequence } from '@sveltejs/kit/hooks';
 // todo: 나중에 패키지로 고칠 것. 패키지에서 불러오면 undefined로 불러와짐...
 import {
@@ -16,6 +16,7 @@ import {
   validate as validateUuid,
   version as versionUuid,
 } from '$lib/uuid/esm-node';
+import {env} from 'node:process';
 
 global.atob = atob;
 global.btoa = btoa;
@@ -24,7 +25,7 @@ global.btoa = btoa;
 // noinspection JSUnusedGlobalSymbols
 export const handle = sequence(init, ui, images, auth, setSessionId);
 
-function init({event, resolve}: HandleParameter): MaybePromise<Response> {
+function init({event, resolve}: HandleParameters): MaybePromise<Response> {
   if (!event.locals) {
     event.locals = {
       settings: {
@@ -33,8 +34,7 @@ function init({event, resolve}: HandleParameter): MaybePromise<Response> {
     } as any
   }
 
-  const cookie = event.request.headers.get('cookie') ?? '';
-  const {image_order} = CookieParser.parse(cookie);
+  const image_order = event.cookies.get('image_order');
 
   if (image_order) {
     try {
@@ -53,7 +53,7 @@ function init({event, resolve}: HandleParameter): MaybePromise<Response> {
 }
 
 /** @type {import('@sveltejs/kit').Handle} */
-async function ui({event, resolve}: HandleParameter): Promise<Response> {
+function ui({event, resolve}: HandleParameters): MaybePromise<Response> {
   const cookie = event.request.headers.get('cookie') ?? '';
   const {
     theme,
@@ -70,7 +70,42 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
 
   const expire = dayjs().add(1000, 'y').toDate();
   const validTheme = theme === 'light' ? 'light' : 'dark';
-  const response = await resolve(event, {
+
+  if (!comment_folding) {
+    // response.headers.append('set-cookie', `comment_folding=false; Path=/; Expires=${expire};`);
+    event.cookies.set('comment_folding', event.locals.ui.commentFolding.toString(), {
+      path: '/',
+      expires: expire,
+      httpOnly: false,
+    });
+  }
+
+  if (!button_align) {
+    // response.headers.append('set-cookie', `button_align=right; Path=/; Expires=${expire};`);
+    event.cookies.set('button_align', event.locals.ui.buttonAlign, {
+      path: '/',
+      expires: expire,
+      httpOnly: false,
+    });
+  }
+
+  if (!list_type) {
+    // response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
+    event.cookies.set('list_type', event.locals.ui.listType, {
+      path: '/',
+      expires: expire,
+      httpOnly: false,
+    });
+  }
+
+  // response.headers.append('set-cookie', `theme=${validTheme}; Path=/; Expires=${expire};`);
+  event.cookies.set('theme', validTheme, {
+    path: '/',
+    expires: expire,
+    httpOnly: false,
+  });
+
+  return resolve(event, {
     transformPageChunk: ({html}) => {
       // todo: global variable?
       const themed = theme === 'light' ? '#FFFFFF' : '#3C4556';
@@ -81,32 +116,13 @@ async function ui({event, resolve}: HandleParameter): Promise<Response> {
         .replace('<>META-THEME-COLOR<>', themed);
     }
   });
-
-  if (!comment_folding) {
-    response.headers.append('set-cookie', `comment_folding=false; Path=/; Expires=${expire};`);
-  }
-
-  if (!button_align) {
-    response.headers.append('set-cookie', `button_align=right; Path=/; Expires=${expire};`);
-  }
-
-  if (!list_type) {
-    response.headers.append('set-cookie', `list_type=list; Path=/; Expires=${expire};`);
-  }
-
-  response.headers.append('set-cookie', `theme=${validTheme}; Path=/; Expires=${expire};`);
-
-  return response;
 }
 
 /** @type {import('@sveltejs/kit').Handle} */
-async function images({event, resolve}: HandleParameter): Promise<Response> {
-
-  const cookie = event.request.headers.get('cookie') ?? '';
-  const {image_order} = CookieParser.parse(cookie);
+function images({event, resolve}: HandleParameters): MaybePromise<Response> {
+  const image_order = event.cookies.get('image_order');
 
   const expire = dayjs().add(1000, 'year').toDate();
-  const response = await resolve(event);
   const defaultOrder = encodeURIComponent('jxl,avif,webp,png');
 
   if (image_order) {
@@ -116,97 +132,82 @@ async function images({event, resolve}: HandleParameter): Promise<Response> {
         .filter(ext => ['jxl', 'avif', 'webp', 'png'].includes(ext))
         .join(',');
 
-      response.headers.append('set-cookie', `image_order=${encodeURIComponent(imageOrder)}; Path=/; Expires=${expire};`);
+      // response.headers.append('set-cookie', `image_order=${encodeURIComponent(imageOrder)}; Path=/; Expires=${expire};`);
+      event.cookies.set('image_order', imageOrder, {
+        path: '/',
+        expires: expire,
+        httpOnly: false,
+      });
     } catch {
-      console.log(`image_order=${defaultOrder}; Path=/; Expires=${expire};`);
-      response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+      // console.log(`image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+      // response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+      event.cookies.set('image_order', defaultOrder, {
+        path: '/',
+        expires: expire,
+        httpOnly: false,
+      });
     }
   } else {
-    response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+    // response.headers.append('set-cookie', `image_order=${defaultOrder}; Path=/; Expires=${expire};`);
+    event.cookies.set('image_order', defaultOrder, {
+      path: '/',
+      expires: expire,
+      httpOnly: false,
+    });
   }
 
-  return response;
+  return resolve(event);
 }
 
 /** @type {import('@sveltejs/kit').Handle} */
-async function auth({event, resolve}: HandleParameter): Promise<Response> {
-  let result: GetUserReturn | undefined;
-  let newRefresh: njwt.Jwt | undefined;
+async function auth({event, resolve}: HandleParameters): Promise<Response> {
+  const token = event.cookies.get('token');
 
-  const cookie = event.request.headers.get('cookie') ?? '';
-  const {
-    token,
-    refresh,
-  } = CookieParser.parse(cookie);
+  if (token) {
+    const jwt = njwt.verify(token, key);
+    if (!jwt) {
+      event.locals.user = undefined;
+      return resolve(event);
+    }
 
-  try {
-    if (!_.isEmpty(token) || !_.isEmpty(refresh)) {
-      // token이 유효할 때 혹은 token이 만료 되었지만 리프레시 토큰이 유효할 때
-      // 유저 값을 반환합니다.
-      result = await getUser(token, refresh);
-      try {
-        if (refresh) {
-          const userData = njwt.verify(refresh, key);
-          if (userData) {
-            const exp = userData.body.toJSON().exp as number * 1000;
-            const now = Date.now();
-            if (exp - 18000000 <= now) {
-              const body = userData.body.toJSON();
-              const user = await User.findByUniqueId(body.uid as string);
-              newRefresh = await user!.token('refresh');
-              const expireRefresh = dayjs().add(1, 'day').toDate();
-              newRefresh.setExpiration(expireRefresh);
-            }
-          }
-        }
-      } catch {
-        //
+    event.locals.user = jwt.body.toJSON() as any;
+  } else {
+    const refresh = event.cookies.get('refresh');
+
+    if (refresh) {
+      const jwt = njwt.verify(refresh, key);
+      if (!jwt) {
+        event.locals.user = undefined;
+        return resolve(event);
+      }
+      const uid = jwt.body.toJSON().uid?.toString();
+      const user = await User.findByUniqueId(uid);
+      const newToken = await user?.token('user');
+      if (newToken) {
+        event.cookies.set('token', newToken.compact(), {
+          path: '/',
+          expires: dayjs().add(10, 'minutes').toDate(),
+          sameSite: 'strict',
+          httpOnly: true,
+          secure: !env.IS_DEV,
+        });
+
+        event.locals.user = newToken.body.toJSON() as any;
       }
     }
-  } catch {
-    //
   }
 
-  if (result?.newToken) {
-    event.locals.user = result.user;
 
-    const response = await resolve(event);
-    const expire = dayjs().add(15, 'minute').toDate().toUTCString();
-    response.headers.append('set-cookie', `token=${result.newToken}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
-    if (newRefresh) {
-      const expireRefresh = dayjs().add(1, 'day').toDate();
-      response.headers.append('set-cookie', `refresh=${newRefresh.compact()}; Path=/; Expires=${expireRefresh.toUTCString()}; SameSite=Strict; HttpOnly;`);
-    }
-    return response;
-  }
-
-  if (!result) {
-    // noinspection ES6RedundantAwait
-    return await resolve(event);
-  }
-
-  event.locals.user = result.user;
-
-  const response = await resolve(event);
-
-  try {
-    if (result?.newToken) {
-      response.headers.append('set-cookie', result.newToken);
-    }
-  } catch {
-    console.trace('error');
-  }
-
-  return response;
+  return resolve(event);
 }
 
 const newUuid = () => uuid('https://ru.hn', uuid.URL);
-const validate = (uuid: string) => validateUuid(uuid) && versionUuid(uuid) === 5;
+const validate = (uuid?: string) => validateUuid(uuid) && versionUuid(uuid) === 5;
 
 /** @type {import('@sveltejs/kit').Handle} */
-async function setSessionId({event, resolve}: HandleParameter): Promise<Response> {
-  const cookie = event.request.headers.get('cookie') ?? '';
-  const {session_id,} = CookieParser.parse(cookie);
+async function setSessionId({event, resolve}: HandleParameters): Promise<Response> {
+  const cookie = event.cookies;
+  const session_id = cookie.get('session_id');
   event.locals.sessionId = session_id ?? newUuid();
   const response = await resolve(event);
   // console.log(event.locals.sessionId, !validateUuid(event.locals.sessionId))
@@ -274,7 +275,7 @@ async function getUser(token?: string, refresh?: string): Promise<GetUserReturn 
   return { user: jwt.body.toJSON() as any };
 }
 
-interface HandleParameter {
+interface HandleParameters {
   event: RequestEvent,
   resolve: (event: RequestEvent, opts?: ResolveOptions) => MaybePromise<Response>
 }

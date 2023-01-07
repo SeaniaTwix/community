@@ -23,12 +23,15 @@
 
   function changeSettingLeftButtons(event: CustomEvent<boolean>) {
     const isSetAlignLeft = event.detail;
+
     Cookies.set('button_align', isSetAlignLeft ? 'left' : 'right', {
       expires: dayjs().add(1000, 'years').toDate(),
     });
 
     client.update((s) => {
-      s.ui.buttonAlign = isSetAlignLeft ? 'left' : 'right';
+      if (s.ui) {
+        s.ui.buttonAlign = isSetAlignLeft ? 'left' : 'right';
+      }
       return s;
     });
   }
@@ -42,10 +45,16 @@
     imageOrder = event.detail.items;
     const orders = Object.values(imageOrder).map(i => i.name);
     const expires = dayjs().add(1000, 'year').toDate();
-    Cookies.set('image_order', encodeURIComponent(orders.join(',')), {expires});
+
+    Cookies.set('image_order', orders.join(','), {
+      path: '/',
+      expires,
+    });
 
     client.update((s) => {
-      s.settings.imageOrder = orders;
+      if (s.settings) {
+        s.settings.imageOrder = orders;
+      }
       return s;
     });
   }
