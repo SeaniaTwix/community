@@ -12,6 +12,7 @@
   import CircleAvatar from './CircleAvatar.svelte';
   import {toSources} from '$lib/file/image/shared';
   import {page} from '$app/stores';
+  import {client} from '$lib/auth/user/client';
 
   export let board: string;
   export let list: ArticleItemDto[] = [];
@@ -33,7 +34,7 @@
     return {src: avatar, type: `image/${type}`};
   }
 
-  const order = ['jxl', 'avif', 'webp', 'png']; // $session.settings.imageOrder;
+  const order = $client.settings?.imageOrder ?? ['jxl', 'avif', 'webp', 'png'];
 
   function sortSources(images: {srcset: string, type: string}[]) {
     return images.sort(({srcset: a}, {srcset: b}) => {

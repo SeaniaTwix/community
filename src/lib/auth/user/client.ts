@@ -1,8 +1,8 @@
 import ky from 'ky-universal';
 import {writable} from 'svelte/store';
 import {decode} from 'js-base64';
-import {CookieParser} from '$lib/cookie-parser';
-import type {AllowedExtensions, IUserSession} from '../../../app';
+import type {AllowedExtensions, IUserSession} from '@root/app';
+import Cookies from 'js-cookie';
 
 export const client = writable<Partial<App.Locals>>({
   user: undefined,
@@ -49,7 +49,8 @@ export class User {
 
       client.update((old) => {
         if (typeof old !== 'object') {
-          const {image_order} = CookieParser.parse(document.cookie);
+          // const {image_order} = CookieParser.parse(document.cookie);
+          const image_order = Cookies.get('image_order');
           old = {
             settings: {
               imageOrder: image_order?.split(',')
