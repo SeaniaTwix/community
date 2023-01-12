@@ -1,12 +1,12 @@
+<!--suppress JSUnusedAssignment -->
 <script lang="ts">
   import Login from 'svelte-material-icons/Login.svelte';
   import Menu from 'svelte-material-icons/Menu.svelte';
   import Switch from 'svelte-material-icons/ThemeLightDark.svelte';
   import Console from 'svelte-material-icons/Tools.svelte';
   import Search from 'svelte-material-icons/Magnify.svelte';
-  import NewNoti from 'svelte-material-icons/Circle.svelte';
+  import Backspace from 'svelte-material-icons/Backspace.svelte';
   import Cookies from 'js-cookie';
-  import dayjs from 'dayjs';
   import {fly, fade} from 'svelte/transition';
   import {page} from '$app/stores';
   import {EUserRanks} from '$lib/types/user-ranks';
@@ -33,28 +33,43 @@
     searchInput.focus();
   }
 
-  function exitSearchMode() {
+  function exitSearchMode(event?: FocusEvent) {
+    if (event?.relatedTarget && event.relatedTarget instanceof HTMLButtonElement && event.relatedTarget.hasAttribute('clear-search-text')) {
+      return event.preventDefault();
+    }
     searchMode = false;
   }
 
-  function detectEnter(event: KeyboardEvent) {
-
+  function handleSearchInput(event: KeyboardEvent) {
+    // noinspection JSDeprecatedSymbols
     if (event.isComposing || event.keyCode === 229) {
       return;
     }
     if (event.key === 'Enter') {
       //todo: search
-      goto(`/community/search?q=${encodeURIComponent(searchText)}`)
+      $page.url.searchParams.set('q', searchText);
+      // console.log();
+      goto($page.url.toString(), {invalidateAll: true})
         .then(async () => {
           searchMode = true;
           await tick();
-          searchInput.focus();
+
+          setTimeout(() => {
+            const input = document.getElementById('__search-input');
+            if (input) {
+              input.focus();
+            }
+          }, 100);
         });
+    }
+
+    if (event.code === 'Escape' && searchMode) {
+      exitSearchMode();
     }
 
   }
 
-  $: showSearch = $page.route.id?.startsWith('community/') === true;
+  $: showSearch = $page.url.pathname.startsWith('/community/') === true;
 
   function gotoLogin(event: Event) {
     event.preventDefault();
@@ -95,11 +110,32 @@
   }
 
   function checkBoardLink(event: MouseEvent, link: string) {
-    // console.log(link, $page.url.pathname);
-    // todo: prevent going scroll top on same page if you clicked nav menu
+    goto(link, {noScroll: link === $page.url.pathname});
+  }
+
+  function detectFindKey(event: KeyboardEvent) {
+    if (event.target instanceof HTMLElement) {
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+    }
+
+    if (event.code === 'KeyF') {
+      event.preventDefault();
+      enableSearchMode();
+    }
+  }
+
+  function clearSearchText() {
+    searchText = '';
+    searchMode = true;
+    searchInput.focus();
   }
 
 </script>
+
+<svelte:body on:keydown={detectFindKey} />
+
 <div class="fixed bg-white/50 backdrop-blur-lg z-50">
   {#if showSideMenu}
     <div transition:fly={{x: -(document.body.scrollWidth + 50), duration: 350}}
@@ -130,9 +166,9 @@
     </div>
   {/if}
   {#if showSideMenu}
-    <div transition:fade
-         class="absolute w-screen h-screen bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm touch-none overscroll-none"
-         on:click={closeSideMenu}></div>
+    <button transition:fade
+         class="absolute w-screen h-screen bg-white/50 dark:bg-gray-600/50 backdrop-blur-sm touch-none overscroll-none cursor-default"
+         on:click={closeSideMenu}></button>
   {/if}
 </div>
 
@@ -156,7 +192,7 @@
           <li class="py-2">
             <a class="px-4 py-2 inline-block hover:bg-zinc-100 rounded-md
                   transition-colors dark:hover:bg-gray-500"
-               on:click={(e) => checkBoardLink(e, `/community/${board._key}`)}
+               on:click|preventDefault={(e) => checkBoardLink(e, `/community/${board._key}`)}
                href="/community/{board._key}" data-sveltekit-prefetch>
               {board.name}
             </a>
@@ -211,13 +247,20 @@
       {/if}
     </ul>
   {:else}
-    <input bind:this={searchInput}
-           bind:value={searchText}
-           on:blur={exitSearchMode}
-           on:keydown={detectEnter}
-           class="w-full px-4 focus:outline-none dark:bg-gray-700"
-           type="text"
-           placeholder="이곳에 검색어를 입력하세요" />
+    <div class="w-full pl-4 dark:bg-gray-700 flex flex-row justify-center">
+      <input bind:this={searchInput}
+             bind:value={searchText}
+             on:blur={exitSearchMode}
+             on:keydown={handleSearchInput}
+             role="searchbox"
+             id="__search-input"
+             class="grow focus:outline-none bg-transparent"
+             type="text"
+             placeholder="이곳에 검색어를 입력하세요" />
+      <button on:click={clearSearchText} class="w-13 pr-4 hover:text-zinc-400" clear-search-text>
+        <Backspace size="1.25rem" />
+      </button>
+    </div>
   {/if}
 </nav>
 

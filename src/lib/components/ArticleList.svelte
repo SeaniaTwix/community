@@ -22,7 +22,10 @@
   export let list: ArticleItemDto[] = [];
   export let showingUserContextMenuIndex = -1;
   $: isBestView = last($page.url.toString().split('?')[0].split('/')) === 'best';
-  $: q = !isEmpty($page.url.search) ? `${$page.url.search}${isBestView ? '&type=best' : ''}` : isBestView ? `?type=best` : '';
+  declare var query: string;
+  $: query = !isEmpty($page.url.search) ?
+      `${$page.url.search}${isBestView ? '&type=best' : ''}`
+    : isBestView ? `?type=best` : '';
   // $: console.log('changed:', showingUserContextMenuIndex);
   // export let users: Record<string, IUser>;
   const dispatch = createEventDispatcher();
@@ -85,7 +88,7 @@
   <ul class="divide-y divide-zinc-200 dark:divide-zinc-400">
     {#each list as article, i}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
-        <a href="/community/{board}/{article._key}{q}">
+        <a href="/community/{board}/{article._key}{query}">
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0 md:items-center">

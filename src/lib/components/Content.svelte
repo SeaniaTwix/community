@@ -53,7 +53,10 @@
   {:else if hasImages(content)}
     <p>
       {#each getImages(content) as image}
-        <Image {data} {nsfw} src="{image.attribs.src}" size="{{x: image.attribs.width, y: image.attribs.height}}" sources="{image.sources}" />
+        <Image {data} {nsfw} src="{image.attribs.src}"
+               loadType="eager"
+               size="{{x: image.attribs.width, y: image.attribs.height}}"
+               sources="{image.sources}" />
       {/each}
     </p>
   {:else}

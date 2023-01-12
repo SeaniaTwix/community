@@ -21,5 +21,6 @@ module.exports = {
     'no-async-promise-executor': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
+    'no-redeclare': 'off',
   }
 };

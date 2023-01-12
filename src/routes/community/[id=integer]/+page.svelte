@@ -55,7 +55,7 @@
 
   afterNavigate(({from, to}) => {
     // const page = to.searchParams.get('page');
-    console.log(from?.url.pathname, to?.url.pathname)
+    // console.log(from?.url.pathname, to?.url.pathname)
     if (from?.url.pathname + '?' + from?.url.searchParams !== to?.url.pathname + '?' + to?.url.searchParams) {
       if (pusher) {
         pusher.destory();
@@ -121,7 +121,7 @@
 
   function updateListFromBuffer() {
     const autoTagRegex = /^[[(]?([a-zA-Z가-힣@]+?)[\])]/gm;
-    const newArticles: ArticleItemDto[] = buffer.map(item => {
+    const newArticles: Partial<ArticleItemDto>[] = buffer.map(item => {
       const regx = autoTagRegex.exec(item.title.trim());
       let autoTag: string | undefined;
       // console.log(item.title, regx);
@@ -142,7 +142,7 @@
     });
 
     // todo: make list limit to max
-    articles = [...newArticles, ...articles]; // .slice(0, 30);
+    articles = [...(<ArticleItemDto[]>newArticles), ...articles]; // .slice(0, 30);
     buffer = [];
   }
 
@@ -395,7 +395,7 @@
   {/if}
 
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{$page.params.id}" q="page" current="{currentPage}" max="{maxPage}"/>
+    <Pagination base="/community/{$page.params.id}" pageKey="page" current="{currentPage}" max="{maxPage}"/>
   </div>
 </div>
 

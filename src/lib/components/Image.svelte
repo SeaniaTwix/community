@@ -19,6 +19,7 @@
   export let sources: {srcset: string, type: string}[] = [];
   export let nsfw = false;
   export let size: { x: number, y: number } | undefined;
+  export let loadType: 'eager' | 'lazy' = 'lazy';
   let loading = true;
   let isFavorite = false;
   let forceShow = false;
@@ -201,7 +202,7 @@
           class:select-none={nsfw && !forceShow}
           class:pointer-events-none={nsfw && !forceShow}>
       {#if isEmpty(sources)}
-        <img {src} alt="유즈는 귀엽다" loading="lazy" crossorigin="anonymous"
+        <img {src} alt="유즈는 귀엽다" loading="{loadType}" crossorigin="anonymous"
              class="min-w-full"
              bind:this={img}
              on:load={() => onImageLoaded(img)}
