@@ -3,27 +3,33 @@ import HttpStatus from 'http-status-codes';
 import {isEmpty, last} from 'lodash-es';
 import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {client} from '$lib/database/search';
-import {error, json} from '$lib/kit';
+import {json} from '$lib/kit';
 
-export async function GET({url}: RequestEvent): Promise<Response> {
-  const q = url.searchParams.get('q') ?? '';
+export async function retrive(id?: string, query?: string | null) {
+  const q = query ?? '';
   //console.log('q:', q);
   if (isEmpty(q)) {
-    return new Response(undefined, {status: HttpStatus.NO_CONTENT});
+    return undefined;
   }
 
   // todo: board relative search
-  const search = new ArticleSearch('', q);
+  const search = new ArticleSearch(id ?? '', q);
   try {
-    return json({
-      result: await search.result(),
-    });
+    return await search.result();
   } catch (e: any) {
-    throw error(HttpStatus.BAD_GATEWAY, e.toString());
+    return undefined
   }
 }
 
-class ArticleSearch {
+export async function GET({url, params: {id}}: RequestEvent): Promise<Response> {
+  const result = retrive(id, url.searchParams.get('q'));
+  if (!result) {
+    return new Response(undefined, {status: HttpStatus.NO_CONTENT});
+  }
+  return json({result});
+}
+
+export class ArticleSearch {
   private readonly frags: string[];
   private readonly _tags: string[];
   private readonly tags: string[];
@@ -83,7 +89,7 @@ class ArticleSearch {
     return `tags.${tagCondition} NOT EXISTS`;
   }
 
-  async result(): Promise<ArticleItemDto[]> {
+  async result(): Promise<ISearchResult> {
     const settings = await client.index('articles')
       .getSettings();
 
@@ -108,4 +114,19 @@ class ArticleSearch {
     return d as any;
   }
 
+}
+
+interface ISearchResult {
+  hits: ISearchArticleResult[];
+}
+
+export interface ISearchArticleResult {
+  board: string;
+  id: string;
+  title: string;
+  source: string;
+  content: string;
+  tags: object;
+  author: object;
+  createdAt: number;
 }

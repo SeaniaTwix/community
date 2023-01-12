@@ -8,6 +8,9 @@ import HttpStatus from 'http-status-codes';
 import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {initAutoTag} from '$lib/community/shared/auto-tag';
 import type {ListBoardRequest} from '@routes/community/[id=integer]/api/list/+server';
+import type {IUserSession} from '@root/app';
+import {ArticleSearch} from '@routes/community/api/search/+server';
+import {inRange} from 'lodash-es';
 
 type BoardType = 'default' | 'best';
 
@@ -23,16 +26,16 @@ export class Board {
     return await cursor.all();
   }
 
-  async render(pageRequest: ListBoardRequest, type: BoardType, locals: App.Locals) {
+  async render(pageRequest: ListBoardRequest, type: BoardType, locals: App.Locals, query?: string) {
     const list: ArticleDto[] = type === 'default' ?
-        await pageRequest.getListRecents(locals?.user?.uid ?? null) as any[]
-      : await pageRequest.getBestListRecents(locals?.user?.uid ?? null) as any[];
+      await pageRequest.getListRecents(locals?.user?.uid ?? null, query) as any[]
+      : await pageRequest.getBestListRecents(locals?.user?.uid ?? null, query) as any[];
 
     const maxPage = type === 'default' ?
-        await pageRequest.getMaxPage()
+      await pageRequest.getMaxPage()
       : await pageRequest.getBestMaxPage();
 
-    const page = pageRequest.page
+    const page = pageRequest.page;
 
     if (page > maxPage) {
       throw error(HttpStatus.NOT_FOUND, 'Not found');
@@ -40,11 +43,9 @@ export class Board {
 
     const {user, sessionId} = locals;
 
-    const bests = await this.getBests(user?.uid ?? null, 10, 1);
-
     const announcements = await this.getAnnouncements(page, user ? user.uid : sessionId!);
 
-    return {
+    const result: IArticleList = {
       articles: list
         .map((article) => {
           const {tags} = article;
@@ -71,10 +72,15 @@ export class Board {
       name: await this.name,
       currentPage: page,
       maxPage,
-      bests,
       announcements,
       session: locals,
     };
+
+    if (type === 'default') {
+      result.bests = await this.getBests(user?.uid ?? null, 10, 1);
+    }
+
+    return result;
   }
 
   async create(title: string, pub: boolean) {
@@ -104,9 +110,9 @@ export class Board {
     return await cursor.next();
   }
 
-  async getAnnouncements(page: number, reader: string) {
+  async getAnnouncements(page: number, reader: string): Promise<ArticleItemDto[]> {
     if (page <= 0) {
-      throw new Error('page must be gt 0')
+      throw new Error('page must be gt 0');
     }
     const cursor = await db.query(aql`
       let reader = ${reader}
@@ -163,7 +169,7 @@ export class Board {
               for tag in tags
                 filter tag.target == article._key && tag.pub
                   return tag.name)
-            return merge(unset(article, "_rev", "_id", "content", "pub", "source", "tags"), {tags: tagNames})`)
+            return merge(unset(article, "_rev", "_id", "content", "pub", "source", "tags"), {tags: tagNames})`);
     const results = await cursor.all();
     return results.map(article => {
       const tags: Record<string, number> = {};
@@ -179,14 +185,30 @@ export class Board {
     });
   }
 
-  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false, requireLikes: number | null = null) {
+  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false, requireLikes: number | null = null, query?: string) {
     if (page <= 0) {
-      throw new Error('page must be lt 0')
+      throw new Error('page must be lt 0');
     }
+
+    if (!inRange(amount, 1, 50)) {
+      throw new Error('amount must be in the range of 1 to 50');
+    }
+
+    let articleFilter: string[] | null = null;
+
+    if (query) {
+      const search = new ArticleSearch('', query, page, amount);
+      const result = await search.result();
+      articleFilter = result.hits.map(v => v.id);
+    }
+
     // console.log(requireLikes)
     const cursor = await db.query(aql`
+      let articleFilter = ${articleFilter}
       for article in articles
         sort article.createdAt desc
+        let skipFilter = articleFilter == null
+        filter skipFilter || position(articleFilter, article._key)
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub
           let savedTags = (
@@ -229,7 +251,7 @@ export class Board {
               for view in views
                 filter view.article._key == article._key
                   return view)
-            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, convertedImages: convertedImages, author: authorData, views: viewCount})`)
+            return merge(unset(article, "content", "pub", "source", "_id", "_rev"), {comments: c, tags: savedTags, images: imgs, convertedImages: convertedImages, author: authorData, views: viewCount})`);
 
     return await cursor.all();
   }
@@ -241,7 +263,7 @@ export class Board {
           filter board._key == ${this.id}
             return board.name`)
         .then((cursor) => {
-          cursor.next().then(resolve)
+          cursor.next().then(resolve);
         })
         .catch(reject);
     });
@@ -260,10 +282,38 @@ export class Board {
         .catch(reject);
     });
   }
+
+  get minReqLikes(): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      db
+        .query(aql`
+          let board = document(concat("boards/", ${this.id}))
+          return has(board, "minReqLikes") ? board.minReqLikes : 1`)
+        .then((cursor) => {
+          cursor
+            .next()
+            .then(resolve)
+            .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
 }
 
 export interface INewBoardInfo {
   name: string;
   min: EUserRanks;
   blocked: boolean;
+}
+
+export interface IArticleList {
+  articles: ArticleItemDto[];
+  user?: IUserSession,
+  name: string,
+  currentPage: number,
+  maxPage: number;
+  announcements: ArticleItemDto[],
+  session: App.Locals,
+  bests?: ArticleItemDto[],
 }

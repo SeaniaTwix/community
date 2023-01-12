@@ -19,24 +19,49 @@ export async function retrive({params, url, locals}: RequestEvent, {best}: Parti
   const pageParam = url.searchParams.get('page') ?? '1';
   const amountParam = url.searchParams.get('amount') ?? '30';
   const type = best === true || url.searchParams.get('type') === 'best' ? 'best' : 'default';
+  const query = url.searchParams.get('q');
 
-  return await load(params.id, pageParam, amountParam, type, locals);
+  return await load({
+    page: pageParam,
+    amount: amountParam,
+    id: params.id,
+    type,
+    locals,
+    query,
+  });
 }
 
 export async function GET(event: RequestEvent, listParams: Partial<ListParams> = {}): Promise<Response> {
   return json(await retrive(event, listParams));
 }
 
-function load(id: string, pageParam: string, amountParam: string, type: 'default' | 'best', locals: App.Locals) {
-  const page = isStringInteger(pageParam) ? parseInt(pageParam) : 1;
-  const amount = isStringInteger(amountParam) ? parseInt(amountParam) : 30;
-  const showImage = locals?.ui?.listType === 'gallery';
+function toSafeNumber(i?: string | number, def = 1): number {
+  if (!i) {
+    return def;
+  }
 
-  const board = new Board(id);
+  return isStringInteger(i as string) ? parseInt(i as string) : i as number;
+}
+
+function load(option: ISearchServerParams) {
+  const page = toSafeNumber(option.page);
+  const amount = toSafeNumber(option.amount, 30);
+  const showImage = option.locals?.ui?.listType === 'gallery';
+
+  const board = new Board(option.id);
 
   const pageRequest = new ListBoardRequest(board, page, amount, showImage);
 
-  return board.render(pageRequest, type, locals);
+  return board.render(pageRequest, option.type, option.locals, option.query ?? undefined);
+}
+
+export interface ISearchServerParams {
+  id: string;
+  page: number | string;
+  amount: number | string;
+  type: 'default' | 'best';
+  locals: App.Locals;
+  query: string | null;
 }
 
 export class ListBoardRequest {
@@ -64,12 +89,13 @@ export class ListBoardRequest {
     return this.board.getMaxPage(this.amount, 1);
   }
 
-  getListRecents(reader: string | null): Promise<ArticleDto[]> {
-    return this.board.getRecentArticles(this.page, this.amount, reader, this.showImage);
+  getListRecents(reader: string | null, query?: string): Promise<ArticleDto[]> {
+    return this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, null, query);
   }
 
-  getBestListRecents(reader: string | null): Promise<ArticleDto[]> {
+  async getBestListRecents(reader: string | null, query?: string): Promise<ArticleDto[]> {
     // todo: based on board setting minLike
-    return this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, 1);
+    const minReqLikes = await this.board.minReqLikes;
+    return await this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, minReqLikes, query);
   }
 }

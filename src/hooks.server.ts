@@ -1,13 +1,11 @@
 import type {RequestEvent, ResolveOptions} from '@sveltejs/kit';
 import type {MaybePromise} from '@sveltejs/kit/types/private';
-import {isEmpty} from 'lodash-es';
-import njwt from 'njwt';
+import njwt, {Jwt} from 'njwt';
 import {CookieParser} from '$lib/cookie-parser';
 import {key} from '$lib/auth/user/shared';
 import {atob, btoa} from 'js-base64';
 import {User} from '$lib/auth/user/server';
 import dayjs from 'dayjs';
-import type {IUser, JwtUser} from '$lib/types/user';
 import type {AllowedExtensions, IUserSession} from './app';
 import { sequence } from '@sveltejs/kit/hooks';
 // todo: 나중에 패키지로 고칠 것. 패키지에서 불러오면 undefined로 불러와짐...
@@ -159,28 +157,47 @@ function images({event, resolve}: HandleParameters): MaybePromise<Response> {
   return resolve(event);
 }
 
+function resolveJwt(jwt?: Jwt): IUserSession | undefined {
+  if (!jwt) {
+    return undefined;
+  }
+
+  const body = jwt.body.toJSON();
+
+  if (body.iss !== 'https://ru.hn/' || body.scope !== 'user') {
+    return undefined;
+  }
+
+  return body as any;
+}
+
 /** @type {import('@sveltejs/kit').Handle} */
 async function auth({event, resolve}: HandleParameters): Promise<Response> {
   const token = event.cookies.get('token');
 
   if (token) {
     const jwt = njwt.verify(token, key);
-    if (!jwt) {
-      event.locals.user = undefined;
+    const body = resolveJwt(jwt);
+
+    if (!body) {
+      event.locals.user = body;
       return resolve(event);
     }
 
-    event.locals.user = jwt.body.toJSON() as any;
+    event.locals.user = body;
   } else {
     const refresh = event.cookies.get('refresh');
 
     if (refresh) {
       const jwt = njwt.verify(refresh, key);
-      if (!jwt) {
-        event.locals.user = undefined;
+      const body = resolveJwt(jwt);
+
+      if (!body) {
+        event.locals.user = body;
         return resolve(event);
       }
-      const uid = jwt.body.toJSON().uid?.toString();
+
+      const {uid} = body;
       const user = await User.findByUniqueId(uid);
       const newToken = await user?.token('user');
       if (newToken) {
@@ -196,7 +213,6 @@ async function auth({event, resolve}: HandleParameters): Promise<Response> {
       }
     }
   }
-
 
   return resolve(event);
 }
@@ -220,59 +236,6 @@ async function setSessionId({event, resolve}: HandleParameters): Promise<Respons
     response.headers.append('set-cookie', `session_id=${event.locals.sessionId}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
   }
   return response;
-}
-
-async function refreshJwt(token: string) {
-  try {
-    const refresh = njwt.verify(token ?? '', key);
-    if (refresh?.isExpired() === false) {
-      // todo: sign again
-      const {sub} = refresh.body.toJSON() as { sub: string };
-      const id = sub.split('/')[1];
-      const user = new User(id);
-      const {rank} = await user.safeData;
-      const exp = dayjs().add(15, 'minute').toDate();
-      const adult = await user.isAdult();
-      const newToken = await user.token('user', {rank, adult});
-      newToken.setExpiration(exp);
-      return {newToken: newToken.compact(), user: newToken.body.toJSON()};
-    }
-  } catch {
-    //
-  }
-
-  return undefined;
-}
-
-type GetUserReturn = { user: JwtUser & {adult: boolean}, newToken?: string };
-async function getUser(token?: string, refresh?: string): Promise<GetUserReturn | undefined> {
-
-  if (!token) {
-    if (refresh) {
-      try {
-        return await refreshJwt(refresh) as any
-      } catch (e) {
-        console.error(e)
-        return undefined;
-      }
-    } else {
-      return undefined;
-    }
-  }
-
-  const jwt = njwt.verify(token!, key);
-  if (!jwt) {
-    return undefined;
-  }
-
-  const body = jwt.body.toJSON();
-  // console.log('check body:', body)
-
-  if (body.iss !== 'https://ru.hn/' || body.scope !== 'user') {
-    return undefined;
-  }
-
-  return { user: jwt.body.toJSON() as any };
 }
 
 interface HandleParameters {

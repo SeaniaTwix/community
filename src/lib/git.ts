@@ -6,7 +6,6 @@ const HEAD = './.git/logs/HEAD';
 function parseGitLogHead(data: string): string | undefined {
   const lines = data.split('\n');
   const commits = lines.map((line) => {
-    console.log(line)
     return last(line.split(/\s/, 2));
   }).filter(v => !!v);
   return last(commits);

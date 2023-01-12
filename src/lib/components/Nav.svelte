@@ -58,7 +58,9 @@
 
   function gotoLogin(event: Event) {
     event.preventDefault();
-    sessionStorage.setItem('ru.hn:back', location.pathname);
+    if (location.pathname !== '/login') {
+      sessionStorage.setItem('ru.hn:back', location.pathname);
+    }
     goto('/login');
   }
 
