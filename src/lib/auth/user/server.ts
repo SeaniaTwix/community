@@ -8,7 +8,7 @@ import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '$lib/util';
 import type {IArangoDocumentIdentifier} from '$lib/database';
 import {Notifications} from '$lib/notifications/server';
-import {Permissions} from '$lib/community/permission';
+import {Permissions} from '$lib/community/permission/server';
 import {last} from 'lodash-es';
 import {error} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';

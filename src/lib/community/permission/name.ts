@@ -1,4 +1,4 @@
-import type {Permissions} from '$lib/community/permission/index';
+import type {Permissions} from '$lib/community/permission/server';
 
 type permissions = typeof Permissions.FLAGS;
 export type PermissionsFlags = keyof permissions;

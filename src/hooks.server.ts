@@ -16,7 +16,7 @@ import {
 } from '$lib/uuid/esm-node';
 import {env} from 'node:process';
 import {isEmpty} from 'lodash-es';
-import {Permissions} from '$lib/community/permission';
+import {Permissions} from '$lib/community/permission/server';
 
 global.atob = atob;
 global.btoa = btoa;

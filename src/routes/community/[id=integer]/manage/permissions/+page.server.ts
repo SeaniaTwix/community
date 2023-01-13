@@ -3,7 +3,7 @@ import type {PageData} from './$types';
 import {User} from '$lib/auth/user/server';
 import {error} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
-import {Permissions} from '$lib/community/permission';
+import {Permissions} from '$lib/community/permission/server';
 import {Board} from '$lib/community/board/server';
 
 export async function load({params: {id: bid}, locals}: ServerLoadEvent): Promise<PageData> {

@@ -3,7 +3,7 @@ import {User} from '$lib/auth/user/server';
 import {type Actions, error} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import type { PageData, ActionData } from './$types';
-import {Permissions} from '$lib/community/permission';
+import {Permissions} from '$lib/community/permission/server';
 import type {PermissionsFlags} from '$lib/community/permission/name';
 
 

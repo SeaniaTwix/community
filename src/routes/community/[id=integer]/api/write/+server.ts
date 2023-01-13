@@ -17,7 +17,7 @@ import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
 import {getTagErrors} from '../../[article=integer]/api/tag/add/+server';
 import {error} from '$lib/kit';
-import {Permissions} from '$lib/community/permission';
+import {Permissions} from '$lib/community/permission/server';
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
