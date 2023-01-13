@@ -5,27 +5,29 @@
   import {client, decodeToken} from '$lib/auth/user/client';
   import {page} from '$app/stores';
   import {onDestroy} from 'svelte';
+  import {browser} from '$app/environment';
 
-  const unsub = page.subscribe(({form}) => {
-    const token = form?.token;
+  if (browser) {
+    onDestroy(
+      page.subscribe(({form}) => {
+        const token = form?.token;
 
-    if (token) {
-      const user = decodeToken(token);
+        if (token) {
+          const user = decodeToken(token);
 
-      if (user) {
-        $client.user = user;
+          if (user) {
+            $client.user = user;
 
-        NotificationsClient.init(user.uid);
+            NotificationsClient.init(user.uid);
 
-        goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
-          sessionStorage.removeItem('ru.hn:back');
-        });
-      }
-    }
-
-  });
-
-  onDestroy(unsub);
+            goto(sessionStorage.getItem('ru.hn:back') ?? '/').then(() => {
+              sessionStorage.removeItem('ru.hn:back');
+            });
+          }
+        }
+      })
+    );
+  }
 
 </script>
 

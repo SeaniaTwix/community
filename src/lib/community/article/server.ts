@@ -15,7 +15,7 @@ import {uploadAllowedExtensions} from '$lib/file/image/shared';
 import {env} from 'node:process';
 
 export class Article {
-
+  readonly type = 'article';
   title: string | undefined;
   content: string | undefined;
 

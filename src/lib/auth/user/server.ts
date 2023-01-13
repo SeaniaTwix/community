@@ -8,13 +8,19 @@ import type {IUser} from '$lib/types/user';
 import {isStringInteger} from '$lib/util';
 import type {IArangoDocumentIdentifier} from '$lib/database';
 import {Notifications} from '$lib/notifications/server';
+import {Permissions} from '$lib/community/permission';
+import {last} from 'lodash-es';
+import {error} from '@sveltejs/kit';
+import HttpStatus from 'http-status-codes';
 
 type UnsafeUser = IUser & { password: string };
 
 export class User {
   private readonly notifications: Notifications;
+  readonly permissions: Permissions;
   constructor(readonly id: string) {
     this.notifications = new Notifications(this);
+    this.permissions = new Permissions(null, this);
   }
 
   private stored: UnsafeUser | undefined;
@@ -90,6 +96,11 @@ export class User {
     });
   }
 
+  static fromSub(sub: string): User | null {
+    const id = last(sub.split('/'));
+    return id ? new User(id) : null;
+  }
+
   static async findByUniqueId(uid?: string): Promise<User | null> {
     // console.trace('3');
     if (!uid) {
@@ -135,6 +146,11 @@ export class User {
 
     if (!password || password.length < 6) {
       throw Error('password invalid (is that shorten than 6)');
+    }
+
+    const regex = /^[a-zA-Z0-9ㄱ-ㅎ가-힣_]+$/;
+    if (!regex.test(this.id)) {
+      throw error(HttpStatus.BAD_REQUEST, 'Not allowed character found');
     }
 
     const hashed = await argon2.hash(password);

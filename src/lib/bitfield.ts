@@ -146,6 +146,6 @@ export class BitField {
   }
 }
 
-export function BitFlag(x: bigint | number) {
+export function BitFlag(x: bigint | number): bigint {
   return BigInt(1) << BigInt(x);
 }

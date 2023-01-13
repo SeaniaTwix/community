@@ -18,7 +18,9 @@ import {inRange} from 'lodash-es';
 type BoardType = 'default' | 'best';
 
 export class Board {
-  constructor(private readonly id: string) {
+  readonly type = 'board';
+
+  constructor(readonly id: string) {
   }
 
   static async listAll() {

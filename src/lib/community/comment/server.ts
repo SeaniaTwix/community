@@ -5,7 +5,8 @@ import db from '$lib/database/instance';
 import {aql} from 'arangojs';
 
 export class Comment {
-  constructor(private readonly id: string) {
+  readonly type = 'comment';
+  constructor(readonly id: string) {
   }
 
   static async new(relative: Article, author: User, content: string): Promise<Comment> {

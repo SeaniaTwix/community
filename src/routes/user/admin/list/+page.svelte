@@ -10,6 +10,7 @@
 
   import type {PageData} from './$types';
   import {client} from '$lib/auth/user/client';
+  import type {IUser} from '$lib/types/user';
 
   export let data: PageData
 
@@ -39,7 +40,7 @@
             </div>
             <div class="flex-grow flex flex-row items-center justify-items-center justify-between">
               <span>
-                {user.id}
+                <a class="hover:bg-zinc-200 dark:hover:bg-zinc-500/50 rounded-md px-2 py-1 cursor-pointer" href="/@{user.id}">{user.id}</a>
                 <span class="inline-block text-sm bg-sky-400 rounded-md text-white px-1 py-px">
                   {EUserRanks[user.rank]}
                 </span>
@@ -61,9 +62,10 @@
                 <PermBan /> 영구정지
               </button>
               {#if ($client?.user ?? data.user)?.rank >= EUserRanks.Admin}
-                <button class="hover:text-emerald-500 hover:bg-zinc-200 dark:hover:bg-zinc-500/50 rounded-md px-2 py-1 cursor-pointer">
-                  <SetRole /> 역할 설정
-                </button>
+                <a href="/user/admin/promote?uid={user._key}"
+                   class="hover:text-emerald-500 hover:bg-zinc-200 dark:hover:bg-zinc-500/50 rounded-md px-2 py-1 cursor-pointer text-center">
+                  <SetRole /> 권한 설정
+                </a>
               {/if}
               {#if ($client?.user ?? data.user)?.rank >= EUserRanks.Admin}
                 <button class="hover:text-amber-500 hover:bg-zinc-200 dark:hover:bg-zinc-500/50 rounded-md px-2 py-1 cursor-pointer">

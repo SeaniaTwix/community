@@ -15,13 +15,14 @@ import {
   version as versionUuid,
 } from '$lib/uuid/esm-node';
 import {env} from 'node:process';
+import {isEmpty} from 'lodash-es';
+import {Permissions} from '$lib/community/permission';
 
 global.atob = atob;
 global.btoa = btoa;
 
-
 // noinspection JSUnusedGlobalSymbols
-export const handle = sequence(init, ui, images, auth, setSessionId);
+export const handle = sequence(init, ui, images, auth, setSessionId, setPermissions);
 
 function init({event, resolve}: HandleParameters): MaybePromise<Response> {
   if (!event.locals) {
@@ -157,14 +158,14 @@ function images({event, resolve}: HandleParameters): MaybePromise<Response> {
   return resolve(event);
 }
 
-function resolveJwt(jwt?: Jwt): IUserSession | undefined {
+function resolveJwt(jwt?: Jwt, scope: 'user' | 'refresh' = 'user'): IUserSession | undefined {
   if (!jwt) {
     return undefined;
   }
 
   const body = jwt.body.toJSON();
 
-  if (body.iss !== 'https://ru.hn/' || body.scope !== 'user') {
+  if (body.iss !== 'https://ru.hn/' || body.scope !== scope) {
     return undefined;
   }
 
@@ -177,7 +178,7 @@ async function auth({event, resolve}: HandleParameters): Promise<Response> {
 
   if (token) {
     const jwt = njwt.verify(token, key);
-    const body = resolveJwt(jwt);
+    const body = resolveJwt(jwt, 'user');
 
     if (!body) {
       event.locals.user = body;
@@ -190,16 +191,19 @@ async function auth({event, resolve}: HandleParameters): Promise<Response> {
 
     if (refresh) {
       const jwt = njwt.verify(refresh, key);
-      const body = resolveJwt(jwt);
+      const body = resolveJwt(jwt, 'refresh');
 
       if (!body) {
         event.locals.user = body;
         return resolve(event);
       }
 
-      const {uid} = body;
-      const user = await User.findByUniqueId(uid);
-      const newToken = await user?.token('user');
+      const {sub} = body;
+      const user = User.fromSub(sub);
+      const newToken = await user?.token('user', {
+        rank: await user.rank,
+        adult: await user.isAdult(),
+      });
       if (newToken) {
         event.cookies.set('token', newToken.compact(), {
           path: '/',
@@ -210,6 +214,8 @@ async function auth({event, resolve}: HandleParameters): Promise<Response> {
         });
 
         event.locals.user = newToken.body.toJSON() as any;
+      } else {
+        console.error('no token?');
       }
     }
   }
@@ -236,6 +242,21 @@ async function setSessionId({event, resolve}: HandleParameters): Promise<Respons
     response.headers.append('set-cookie', `session_id=${event.locals.sessionId}; Path=/; Expires=${expire}; SameSite=Strict; HttpOnly;`);
   }
   return response;
+}
+
+/** @type {import('@sveltejs/kit').Handle}
+ * 사용자에게
+ */
+async function setPermissions({event, resolve}: HandleParameters): Promise<Response> {
+  if (event.locals?.user) {
+    const user = User.fromSub(event.locals.user.sub)!;
+    const {permissions} = user;
+    const all = await permissions.getAll();
+    if (isEmpty(all)) {
+      permissions.set(Permissions.DefaultPermissions).then();
+    }
+  }
+  return resolve(event);
 }
 
 interface HandleParameters {
