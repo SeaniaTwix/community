@@ -34,17 +34,17 @@
       <li>
         <div class="px-4 py-2 bg-zinc-100 dark:bg-gray-500/50 rounded-md shadow-md flex flex-col space-y-2">
           <div class="flex-shrink-0 flex flex-row items-center justify-items-center space-x-2">
-            <div class="w-14">
+            <div class="w-14 h-14">
               <CircleAvatar fallback="{toImageSource(user.avatar)}" />
             </div>
             <div class="flex-grow flex flex-row items-center justify-items-center justify-between">
               <span>
                 {user.id}
-                    <span class="text-sm bg-sky-400 rounded-md text-white px-1 py-px">
+                <span class="inline-block text-sm bg-sky-400 rounded-md text-white px-1 py-px">
                   {EUserRanks[user.rank]}
                 </span>
                     {#if user.adult}
-                  <span class="text-sm bg-rose-500 rounded-md text-white px-1 py-px">본인인증 완료: {#if user.adult.approved}성인{:else}미성년{/if}</span>
+                  <span class="inline-block text-sm bg-rose-500 rounded-md text-white px-1 py-px">본인인증 완료: {#if user.adult.approved}성인{:else}미성년{/if}</span>
                 {/if}
               </span>
             </div>

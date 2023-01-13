@@ -1,4 +1,6 @@
 <script lang="ts">
+  import '@root/styles/time-tooltip.css';
+
   import View from 'svelte-material-icons/Eye.svelte';
   import Plus from 'svelte-material-icons/Plus.svelte';
   import Edit from 'svelte-material-icons/Pencil.svelte';
@@ -211,7 +213,7 @@
     type: string
   }
 </script>
-<div class="w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-4 rounded-md shadow-md transition-transform divide-y divide-dotted">
+<div class="w-full sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto p-2 rounded-md shadow-none sm:shadow-md transition-transform divide-y divide-dotted">
   <div class="space-y-2 mb-4">
     <div class="flex justify-between">
       <div class="flex space-x-2 flex-col md:flex-row lg:flex-row min-w-0">
@@ -222,23 +224,23 @@
           {#if ($client?.user ?? data?.user)}
             <div class="w-max py-2 md:py-0.5">
               {#if ($client?.user ?? data?.user)?.uid !== article.author._key}
-                    <span class="mt-0.5 cursor-pointer hover:text-red-600">
-                      <Report size="1rem"/>
-                    </span>
+                <button class="mt-0.5 cursor-pointer hover:text-red-600">
+                  <Report size="1rem"/>
+                </button>
               {/if}
               {#if article.author._key === ($client?.user ?? data?.user)?.uid}
-                <a href="/community/{article.board}/{article._key}/edit"
+                <a role="button" aria-label="이 게시글 수정" href="/community/{article.board}/{article._key}/edit"
                    class="inline-block mt-0.5 cursor-pointer hover:text-sky-400">
                   <Edit size="1rem"/>
                 </a>
               {/if}
               {#if article.author._key === ($client?.user ?? data?.user)?.uid || ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
-                <span on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
+                <button on:click={deleteArticle} class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Delete size="1rem"/>
-                </span>
+                </button>
               {/if}
               {#if ($client?.user ?? data?.user)?.rank >= EUserRanks.Manager}
-                <a href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
+                <a role="button" aria-label="관리" href="/community/{article.board}/{article._key}/manage" class="mt-0.5 cursor-pointer hover:text-red-400">
                   <Admin size="1rem"/>
                 </a>
               {/if}
@@ -249,9 +251,9 @@
       <div class="flex flex-col md:flex-col">
         <span class="w-max"><View size="1rem"/> {article.views ?? 1}</span>
 
-        <div class="__time-tooltip" time="작성 시간: {timeFullFormat(article.createdAt)}">
+        <div class="__time-tooltip before:bg-zinc-200 dark:before:bg-gray-700 dark:before:text-white" time="작성 시간: {timeFullFormat(article.createdAt)}">
           <button class="w-full text-right" data-tooltip-target="tooltip-time-specific" type="button">
-            <time class="text-zinc-500 dark:text-zinc-300 text-sm">
+            <time class="text-zinc-500 dark:text-zinc-300 text-sm" datetime="{(new Date(article.createdAt)).toUTCString()}">
               {timeAgo.format(new Date(article.createdAt))}
             </time>
           </button>
@@ -259,7 +261,7 @@
       </div>
     </div>
     <div class="flex space-x-3 items-center">
-      <div class="w-12 min-h-[3rem] inline-block">
+      <div class="w-12 h-12 inline-block">
         <CircleAvatar fallback="{toImageSource(article.author._key)}"/>
       </div>
       <span class="inline-block leading-none hover:text-sky-400">{article.author?.id}</span>
@@ -360,33 +362,5 @@
       border-radius: 50%;
       aspect-ratio: 1/1;
     }
-  }
-
-  .__time-tooltip {
-    position: relative;
-  }
-
-  .__time-tooltip::before {
-    content: "\2003" attr(time);
-    text-indent: -1rem;
-    display: inline-block;
-    position: absolute;
-    bottom: 50%;
-    background: #222F3E;
-    color: #FFFFFF;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    opacity: 0;
-    transition: 0.3s;
-    overflow: hidden;
-    max-width: 50%;
-    pointer-events: none;
-    min-width: max-content;
-    right: calc(100% - 3rem);
-  }
-
-  .__time-tooltip:hover::before {
-    opacity: 1;
-    bottom: 100%;
   }
 </style>

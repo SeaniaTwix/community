@@ -1,6 +1,6 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
 import {redirect} from '$lib/kit';
-import HttpStatus from 'http-status-codes';
+import HttpStatus from '$lib/http-status';
 
 export async function load({locals, }: ServerLoadEvent): Promise<void> {
   if (!locals.user) {

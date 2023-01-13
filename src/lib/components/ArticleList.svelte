@@ -11,6 +11,7 @@
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import Image from 'svelte-material-icons/Image.svelte';
+  import Video from 'svelte-material-icons/Video.svelte';
   import {EUserRanks} from '$lib/types/user-ranks';
   import {page} from '$app/stores';
   import {createEventDispatcher} from 'svelte';
@@ -21,7 +22,10 @@
   export let list: ArticleItemDto[] = [];
   export let showingUserContextMenuIndex = -1;
   $: isBestView = last($page.url.toString().split('?')[0].split('/')) === 'best';
-  $: q = !isEmpty($page.url.search) ? `${$page.url.search}${isBestView ? '&type=best' : ''}` : isBestView ? `?type=best` : '';
+  declare var query: string;
+  $: query = !isEmpty($page.url.search) ?
+      `${$page.url.search}${isBestView ? '&type=best' : ''}`
+    : isBestView ? `?type=best` : '';
   // $: console.log('changed:', showingUserContextMenuIndex);
   // export let users: Record<string, IUser>;
   const dispatch = createEventDispatcher();
@@ -84,7 +88,7 @@
   <ul class="divide-y divide-zinc-200 dark:divide-zinc-400">
     {#each list as article, i}
       <li class="px-2 py-3 hover:bg-zinc-100/30 group transition-colors">
-        <a href="/community/{board}/{article._key}{q}">
+        <a href="/community/{board}/{article._key}{query}">
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0 md:items-center">
@@ -92,7 +96,7 @@
                 <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
                   <div class="truncate">
                     {#if article.autoTag}
-                      <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
+                      <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
                     {/if}<span>{typeof article.autoTag === 'string' ? unwrapAutotag(article.title) : article.title}</span>
                   </div>
                   {#if Object.keys(article.tags??{}).includes('성인')}
@@ -101,7 +105,7 @@
                 </div>
                 <!-- (mobile only) i have no idea to make no duplicated elements... -->
                 <div on:click|preventDefault={() => toggleUserMenu(i)} class="flex space-x-2 inline-block md:hidden lg:hidden ml-4">
-                  <div class="w-6 max-h-6">
+                  <div class="w-6 h-6">
                     <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                   </div>
                   <div class="cursor-pointer hover:text-sky-400
@@ -117,7 +121,11 @@
                     {article._key}
                   </span>
                   <span class="h-full flex items-center space-x-1 gap-0.5">
-                    {#if article.images}
+                    {#if article.video}
+                      <span class="mr-0.5">
+                        <Video />
+                      </span>
+                    {:else if article.images}
                       <span class="mr-0.5"><Image size="1rem"/></span>
                     {/if}
                     <span class="mr-0.5"><View size="1rem"/></span>{article.views ?? 0}
@@ -140,7 +148,7 @@
                 </div>
                 <div class="inline-block flex w-max items-center">
                   <div on:click={() => toggleUserMenu(i)} class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
-                    <div class="w-6 max-h-6 inline-block mt-[-1px]">
+                    <div class="w-6 h-6 inline-block mt-[-1px]">
                       <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
                     </div>
                     <div on:click|preventDefault class="cursor-pointer hover:text-sky-400 inline-block align-super
@@ -175,7 +183,7 @@
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
                   <li>
-                    <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
+                    <a href="{$page.url.pathname}?q=%23{decodeURIComponent(tagName)}">
                       <Tag count="{article.tags[tagName]}">{tagName}</Tag>
                     </a>
                   </li>

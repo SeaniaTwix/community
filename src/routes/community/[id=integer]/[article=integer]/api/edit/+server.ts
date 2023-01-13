@@ -127,16 +127,6 @@ class EditArticleRequest {
     };
   }
 
-  async getImage(newContent: string): Promise<string> {
-    if (isEmpty(newContent)) {
-      return '';
-    }
-
-    const $ = loadHtml(newContent);
-    const images = $('img');
-    return isEmpty(images) ? '' : ($(images[0])?.attr('src')?.toString() ?? '');
-  }
-
   async update(author: string, data: EditDto) {
     const {title, content, tags, source} = data;
 
@@ -147,7 +137,8 @@ class EditArticleRequest {
       editedAt: new Date,
       content: sanitizedContent,
       source: source ?? '',
-      images: await this.getImage(sanitizedContent),
+      images: await Article.extractFirstImage(sanitizedContent),
+      video: await Article.isContainsVideos(sanitizedContent),
     };
 
     await db.query(aql`

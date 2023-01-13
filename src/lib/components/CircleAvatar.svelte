@@ -27,13 +27,6 @@
   {/each}
   <img class:border={border === 'sm'} class:border-2={border === 'md'}
        on:load={imageLoaded}
-       class="w-full h-full __circle-image object-cover border-white shadow-md select-none"
+       class="w-full h-full rounded-full aspect-square object-cover border-white shadow-md select-none"
        src="{fallback?.src}" alt="{isEmpty(images) ? 'fallback-image' : alt}"/>
 </picture>
-
-<style>
-  .__circle-image {
-    border-radius: 50%;
-    aspect-ratio: 1/1;
-  }
-</style>

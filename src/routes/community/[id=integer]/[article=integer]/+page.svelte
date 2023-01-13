@@ -440,7 +440,7 @@
 
     pusher = new Pusher(`${$page.params.article}@${$page.params.id}`);
 
-    window.addEventListener('unload', clearSubscribes);
+    window.addEventListener('pagehide', clearSubscribes);
 
     try {
       // ky.put(`/community/${$page.params.id}/${$page.params.article}/api/viewcount`).then();
@@ -606,7 +606,7 @@
   <EditImage on:close={closeImageEditor} on:save={imageEditedInComment} bind:src="{commentImageUploadSrc}"/>
 {/if}
 
-<div class="w-full absolute z-[11] bg-white dark:bg-gray-600 px-4">
+<div class="w-full absolute z-[11] bg-white dark:bg-gray-600 px-2">
   <div id="__breadcrumb"
        class="flex justify-between w-full w-11/12 sm:w-5/6 md:w-4/5 lg:w-3/5 mx-auto pb-1 border-b dark:border-zinc-500">
     <nav class="flex ml-4 grow-0 shrink w-full w-min-0" aria-label="Breadcrumb">
@@ -803,6 +803,7 @@
                     on:blur={disableMobileInput}
                     on:favoriteclick={commentFavoriteImageSelected}
                     on:selectfile={() => fileUploader.click()}
+                    on:closereply={disableReplyMode}
                     bind:commentImageUploadSrc={commentImageUploadSrc}
                     bind:smallImage="{image100x100}"
                     bind:content={commentContent}
@@ -852,6 +853,7 @@
                       on:favoriteclick={commentFavoriteImageSelected}
                       on:mobilemode={enableMobileInput}
                       on:selectfile={() => fileUploader.click()}
+                      on:closereply={disableReplyMode}
                       bind:commentImageUploadSrc={commentImageUploadSrc}
                       bind:smallImage="{image100x100}"
                       bind:content={commentContent}

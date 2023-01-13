@@ -13,7 +13,7 @@ export class NotificationsClient {
   static init(uid: string, preloaded: IPublicNotify[] = []) {
     if (!this.isUnloadEventRegistered) {
       this.isUnloadEventRegistered = true;
-      window.addEventListener('unload', () => this.pusher.close());
+      window.addEventListener('pagehide', () => this.pusher.close());
     }
     if (this.pusher) {
       this.pusher.close();

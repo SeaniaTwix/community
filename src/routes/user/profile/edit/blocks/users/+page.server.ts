@@ -1,5 +1,5 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
-import HttpStatus from 'http-status-codes';
+import HttpStatus from '$lib/http-status';
 import type {PageData} from './$types';
 import {redirect} from '$lib/kit';
 

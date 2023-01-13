@@ -2,37 +2,24 @@ import type {
   RequestEvent,
   RequestHandler,
 } from "@sveltejs/kit";
-import type {LoginDto} from '$lib/types/dto/login.dto';
-import {inRange} from 'lodash-es';
 import HttpStatus from 'http-status-codes';
-import {User} from '$lib/auth/user/server';
-import {error as HttpError, json} from '$lib/kit';
+import type {User} from '$lib/auth/user/server';
 import dayjs from 'dayjs';
+import {error} from '@sveltejs/kit';
 
-// noinspection JSUnusedGlobalSymbols
+// deprecated
 export const POST: RequestHandler = async ({request}: RequestEvent): Promise<Response> => {
-  const login = new LoginRequest(await request.json() as LoginDto);
-
-  if (!inRange(login.id.length, 3, 16)) {
-    throw HttpError(HttpStatus.BAD_REQUEST, 'id allowed range in 3 ~ 16');
-  }
-
-  const user = login.init();
-
-  if (!await login.verify()) {
-    throw HttpError(HttpStatus.NOT_FOUND, 'user not found');
-  }
-
-  const {token, headers} = await newLoginHeaders(user);
-
-  return json({token: token.compact()}, {
-    headers,
-    status: HttpStatus.ACCEPTED
-  });
+  throw error(HttpStatus.GONE, 'DEPRECATED');
 };
 
-export const DELETE: RequestHandler = async (): Promise<Response> => {
-  return new Response(undefined, {status: HttpStatus.ACCEPTED, headers: newLogoutHeader()});
+export const DELETE: RequestHandler = async ({cookies}): Promise<Response> => {
+  cookies.set('token', '', {
+    maxAge: 0,
+  });
+  cookies.set('refresh', '', {
+    maxAge: 0,
+  });
+  return new Response(undefined, {status: HttpStatus.ACCEPTED});
 }
 
 export async function newLoginHeaders(user: User) {
@@ -65,31 +52,4 @@ function newLogoutHeader() {
     `refresh=; Path=/; Expires=${rightNow}; SameSite=Strict; HttpOnly;`);
 
   return headers;
-}
-
-class LoginRequest {
-  private user: User | undefined;
-  constructor(private readonly body: LoginDto) {
-
-  }
-
-  init(): User {
-    this.user = new User(this.id);
-    return this.user;
-  }
-
-  async verify(): Promise<boolean> {
-    if (!this.user) {
-      throw HttpError(HttpStatus.FORBIDDEN, 'user not initialized');
-    }
-    return this.user.verify(this.password);
-  }
-
-  get id(): string {
-    return this.body.id!;
-  }
-
-  get password(): string {
-    return this.body.password!;
-  }
 }

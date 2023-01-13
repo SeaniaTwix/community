@@ -13,6 +13,7 @@ const config = {
   kit: {
     adapter: adapter({
       out: './build',
+      precompress: true,
     }),
     alias: {
       '@root': path.resolve('./src'),

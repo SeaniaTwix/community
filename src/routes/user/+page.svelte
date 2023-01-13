@@ -13,10 +13,9 @@
   function logout() {
     ky.post('/user/logout')
       .then(() => goto('/'))
-      .then(() => client.update((s) => {
-        delete s.user;
-        return s;
-      }));
+      .then(() => {
+        $client.user = undefined;
+      });
   }
 
 </script>
@@ -31,7 +30,7 @@
      href="/user/profile/edit">
     내 프로필 수정
   </a>
-  {#if !$client?.user.adult || !data?.user?.adult}
+  {#if !data.isAdult}
     <a data-sveltekit-prefetch
        class="w-full block bg-zinc-100 rounded-md hover:bg-zinc-200 dark:bg-gray-500 transition-colors py-2 text-center shadow-md flex flex-row justify-center space-x-2 items-center hover:ring-2 ring-red-400 ring-offset-2 dark:ring-offset-gray-600"
        href="/user/settings/adult">

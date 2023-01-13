@@ -30,5 +30,7 @@ export class ArticleItemDto {
 
   images: string | boolean = false;
 
+  video = false;
+
   locked = false;
 }

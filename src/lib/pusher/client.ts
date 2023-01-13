@@ -28,7 +28,7 @@ export class Pusher {
   constructor(context: string) {
     this.target = context;
     if (window) {
-      window.addEventListener('unload', this.close);
+      window.addEventListener('pagehide', this.close);
       window.addEventListener('online', this.online, true);
       window.addEventListener('offline', this.offline, true);
       // @ts-ignore
