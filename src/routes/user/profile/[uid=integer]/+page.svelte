@@ -43,7 +43,6 @@
               <ChevronRight />
           </button>
         </a>
-
       </div>
 
       <div class="p-4">

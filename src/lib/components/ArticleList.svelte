@@ -96,7 +96,7 @@
                 <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
                   <div class="truncate">
                     {#if article.autoTag}
-                      <a class="font-bold text-sky-400" href="/community/search?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
+                      <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
                     {/if}<span>{typeof article.autoTag === 'string' ? unwrapAutotag(article.title) : article.title}</span>
                   </div>
                   {#if Object.keys(article.tags??{}).includes('성인')}
@@ -183,7 +183,7 @@
               {#each Object.keys(article.tags) as tagName}
                 {#if !tagName.startsWith('_')}
                   <li>
-                    <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
+                    <a href="{$page.url.pathname}?q=%23{decodeURIComponent(tagName)}">
                       <Tag count="{article.tags[tagName]}">{tagName}</Tag>
                     </a>
                   </li>

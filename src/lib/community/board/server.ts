@@ -27,13 +27,21 @@ export class Board {
   }
 
   async render(pageRequest: ListBoardRequest, type: BoardType, locals: App.Locals, query?: string) {
+    let articleFilter: string[] | undefined;
+
+    if (query) {
+      const search = new ArticleSearch('', query, pageRequest.page, pageRequest.amount);
+      const result = await search.result();
+      articleFilter = result.hits.map(v => v.id);
+    }
+
     const list: ArticleDto[] = type === 'default' ?
-      await pageRequest.getListRecents(locals?.user?.uid ?? null, query) as any[]
-      : await pageRequest.getBestListRecents(locals?.user?.uid ?? null, query) as any[];
+      await pageRequest.getListRecents(locals?.user?.uid ?? null, articleFilter) as any[]
+      : await pageRequest.getBestListRecents(locals?.user?.uid ?? null, articleFilter) as any[];
 
     const maxPage = type === 'default' ?
-      await pageRequest.getMaxPage()
-      : await pageRequest.getBestMaxPage();
+      await pageRequest.getMaxPage(articleFilter)
+      : await pageRequest.getBestMaxPage(articleFilter);
 
     const page = pageRequest.page;
 
@@ -90,10 +98,13 @@ export class Board {
     return await cursor.next();
   }
 
-  async getMaxPage(amount = 30, requireLikes: number | null = null): Promise<number> {
+  async getMaxPage(amount = 30, requireLikes: number | null = null, articleFilter?: string[]): Promise<number> {
     const cursor = await db.query(aql`
+      let articleFilter = ${articleFilter ?? null}
+      let skipFilter = articleFilter == null
       let count = length(
         for article in articles
+          filter skipFilter || position(articleFilter, article._key)
           filter article.board == ${this.id}
           let minLike = ${requireLikes}
           let savedTags = (
@@ -185,7 +196,13 @@ export class Board {
     });
   }
 
-  async getRecentArticles(page: number, amount: number, reader: string | null, showImage = false, requireLikes: number | null = null, query?: string) {
+  async getRecentArticles(
+    page: number,
+    amount: number,
+    reader: string | null,
+    showImage = false,
+    requireLikes: number | null = null,
+    articleFilter?: string[]) {
     if (page <= 0) {
       throw new Error('page must be lt 0');
     }
@@ -194,20 +211,12 @@ export class Board {
       throw new Error('amount must be in the range of 1 to 50');
     }
 
-    let articleFilter: string[] | null = null;
-
-    if (query) {
-      const search = new ArticleSearch('', query, page, amount);
-      const result = await search.result();
-      articleFilter = result.hits.map(v => v.id);
-    }
-
     // console.log(requireLikes)
     const cursor = await db.query(aql`
-      let articleFilter = ${articleFilter}
+      let articleFilter = ${articleFilter ?? null}
+      let skipFilter = articleFilter == null
       for article in articles
         sort article.createdAt desc
-        let skipFilter = articleFilter == null
         filter skipFilter || position(articleFilter, article._key)
         let isPub = article.pub == null || article.pub == true
         filter article.board == ${this.id} && isPub

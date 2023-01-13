@@ -181,7 +181,7 @@
     if (!isEmpty(announcements)) {
       showBest = false;
     } else {
-      goto('/community/search?q=' + encodeURIComponent('#공지'));
+      goto($page.url.pathname + '?q=' + encodeURIComponent('#공지'));
     }
   }
 

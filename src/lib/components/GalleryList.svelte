@@ -95,7 +95,7 @@
           <div class="pt-2 hover:underline">
             <h2 class="text-lg font-bold px-1 after:ml-1 after:inline-block  after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center" class:__warning-adult-content={Object.keys(gallery.tags).includes('성인')}>
               {#if gallery.autoTag}
-                <a class="font-bold text-sky-400" href="/community/search?q=%23{gallery.autoTag}">{gallery.autoTag})</a>
+                <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{gallery.autoTag}">{gallery.autoTag})</a>
               {/if}
               {typeof gallery.autoTag === 'string' ? gallery.title.replace(new RegExp('^' + gallery.autoTag + '.'), '') : gallery.title}
               {#if gallery.video}
@@ -130,7 +130,7 @@
             <ol class="flex flex-row gap-1 flex-wrap">
               {#each Object.keys(gallery.tags).filter(tag => !tag.startsWith('_')) as tagName}
                 <li class="inline-block">
-                  <a href="/community/search?q=%23{decodeURIComponent(tagName)}">
+                  <a href="{$page.url.pathname}?q=%23{decodeURIComponent(tagName)}">
                     <Tag count="{gallery.tags[tagName]}">{tagName}</Tag>
                   </a>
                 </li>

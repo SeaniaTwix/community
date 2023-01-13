@@ -69,7 +69,7 @@ export class ListBoardRequest {
 
   constructor(board: string | Board,
               readonly page: number,
-              private readonly amount: number,
+              readonly amount: number,
               private readonly showImage: boolean) {
     if (this.amount > 50) {
       throw new Error('too many');
@@ -81,21 +81,21 @@ export class ListBoardRequest {
     }
   }
 
-  getMaxPage() {
-    return this.board.getMaxPage(this.amount);
+  getMaxPage(articleFilter?: string[]) {
+    return this.board.getMaxPage(this.amount, null, articleFilter);
   }
 
-  getBestMaxPage() {
-    return this.board.getMaxPage(this.amount, 1);
+  getBestMaxPage(articleFilter?: string[]) {
+    return this.board.getMaxPage(this.amount, 1, articleFilter);
   }
 
-  getListRecents(reader: string | null, query?: string): Promise<ArticleDto[]> {
-    return this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, null, query);
+  getListRecents(reader: string | null, articleFilter?: string[]): Promise<ArticleDto[]> {
+    return this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, null, articleFilter);
   }
 
-  async getBestListRecents(reader: string | null, query?: string): Promise<ArticleDto[]> {
+  async getBestListRecents(reader: string | null, articleFilter?: string[]): Promise<ArticleDto[]> {
     // todo: based on board setting minLike
     const minReqLikes = await this.board.minReqLikes;
-    return await this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, minReqLikes, query);
+    return await this.board.getRecentArticles(this.page, this.amount, reader, this.showImage, minReqLikes, articleFilter);
   }
 }
