@@ -1,7 +1,6 @@
 import type {RequestEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
 import {isEmpty, last} from 'lodash-es';
-import type {ArticleItemDto} from '$lib/types/dto/article-item.dto';
 import {client} from '$lib/database/search';
 import {json} from '$lib/kit';
 

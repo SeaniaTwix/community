@@ -24,6 +24,7 @@ export default class DefaultDatabase {
     'favorites',
     'images',
     'views',
+    'permissions',
   ];
   private static readonly requireEdgeCollections = [
     'reply',

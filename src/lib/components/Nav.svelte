@@ -219,7 +219,6 @@
           <Switch size="20px" />
         </button>
       </li>
-
       {#if $client?.user && $client.user.rank > EUserRanks.User}
         <li>
           <a role="button" aria-label="관리 페이지로"

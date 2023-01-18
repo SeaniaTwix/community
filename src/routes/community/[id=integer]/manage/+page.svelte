@@ -35,8 +35,12 @@
     </a>
   </div>
 
-  <a href="/community/{$page.params.id}/manage/list" on:click={truncateBoard} class="bg-zinc-100 dark:bg-gray-500 rounded-md w-full py-2 block text-center shadow-md">
+  <a href="/community/{$page.params.id}/manage/list" class="bg-zinc-100 dark:bg-gray-500 rounded-md w-full py-2 block text-center shadow-md">
     비공개 게시글 목록
+  </a>
+
+  <a href="/community/{$page.params.id}/manage/permissions" class="bg-zinc-100 dark:bg-gray-500 rounded-md w-full py-2 block text-center shadow-md">
+    이 게시판 필요 권한 설정
   </a>
 
   <button on:click={truncateBoard} class="bg-amber-400 dark:bg-amber-600 rounded-md w-full py-2 block text-center shadow-md">

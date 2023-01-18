@@ -48,7 +48,7 @@ export const actions: Actions = {
 
     cookies.set('refresh', refresh.compact(), {
       path: '/',
-      expires,
+      expires: expireRefresh,
       sameSite: 'strict',
       httpOnly: true,
       secure: !env.IS_DEV,

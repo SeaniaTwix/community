@@ -15,7 +15,7 @@
   import {writable} from 'svelte/store';
   import type {Unsubscriber} from 'svelte/store';
   import {fade} from 'svelte/transition';
-  import {load} from 'cheerio'
+  import {load} from 'cheerio';
   import {client} from '$lib/auth/user/client';
   import {page} from '$app/stores';
 
@@ -334,8 +334,6 @@
           return isTypeExists && isImageOrVideo;
         });
 
-        // todo: video uploading
-
         const uploads = files.map(async f => await imageUpload(f, undefined, undefined));
         const uploaded: PromiseSettledResult<string>[] = await Promise.allSettled(uploads);
         const fulfilled = uploaded
@@ -350,6 +348,8 @@
 
     unsubs.push(v.subscribe(async (video) => {
       if (video instanceof File) {
+        uploading = true;
+
         try {
           const {result, endpoint} = await ky.post(`/file/video/upload`).json<IRequestVideoUploadUrlResponse>();
 
@@ -361,6 +361,8 @@
           insertVideo(endpoint, result.uid);
         } catch (e) {
           console.trace(e);
+        } finally {
+          uploading = false;
         }
       }
     }));
@@ -398,8 +400,8 @@
       const imgs = $('img');
 
       const reqs = imgs.toArray()
-        .filter(img => img.attribs.src && !img.attribs.src.startsWith('https://s3.ru.hn'))
-        .map(async img => {
+        .filter((img: typeof img) => img.attribs.src && !img.attribs.src.startsWith('https://s3.ru.hn'))
+        .map(async (img: typeof img) => {
           const {uploadedLink} = await ky.post('/file/upload/', {
             json: {
               src: img.attribs?.src,

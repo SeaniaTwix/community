@@ -17,6 +17,7 @@ import type {IUser} from '$lib/types/user';
 import {Pusher} from '$lib/pusher/server';
 import {getTagErrors} from '../../[article=integer]/api/tag/add/+server';
 import {error} from '$lib/kit';
+import {Permissions} from '$lib/community/permission';
 
 export async function GET({params, locals: {user}}: RequestEvent): Promise<Response> {
   if (!user) {
@@ -48,9 +49,12 @@ export async function GET({params, locals: {user}}: RequestEvent): Promise<Respo
 
 // noinspection JSUnusedGlobalSymbols
 export async function POST({request, params, locals}: RequestEvent): Promise<Response> {
-  // console.log('new write')
+  if (!locals.user) {
+    throw error(HttpStatus.NOT_ACCEPTABLE, 'please login and try again');
+  }
+
   const article = new ArticleDto<ClientToServerTagType>(await request.json());
-  const write = new WriteRequest(article);
+  const write = new WriteRequest(article, locals.user.uid);
 
   if (isEmpty(write.title)) {
     throw error(HttpStatus.NOT_ACCEPTABLE, 'title is too short');
@@ -68,10 +72,6 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Res
     throw error(HttpStatus.BAD_GATEWAY, write.error);
   }
 
-  if (!locals.user) {
-    throw error(HttpStatus.NOT_ACCEPTABLE, 'please login and try again');
-  }
-
   const tagError = await getTagErrors(id, null, locals.user, write.tags);
 
   if (tagError) {
@@ -80,7 +80,7 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Res
 
   let result;
   try {
-    result = await write.saveToDB(locals.user.uid);
+    result = await write.submit(locals.user.uid);
   } catch (e: any) {
     throw error(HttpStatus.BAD_GATEWAY, e.toString());
   }
@@ -121,8 +121,9 @@ class WriteRequest {
   id?: string;
   private board: Board;
   private article?: Article;
+  private permission: Permissions;
 
-  constructor(private body: ArticleDto<ClientToServerTagType>) {
+  constructor(private body: ArticleDto<ClientToServerTagType>, userId: string) {
     if (this.isTitleEmpty || this.isContentEmpty) {
       this.error = 'some field is empty';
     }
@@ -132,6 +133,7 @@ class WriteRequest {
     }
 
     this.board = new Board(this.boardId!);
+    this.permission = new Permissions(this.board, userId);
   }
 
   get boardId(): string | undefined {
@@ -188,7 +190,9 @@ class WriteRequest {
    * @param userId 글을 쓴 사람의 유니크 id입니다.
    * @return notify 전용 값입니다.
    */
-  async saveToDB(userId: string) {
+  async submit(userId: string) {
+    this.permission.hasOwn(Permissions.FLAGS.WRITE_ARTICLE);
+
     if (!await this.isBoardExists) {
       this.error = 'board not exsists';
       return;

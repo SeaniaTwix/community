@@ -10,7 +10,7 @@
   import Notifications from '$lib/components/Notifications.svelte';
   import ky from 'ky-universal';
   import {NotificationsClient, unread} from '$lib/notifications/client';
-
+  import Cookies from 'js-cookie';
   import type {PageData} from '$lib/types/$types';
   import {client} from '$lib/auth/user/client';
   import {afterNavigate} from '$app/navigation';
@@ -20,27 +20,26 @@
 
   // console.log('+layout:', data);
 
-  function getImageOrder(cookies: Record<string, string>): AllowedExtensions[] {
-    const {image_order} = cookies;
-    return ((<string>image_order)?.split(',') as AllowedExtensions[] || undefined) ?? ['jxl', 'avif', 'webp', 'png'];
+  function getImageOrder(imageOrder?: string): AllowedExtensions[] {
+    return ((imageOrder ?? 'jxl,avif,webp,png').split(',') as AllowedExtensions[] || undefined) ?? ['jxl', 'avif', 'webp', 'png'];
   }
 
   afterNavigate(() => {
-    const cookies = CookieParser.parse(document.cookie);
+    // const cookies = CookieParser.parse(document.cookie);
     client.update((prev) => {
       return {
         user: prev.user ?? data.user,
         settings: {
-          imageOrder: getImageOrder(cookies),
+          imageOrder: getImageOrder(Cookies.get('image_order')),
         },
         ui: {
-          commentFolding: cookies?.comment_folding === 'true',
-          buttonAlign: cookies?.button_align !== 'left' ? 'right' : 'left',
-          listType: cookies?.list_type !== 'gallery' ? 'list' : 'gallery',
+          commentFolding: Cookies.get('comment_folding') === 'true',
+          buttonAlign: Cookies.get('button_align') !== 'left' ? 'right' : 'left',
+          listType: Cookies.get('list_type') !== 'gallery' ? 'list' : 'gallery',
         },
       };
     });
-    // console.log(data, $client);
+    console.log(data, $client);
   });
 
   onMount(() => {
