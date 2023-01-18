@@ -188,7 +188,7 @@
   export let selected = false;
   export let users: Record<string, IUser>;
   export let comment: IComment<IUser>;
-  export let allComments: IComment[] = [];
+  export let allComments: IComment<IUser>[] = [];
   export let isReplyMode = false;
   export let deleted = comment?.deleted === true;
   export let isBest = false;
@@ -220,7 +220,7 @@
     }
   }
 
-  function getRelative(id: string): IComment | null {
+  function getRelative(id: string): typeof allComments[number] | null {
     return allComments.find(c => c._key === id) ?? null;
   }
 
@@ -309,7 +309,7 @@
               <a on:click={() => highlightComment(comment.relative)} href="{$page.url.pathname}#c{comment.relative}" prevent-reply>
                 <div>
                   <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
-                    <span class="w-max after:content-[':']">{users[getRelative(comment.relative).author].id}</span>
+                    <span class="w-max after:content-[':']">{getRelative(comment.relative).author.id}</span>
                     <p class="flex-grow w-0 truncate">
                       {getRelative(comment.relative).content}
                     </p>
@@ -319,7 +319,7 @@
             {:else}
               <div class="flex flex-row text-sm text-zinc-600 dark:text-zinc-400 bg-zinc-200 dark:bg-gray-600 px-2 py-1 rounded-md space-x-1">
                 {#if getRelative(comment.relative).author}
-                  <span class="w-max after:content-[':'] mr-1">{users[getRelative(comment.relative).author]?.id}</span>
+                  <span class="w-max after:content-[':'] mr-1">{getRelative(comment.relative).author.id}</span>
                 {/if} <i>[댓글이 삭제되었습니다.]</i>
               </div>
             {/if}
