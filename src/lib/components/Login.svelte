@@ -2,19 +2,23 @@
   import {createEventDispatcher} from 'svelte';
   import {ELoginError} from '$lib/errors/login';
   import {goto} from '$app/navigation';
-  import {applyAction, enhance} from '$app/forms';
+  import {fade} from 'svelte/transition';
+  import {applyAction, enhance, type SubmitFunction} from '$app/forms';
   import Pulse from 'svelte-loading-spinners/Pulse.svelte'
   import type {ActionResult} from '@sveltejs/kit';
+  import Checkbox from '$lib/components/Checkbox.svelte';
 
   const dispatch = createEventDispatcher();
   let passwordInput: HTMLInputElement;
   let loginButton: HTMLButtonElement;
   let id = '', password = '';
   let loading = false;
+  let keep = false;
 
   let error: ELoginError = ELoginError.None;
 
-  function onlySuccess() {
+  const onlySuccess: SubmitFunction = ({data}) => {
+    data.set('keep', keep.toString());
     return async (action) => {
       const result: ActionResult = action.result;
       if (result.type === 'success') {
@@ -42,7 +46,7 @@
 
     loginButton.disabled = true;
 
-    dispatch('login', {id, password, whenDone: done});
+    dispatch('login', {id, password, keep, whenDone: done});
     // console.log('fired')
   }
 
@@ -91,6 +95,11 @@
            bind:this={passwordInput} bind:value={password}
            class="w-full bg-transparent outline-none focus:outline-0 rounded-md">
   </div>
+  <div>
+    <Checkbox bind:checked={keep}>
+      로그인 유지
+    </Checkbox>
+  </div>
   <div class="flex space-x-2">
     <button id="btn-login" bind:this={loginButton}
             class="bg-sky-400 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white items-center rounded-md px-4 py-2
@@ -106,6 +115,13 @@
       계정이 없어요
     </button>
   </div>
+
+  {#if keep}
+    <div transition:fade class="p-4 bg-red-100 rounded-md text-red-400 text-sm">
+      <p>해당 기능은 보안에 취약해지며, 제3자에 의해 계정을 탈취 당할 수 있게 됩니다.</p>
+      <p>어떠한 일이 있어도 공용 컴퓨터에서 해당 기능을 사용하지 마세요.</p>
+    </div>
+  {/if}
 
   <div class="space-y-2">
     <div>

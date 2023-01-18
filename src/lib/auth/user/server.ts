@@ -26,7 +26,7 @@ export class User {
   private stored: UnsafeUser | undefined;
 
   get data(): Promise<UnsafeUser> {
-    // console.trace('1');
+    // console.trace(this);
     return new Promise<UnsafeUser>(async (resolve, reject) => {
       if (!await this.exists) {
         return reject('user not exists');

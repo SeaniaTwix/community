@@ -54,7 +54,13 @@ export async function POST({request, params, locals}: RequestEvent): Promise<Res
   }
 
   const article = new ArticleDto<ClientToServerTagType>(await request.json());
-  const write = new WriteRequest(article, locals.user.uid);
+  const user = await User.findByUniqueId(locals.user.uid);
+
+  if (!user) {
+    throw error(HttpStatus.UNAUTHORIZED);
+  }
+
+  const write = new WriteRequest(article, user);
 
   if (isEmpty(write.title)) {
     throw error(HttpStatus.NOT_ACCEPTABLE, 'title is too short');
@@ -123,7 +129,7 @@ class WriteRequest {
   private article?: Article;
   private permission: Permissions;
 
-  constructor(private body: ArticleDto<ClientToServerTagType>, userId: string) {
+  constructor(private body: ArticleDto<ClientToServerTagType>, user: User) {
     if (this.isTitleEmpty || this.isContentEmpty) {
       this.error = 'some field is empty';
     }
@@ -133,7 +139,7 @@ class WriteRequest {
     }
 
     this.board = new Board(this.boardId!);
-    this.permission = new Permissions(this.board, userId);
+    this.permission = new Permissions(this.board, user);
   }
 
   get boardId(): string | undefined {

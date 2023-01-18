@@ -186,7 +186,7 @@ async function auth({event, resolve}: HandleParameters): Promise<Response> {
     }
 
     event.locals.user = body;
-  } else {
+  } else if (event.request.headers.get('cookie')?.includes('refresh=')) {
     const refresh = event.cookies.get('refresh');
 
     if (refresh) {

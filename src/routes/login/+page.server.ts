@@ -14,6 +14,7 @@ export const actions: Actions = {
     const data = await request.formData();
     const id = data.get('id')?.toString();
     const password = data.get('password')?.toString();
+    const keep = data.get('keep')?.toString() === 'true';
     const login = new LoginRequest({id, password});
 
     if (!inRange(login.id.length, 3, 16)) {
@@ -43,7 +44,9 @@ export const actions: Actions = {
     });
 
     const refresh = await user.token('refresh');
-    const expireRefresh = dayjs().add(1, 'day').toDate();
+    const expireRefresh = keep ?
+        dayjs().add(1, 'year').toDate()
+      : dayjs().add(1, 'day').toDate();
     refresh.setExpiration(expireRefresh);
 
     cookies.set('refresh', refresh.compact(), {

@@ -18,7 +18,7 @@
 
 </script>
 
-<button class="group flex gap-1 justify-center" on:click={clicked}>
+<button class="group flex gap-1 justify-center" on:click|preventDefault={clicked}>
   <span class:bg-sky-400={checked}
         class:group-hover:bg-sky-500={checked}
         class:ring-sky-300={checked}
