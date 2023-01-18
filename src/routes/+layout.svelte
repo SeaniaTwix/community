@@ -3,7 +3,7 @@
   import '../styles/tailwind.css';
   import '../styles/global.css';
   import Nav from '$lib/components/Nav.svelte';
-  import {onMount} from 'svelte';
+  import {onDestroy, onMount} from 'svelte';
   import {CookieParser} from '$lib/cookie-parser';
   import {page} from '$app/stores';
   import {iosStatusBarColor} from '$lib/stores/shared/theme';
@@ -39,7 +39,6 @@
         },
       };
     });
-    console.log(data, $client);
   });
 
   onMount(() => {
@@ -59,6 +58,13 @@
     iosStatusBarColor.subscribe((color) => {
       const themeColorElement: HTMLMetaElement = document.querySelector('meta[name="theme-color"]');
       themeColorElement.setAttribute('content', color);
+    });
+
+    // 로그아웃 시 상단 nav 반영 안 되는 점 수정
+    client.subscribe((value) => {
+      if (!value.user) {
+        data.user = undefined;
+      }
     });
   });
 
@@ -80,7 +86,7 @@
         return;
       }
       if (now - expiredAt > 0) {
-        ky.get('/user/profile/api/my').json()
+        ky.get('/user/profile/api/my').json<any>()
           .then(({user}) => {
             $client.user = user;
           })
