@@ -4,6 +4,7 @@
   import Pagination from '$lib/components/Pagination.svelte';
   import Refresh from 'svelte-material-icons/Refresh.svelte';
   import Circle from 'svelte-material-icons/Circle.svelte';
+  import Close from 'svelte-material-icons/CloseBox.svelte';
   import List from 'svelte-material-icons/ViewList.svelte';
   import Gallery from 'svelte-material-icons/ViewGallery.svelte';
 
@@ -19,6 +20,7 @@
   import {ArticleItemDto} from '$lib/types/dto/article-item.dto';
   import {client} from '$lib/auth/user/client.js';
   import type {UI} from '@root/app';
+  import Tag from '$lib/components/Tag.svelte';
 
   export let data: PageData & {ui?: UI};
 
@@ -73,17 +75,13 @@
   }
 
   async function fullRefresh() {
-    const newList = await getRecentList();
-
     if (!$client?.ui) {
       throw new Error('ui is ' + $client?.ui);
     }
 
     $client.ui.listType = listType;
 
-    articles = newList.articles;
-    bests = newList.bests;
-    maxPage = newList.maxPage;
+    await goto($page.url, {invalidateAll: true});
   }
 
   function toggleViewMode() {
@@ -183,6 +181,18 @@
     } else {
       goto($page.url.pathname + '?q=' + encodeURIComponent('#공지'));
     }
+  }
+
+  function removeSearchQuery(target: string) {
+    const url = new URL($page.url);
+    const q = url.searchParams.get('q');
+    const nq = q.split(' ').filter(v => v !== target).join(' ');
+    if (isEmpty(nq)) {
+      url.searchParams.delete('q');
+    } else {
+      url.searchParams.set('q', nq);
+    }
+    goto(url, {invalidateAll: true});
   }
 
   // console.log(id, params);
@@ -366,7 +376,18 @@
       {/if}
     </button>
 
-    {#if !isEmpty(buffer)}
+    {#if $page.url.searchParams.has('q')}
+      <div class="flex flex-row gap-1 items-center">
+        {#each $page.url.searchParams.get('q').split(' ') as query}
+          <button class="flex-inline flex-row items-center text-zinc-700 dark:text-zinc-300" on:click={() => removeSearchQuery(query)}>
+            <Tag>
+              <span>{query}</span>
+              <span><Close /></span>
+            </Tag>
+          </button>
+        {/each}
+      </div>
+    {:else if !isEmpty(buffer)} <!-- 검색 중에는 새 게시물 표시 안 함 -->
       <button on:click={updateListFromBuffer}
               class="text-zinc-600 hover:bg-zinc-100 hover:text-sky-400 dark:text-zinc-300 dark:hover:bg-gray-500 dark:hover:text-zinc-200 rounded-md px-2 py-1 select-none transition-colors">
         <Refresh/>

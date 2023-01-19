@@ -37,7 +37,10 @@
     const {list: l, maxPage: mp} = await fullRefresh();
 
     client.update((s) => {
-      s.ui.listType = listType;
+      if (s.ui) {
+        s.ui.listType = listType;
+      }
+
       return s;
     });
 
