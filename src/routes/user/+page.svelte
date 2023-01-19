@@ -14,6 +14,7 @@
     ky.post('/user/logout')
       .then(() => goto('/'))
       .then(() => {
+        delete data.user;
         $client.user = undefined;
       });
   }

@@ -262,7 +262,6 @@
     </div>
   {/if}
 </nav>
-
 <style lang="scss">
   :global {
     svg {

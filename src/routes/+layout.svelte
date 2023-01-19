@@ -60,12 +60,6 @@
       themeColorElement.setAttribute('content', color);
     });
 
-    // 로그아웃 시 상단 nav 반영 안 되는 점 수정
-    client.subscribe((value) => {
-      if (!value.user) {
-        data.user = undefined;
-      }
-    });
   });
 
   page.subscribe(async () => {
