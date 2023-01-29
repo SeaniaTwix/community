@@ -26,6 +26,17 @@
     // noinspection TypeScriptUnresolvedFunction
     return tags.includes('성인') || tags.includes('후방');
   }
+  
+  function unwrapAutotag(title: string) {
+    const e = /^[[(]?.+[\])]/gm.exec(title);
+    return e ? title.replace(e[0], '') : title;
+    // return title.replace(new RegExp('^[[(]' + title + '[\])]'), '')
+  }
+
+  function getAutotag(title: string) {
+    const e = /^([[(]?.+[\])])/gm.exec(title);
+    return e ? e[1] : '';
+  }
 
   function toImageSource(avatar: string) {
     if (!avatar) {
@@ -95,9 +106,9 @@
           <div class="pt-2 hover:underline">
             <h2 class="text-lg font-bold px-1 after:ml-1 after:inline-block  after:bg-rose-500 after:text-white after:rounded-md after:px-1 after:text-xs items-center" class:__warning-adult-content={Object.keys(gallery.tags).includes('성인')}>
               {#if gallery.autoTag}
-                <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{gallery.autoTag}">{gallery.autoTag})</a>
+                <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{gallery.autoTag}">{getAutotag(gallery.title)}</a>
               {/if}
-              {typeof gallery.autoTag === 'string' ? gallery.title.replace(new RegExp('^' + gallery.autoTag + '.'), '') : gallery.title}
+              <span>{typeof gallery.autoTag === 'string' ? unwrapAutotag(gallery.title) : gallery.title}</span>
               {#if gallery.video}
                 <span>
                   <Video />
