@@ -80,7 +80,7 @@ export class ArticleSearch {
     const op = ops ? ops[1] : '>';
     const tagConSplitted = tagCondition.split(operator);
     const compare = tagConSplitted.length > 1 ? last(tagConSplitted) : '0';
-    return `tags.${tagConSplitted[0]}${op}${compare}`;
+    return `'tags.${tagConSplitted[0]}'${op}${compare}`;
   }
 
   private static transformTagExcludeCondition(tagCondition: string) {
