@@ -33,6 +33,8 @@
   declare var name: string;
   $: name = data.name;
   $: currentPage = data.currentPage;
+  declare var minPage: typeof data.maxPage;
+  $: minPage = data.minPage;
   declare var maxPage: typeof data.maxPage;
   $: maxPage = data.maxPage;
   declare var listType: 'list' | 'gallery'
@@ -416,7 +418,11 @@
   {/if}
 
   <div class="pb-8 space-y-2">
-    <Pagination base="/community/{$page.params.id}" pageKey="page" current="{currentPage}" max="{maxPage}"/>
+    <Pagination base="/community/{$page.params.id}"
+                pageKey="page"
+                current="{currentPage}"
+                min="{minPage}"
+                max="{maxPage}"/>
   </div>
 </div>
 

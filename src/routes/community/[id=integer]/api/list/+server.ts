@@ -81,12 +81,12 @@ export class ListBoardRequest {
     }
   }
 
-  getMaxPage(articleFilter?: string[]) {
-    return this.board.getMaxPage(this.amount, null, articleFilter);
+  getMaxPage(reader: string | null, articleFilter?: string[]) {
+    return this.board.getMaxPage(reader, this.amount, null, articleFilter);
   }
 
-  getBestMaxPage(articleFilter?: string[]) {
-    return this.board.getMaxPage(this.amount, 1, articleFilter);
+  getBestMaxPage(reader: string | null, articleFilter?: string[]) {
+    return this.board.getMaxPage(reader, this.amount, 1, articleFilter);
   }
 
   getListRecents(reader: string | null, articleFilter?: string[]): Promise<ArticleDto[]> {

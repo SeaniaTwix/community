@@ -31,6 +31,14 @@ export class Board {
     return await cursor.all();
   }
 
+  private static paginate(current: number, max: number, range = 5) {
+    // Calculate the minimum and maximum page numbers for the given range
+    const minPage = Math.max(current - Math.floor(range / 2), 1);
+    const maxPage = Math.min(minPage + range - 1, max);
+    // Return a tuple with the min and max page numbers
+    return [minPage, maxPage];
+  }
+
   async render(pageRequest: ListBoardRequest, type: BoardType, locals: App.Locals, query?: string) {
     let articleFilter: string[] | undefined;
 
@@ -44,15 +52,20 @@ export class Board {
       await pageRequest.getListRecents(locals?.user?.uid ?? null, articleFilter) as any[]
       : await pageRequest.getBestListRecents(locals?.user?.uid ?? null, articleFilter) as any[];
 
-    const maxPage = type === 'default' ?
-      await pageRequest.getMaxPage(articleFilter)
-      : await pageRequest.getBestMaxPage(articleFilter);
+    let maxPage = type === 'default' ?
+      await pageRequest.getMaxPage(locals?.user?.uid ?? null, articleFilter)
+      : await pageRequest.getBestMaxPage(locals?.user?.uid ?? null, articleFilter);
 
     const page = pageRequest.page;
 
     if (page > maxPage) {
       throw error(HttpStatus.NOT_FOUND, 'Not found');
     }
+
+    // todo: global setting for pagination range
+    const paginated = Board.paginate(page, maxPage, 5);
+    const minPage = paginated[0];
+    maxPage = paginated[1];
 
     const {user, sessionId} = locals;
 
@@ -84,6 +97,7 @@ export class Board {
       user,
       name: await this.name,
       currentPage: page,
+      minPage,
       maxPage,
       announcements,
       session: locals,
@@ -103,7 +117,7 @@ export class Board {
     return await cursor.next();
   }
 
-  async getMaxPage(amount = 30, requireLikes: number | null = null, articleFilter?: string[]): Promise<number> {
+  async getMaxPage(reader: string | null, amount = 30, requireLikes: number | null = null, articleFilter?: string[]): Promise<number> {
     const cursor = await db.query(aql`
       let articleFilter = ${articleFilter ?? null}
       let skipFilter = articleFilter == null
@@ -120,8 +134,22 @@ export class Board {
           let likeCount = length(for tn in savedTags filter tn == "_like" return tn)
           let dislikeCount = length(for tn in savedTags filter tn == "_dislike" return tn)
           filter is_number(minLike) ? likeCount - dislikeCount >= minLike : true
+          let reader = ${reader}
+          let blockedTags = is_string(reader) ? flatten(
+            for user in users
+              filter user._key == reader
+                return is_array(user.blockedTags) ? user.blockedTags : []
+          ) : []
+          let blockedUsers = is_string(reader) ? flatten(
+            for user in users
+              filter user._key == reader && has(user, "blockedUsers")
+                return (for blockedUser in user.blockedUsers return blockedUser.key)
+          ) : []
           
-            return article)
+          filter blockedTags none in savedTags
+          filter article.author not in blockedUsers
+        return article)
+          
       return max([1, ceil(count / ${amount})])`);
     return await cursor.next();
   }
@@ -360,6 +388,7 @@ export interface IArticleList {
   user?: IUserSession,
   name: string,
   currentPage: number,
+  minPage: number,
   maxPage: number;
   announcements: ArticleItemDto[],
   session: App.Locals,
