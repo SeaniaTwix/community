@@ -92,11 +92,13 @@
           <div class="flex justify-between">
             <span class="text-zinc-500 dark:text-zinc-400 hidden md:inline-block lg:inline-block mr-4 select-none">{article._key}</span>
             <div class="flex space-x-0 md:space-x-1 lg:space-x-1 flex-grow flex-col md:flex-row lg:flex-row w-full md:w-7/12 lg:w-5/12 min-w-0 md:items-center">
-              <div class="flex justify-between min-w-0">
+              <div class="__fix-additional-space flex justify-between min-w-0">
                 <div class="flex flex-row hover:text-sky-400 transition-colors block truncate items-center">
                   <div class="truncate">
                     {#if article.autoTag}
-                      <a class="font-bold text-sky-400" href="{$page.url.pathname}?q=%23{article.autoTag}">{getAutotag(article.title)}</a>
+                      <a href="{$page.url.pathname}?q=%23{article.autoTag}">
+                        <span class="inline-block font-bold text-sky-400">{getAutotag(article.title)}</span>
+                      </a>
                     {/if}<span>{typeof article.autoTag === 'string' ? unwrapAutotag(article.title) : article.title}</span>
                   </div>
                   {#if Object.keys(article.tags??{}).includes('성인')}
@@ -115,9 +117,9 @@
                 </div>
                 <!-- (mobile only end) -->
               </div>
-              <div class="flex flex-grow flex-shrink-0 justify-between leading-zero -mt-px">
+              <div class="flex flex-grow flex-shrink-0 justify-between leading-zero -mt-px text-sm sm:text-md">
                 <div class="inline-block select-none flex-shrink-0 justify-between space-x-1 mr-4 text-gray-700 dark:text-zinc-300 items-center flex flex-row items-center">
-                  <span class="inline-block md:hidden lg:hidden text-zinc-400 select-none">
+                  <span class="hidden xs:inline-block md:hidden lg:hidden text-zinc-400 select-none">
                     {article._key}
                   </span>
                   <span class="h-full flex items-center space-x-1 gap-0.5">
@@ -146,7 +148,7 @@
                     {/if}
                   </span>
                 </div>
-                <div class="inline-block flex w-max items-center">
+                <div class="inline-block flex w-max items-center gap-0 md:gap-4">
                   <div on:click={() => toggleUserMenu(i)} class="flex space-x-2 hidden sm:hidden md:inline lg:inline flex-shrink-0">
                     <div class="w-6 h-6 inline-block mt-[-1px]">
                       <CircleAvatar fallback="{toImageSource(article)}" border="sm"/>
@@ -154,7 +156,7 @@
                     <div on:click|preventDefault class="cursor-pointer hover:text-sky-400 inline-block align-super
                               underline decoration-dashed decoration-sky-400">{article.author.id}</div>
                   </div>
-                  <span class="text-right inline-block flex-shrink-0 min-w-[7rem] leading-normal">
+                  <span class="text-right inline-block flex-shrink-0 leading-normal min-w-0 md:min-w-[7rem]">
                     {formatDate(article.createdAt)}
                   </span>
                 </div>
@@ -203,4 +205,5 @@
       content: "19";
     }
   }
+
 </style>

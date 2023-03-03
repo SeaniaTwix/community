@@ -8,6 +8,9 @@ module.exports = {
         'zero': '0',
       }
     },
+    screens: {
+      'xs': '300px',
+    }
   },
   plugins: [],
 }
