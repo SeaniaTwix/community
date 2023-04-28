@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-vercel';
 import preprocess from 'svelte-preprocess';
 import path from 'node:path';
 
@@ -12,8 +12,7 @@ const config = {
 
   kit: {
     adapter: adapter({
-      out: './build',
-      precompress: true,
+      runtime: 'nodejs16.x'
     }),
     alias: {
       '@root': path.resolve('./src'),

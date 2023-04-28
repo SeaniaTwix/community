@@ -48,6 +48,7 @@
 		"@babel/runtime": "^7.21.0",
 		"@skyra/timestamp": "^1.0.0",
 		"@sveltejs/adapter-node": "^1.2.4",
+		"@sveltejs/adapter-vercel": "^2.4.3",
 		"@sveltejs/kit": "^1.15.9",
 		"@tinymce/tinymce-svelte": "^1.0.1",
 		"@tiptap/core": "2.0.3",
