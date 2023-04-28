@@ -16,18 +16,6 @@
       설정 페이지
     </a>
 
-    <div class="text-center">
-
-      <h1 class="text-3xl">테스트 중</h1>
-      <p>
-        현재 버전:
-        <a class="text-sky-400 underline"
-           href="https://github.com/SeaniaTwix/community/commit/{data.version}">
-          {data.version.slice(0, 7)}
-        </a>
-      </p>
-
-    </div>
 
   </div>
 </div>
