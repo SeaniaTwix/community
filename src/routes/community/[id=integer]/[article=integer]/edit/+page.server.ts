@@ -5,6 +5,7 @@ import {retriveEditInfo} from '../api/edit/+server';
 import type {IEditable} from '../api/edit/+server';
 import {error} from '$lib/kit';
 import {Board} from '$lib/community/board/server';
+import {env} from 'node:process';
 
 type T = { edit: IEditable };
 
@@ -24,7 +25,7 @@ export async function load({params, locals}: ServerLoadEvent): Promise<PageData>
   return {
     boardName: await board.name,
     content,
-    // editorKey: key,
+    editorKey: env.EDITOR_KEY ?? '',
     source,
     tagCounts,
     tags: Object.values(tags).map(v => v.name),

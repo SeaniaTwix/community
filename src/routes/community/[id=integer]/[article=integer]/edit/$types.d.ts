@@ -5,7 +5,7 @@ interface PageDataInternal {
   source: string,
   content: string,
   tags: string[],
-  // editorKey: string,
+  editorKey: string,
 }
 
 export type PageData = PageDataInternal;

@@ -1,7 +1,6 @@
 <script lang="ts">
   import FullEditor from '$lib/components/FullEditor.svelte';
   import type {PageData} from './$types';
-  import {key} from '$lib/editor-key';
   import {page} from '$app/stores';
 
   export let data: PageData;
@@ -14,7 +13,6 @@
   declare var tagCounts: number;
   $: tagCounts = tags.length;
 
-  let editorKey = key;
   let article = $page.params.article;
   let board = $page.params.id;
   let name = data.boardName;
@@ -27,7 +25,11 @@
 </svelte:head>
 
 <div class="__mobile-bottom-fix mt-10 w-10/12 md:w-4/6 lg:w-3/5 mx-auto space-y-4">
-  <FullEditor {editorKey} {board} {usedTags} {title} {source} {content} {tags} {article} {tagCounts} isEditMode="{true}" />
+  {#await fetch('/community/api/editor', {method: 'GET'})}
+    <p>Loading editor...</p>
+  {:then editor}
+    <FullEditor editorKey={editor.key} {board} {usedTags} {title} {source} {content} {tags} {article} {tagCounts} isEditMode="{true}" />
+  {/await}
 </div>
 
 <style lang="scss">

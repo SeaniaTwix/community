@@ -1,6 +1,7 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
 import HttpStatus from 'http-status-codes';
-import {key} from '$lib/editor-key';
+// import {key} from '$lib/editor-key';
+import {env} from 'node:process';
 import type {PageData} from './$types';
 import {error, redirect} from '$lib/kit';
 import {GET} from '../api/write/+server';
@@ -17,7 +18,7 @@ export async function load({params, locals}: ServerLoadEvent): Promise<PageData>
   const data = await response.json();
 
   return {
-    editorKey: key,
+    editorKey: env.EDITOR_KEY ?? '',
     boardName: await board.name,
     usedTags: data.tags,
   };
