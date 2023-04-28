@@ -6,7 +6,7 @@
   import Edit from 'svelte-material-icons/Pencil.svelte';
   import Delete from 'svelte-material-icons/TrashCan.svelte';
   import Report from 'svelte-material-icons/AlertBox.svelte';
-  import Admin from 'svelte-material-icons/Settings.svelte';
+  import Admin from 'svelte-material-icons/Cog.svelte';
   import Like from 'svelte-material-icons/ThumbUp.svelte';
   import LikeEmpty from 'svelte-material-icons/ThumbUpOutline.svelte';
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';

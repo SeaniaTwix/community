@@ -12,7 +12,7 @@
   import Dislike from 'svelte-material-icons/ThumbDown.svelte';
   import DislikeEmpty from 'svelte-material-icons/ThumbDownOutline.svelte';
   import Reply from 'svelte-material-icons/CommentMultiple.svelte';
-  import Admin from 'svelte-material-icons/Settings.svelte';
+  import Admin from 'svelte-material-icons/Cog.svelte';
 
   import {EUserRanks} from '$lib/types/user-ranks';
   import TimeAgo from 'javascript-time-ago';
