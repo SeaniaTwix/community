@@ -4,10 +4,18 @@
   import {NotificationsClient} from '$lib/notifications/client';
   import {client, decodeToken} from '$lib/auth/user/client';
   import {page} from '$app/stores';
-  import {onDestroy} from 'svelte';
+  import {onDestroy, onMount} from 'svelte';
   import {browser} from '$app/environment';
 
   if (browser) {
+    onMount(() => {
+      if ($page.url.searchParams.has('redir')) {
+        const redir = decodeURIComponent($page.url.searchParams.get('redir'));
+        sessionStorage.setItem('ru.hn:back', redir);
+      }
+    })
+
+
     onDestroy(
       page.subscribe(({form}) => {
         const token = form?.token;

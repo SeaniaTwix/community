@@ -173,14 +173,14 @@ export class User {
     }
   }
 
-  async token(type: 'user' | 'refresh' | 'ws', payload: Rec<unknown> = {}): Promise<njwt.Jwt> {
+  async token(type: 'user' | 'refresh' | 'ws' | 'exchange', payload: Rec<unknown> = {}, customKey?: string): Promise<njwt.Jwt> {
     return njwt.create({
       iss: 'https://ru.hn/',
       sub: `user/${this.id}`,
       scope: type,
       uid: await this.uid,
       ...payload,
-    }, key);
+    }, customKey ?? key);
   }
 
   async blockUser(key: string, reason: string) {
